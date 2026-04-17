@@ -10,6 +10,8 @@ from sts_py.engine.monsters.intent import MonsterIntent
 from sts_py.engine.run.map_image_generator import show_map_image
 from sts_py.engine.run.run_engine import RoomType
 from sts_py.terminal.catalog import (
+    _looks_presentable_text,
+    _looks_sane_translation,
     card_requires_target,
     get_card_info,
     get_potion_info,
@@ -639,12 +641,14 @@ def render_event_choice_lines(event) -> list[str]:
     lines: list[str] = []
     description_cn = str(getattr(event, "description_cn", "") or "").strip()
     description_en = str(getattr(event, "description", "") or "").strip()
-    if description_cn:
+    if _looks_sane_translation(description_cn):
         lines.append(description_cn)
-    elif description_en:
+    elif _looks_presentable_text(description_en):
         lines.append(description_en)
     for idx, choice in enumerate(getattr(event, "choices", []) or []):
-        label = str(getattr(choice, "description_cn", "") or getattr(choice, "description", "") or "").strip()
+        choice_cn = str(getattr(choice, "description_cn", "") or "").strip()
+        choice_en = str(getattr(choice, "description", "") or "").strip()
+        label = choice_cn if _looks_sane_translation(choice_cn) else choice_en
         lines.append(f"[{idx}] {label}")
     return lines
 

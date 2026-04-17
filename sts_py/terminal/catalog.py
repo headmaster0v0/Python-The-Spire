@@ -797,18 +797,22 @@ def translate_room_type(room_type: RoomType) -> str:
 def translate_event_name(event: Any) -> str:
     if isinstance(event, str):
         event_id = event
+        event_key = event
         name_cn = None
     else:
-        event_id = getattr(event, "id", str(event))
+        event_id = getattr(event, "event_id", getattr(event, "id", str(event)))
+        event_key = getattr(event, "event_key", event_id)
         name_cn = getattr(event, "name_cn", None)
-    policy_name = _policy_translation("event", event_id)
+    policy_name = _policy_translation("event", event_key) or _policy_translation("event", event_id)
     if policy_name is not None:
         return policy_name
+    if event_key in EVENT_NAME_OVERRIDES:
+        return EVENT_NAME_OVERRIDES[event_key]
     if event_id in EVENT_NAME_OVERRIDES:
         return EVENT_NAME_OVERRIDES[event_id]
     if _looks_sane_translation(name_cn):
         return str(name_cn)
-    return _humanize_identifier(event_id)
+    return _humanize_identifier(str(event_key or event_id))
 
 
 def _generic_card_summary(card: CardInstance) -> str:

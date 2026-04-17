@@ -17,7 +17,7 @@ from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
-from sts_py.engine.run.events import ACT1_EVENTS, ACT2_EVENTS, ACT3_EVENTS, Event, EventChoice
+from sts_py.engine.run.events import EVENTS_BY_KEY, Event, EventChoice
 from sts_py.engine.run.run_engine import RoomType, _monster_factory_registry
 from sts_py.terminal.catalog import (
     card_requires_target,
@@ -521,11 +521,11 @@ def _power_class_inventory() -> list[tuple[str, type[Any]]]:
 
 
 def _event_inventory() -> dict[str, Event]:
-    events: dict[str, Event] = {}
-    for bucket in (ACT1_EVENTS, ACT2_EVENTS, ACT3_EVENTS):
-        for event_id, event in bucket.items():
-            events[event_id] = event
-    return events
+    return {
+        event_key: event.clone()
+        for event_key, event in EVENTS_BY_KEY.items()
+        if getattr(event, "pool_bucket", "") != "terminal"
+    }
 
 
 def _monster_act(monster_id: str) -> int | None:
@@ -866,6 +866,10 @@ def _event_choice_effect_kinds(choice: EventChoice) -> list[str]:
 def build_event_source_facts(event: Event) -> dict[str, Any]:
     return {
         "source_kind": "python_run_source",
+        "event_key": str(getattr(event, "event_key", "") or getattr(event, "name", "") or getattr(event, "id", "")),
+        "event_id": str(getattr(event, "event_id", getattr(event, "id", "")) or ""),
+        "pool_bucket": str(getattr(event, "pool_bucket", "") or ""),
+        "gating_flags": list(getattr(event, "gating_flags", []) or []),
         "act": int(event.act),
         "choice_count": len(event.choices),
         "choice_effect_signatures": build_event_choice_effect_signatures(event),

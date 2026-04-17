@@ -145,8 +145,13 @@ class RunState:
     question_room_monster_chance: float = 0.10  # 10% base, +10% each failed roll
     question_room_treasure_chance: float = 0.02  # 2% base, +2% each failed roll
     question_room_shop_chance: float = 0.03  # 3% base, +3% each failed roll (deadly events only, floor 6+)
-    question_room_elite_chance: float = 0.20  # 20% base, +20% each failed roll (deadly events only)
-    question_room_last_encounter: str = ""  # Track last encountered type to reset chances
+    question_room_elite_chance: float = 0.0  # Java base/reset when DeadlyEvents is disabled
+    question_room_last_encounter: str = ""
+    previous_room_type_for_event_roll: str = ""
+    event_list: list[str] = field(default_factory=list)
+    shrine_list: list[str] = field(default_factory=list)
+    special_one_time_event_list: list[str] = field(default_factory=list)
+    playtime_seconds: float = 0.0
 
     combat: CombatEngine | None = None
     combat_history: list[dict[str, Any]] = field(default_factory=list)
@@ -157,6 +162,8 @@ class RunState:
     event_choices: list[dict[str, Any]] = field(default_factory=list)
 
     current_event_id: str | None = None
+    current_event_key: str | None = None
+    current_event_state: dict[str, Any] = field(default_factory=dict)
     dead_adventurer_state: dict[str, Any] = field(default_factory=dict)
     current_event_combat: dict[str, Any] | None = None
     neow_options: list[dict[str, Any]] = field(default_factory=list)
@@ -193,6 +200,18 @@ class RunState:
             "boss_relic_choices": self.boss_relic_choices,
             "treasure_rooms": self.treasure_rooms,
             "event_choices": self.event_choices,
+            "event_list": self.event_list,
+            "shrine_list": self.shrine_list,
+            "special_one_time_event_list": self.special_one_time_event_list,
+            "question_room_monster_chance": self.question_room_monster_chance,
+            "question_room_shop_chance": self.question_room_shop_chance,
+            "question_room_treasure_chance": self.question_room_treasure_chance,
+            "question_room_elite_chance": self.question_room_elite_chance,
+            "previous_room_type_for_event_roll": self.previous_room_type_for_event_roll,
+            "playtime_seconds": self.playtime_seconds,
+            "current_event_id": self.current_event_id,
+            "current_event_key": self.current_event_key,
+            "current_event_state": self.current_event_state,
             "current_event_combat": self.current_event_combat,
             "neow_options": self.neow_options,
             "pending_neow_choice": self.pending_neow_choice,
@@ -496,10 +515,138 @@ class RunEngine:
         return engine
 
     def _init_run(self) -> None:
+        self._initialize_special_one_time_event_pool()
+        self._initialize_event_pools_for_act()
+        self._reset_question_room_probabilities()
         self._generate_encounters_for_act()
         self._generate_map()
         self._init_neow()
         self.state.phase = RunPhase.NEOW
+
+    def _initialize_special_one_time_event_pool(self) -> None:
+        from sts_py.engine.run.events import SPECIAL_ONE_TIME_EVENT_KEYS
+
+        if self.state.special_one_time_event_list:
+            return
+        include_note = int(getattr(self.state, "ascension", 0) or 0) < 15
+        self.state.special_one_time_event_list = [
+            key for key in SPECIAL_ONE_TIME_EVENT_KEYS
+            if key != "NoteForYourself" or include_note
+        ]
+
+    def _initialize_event_pools_for_act(self) -> None:
+        from sts_py.engine.run.events import ACT_EVENT_KEYS_BY_ACT, SHRINE_EVENT_KEYS_BY_ACT
+
+        self.state.event_list = list(ACT_EVENT_KEYS_BY_ACT.get(self.state.act, []))
+        self.state.shrine_list = list(SHRINE_EVENT_KEYS_BY_ACT.get(self.state.act, []))
+
+    def _reset_question_room_probabilities(self) -> None:
+        self.state.question_room_count = 0
+        self.state.question_room_elite_chance = 0.0
+        self.state.question_room_monster_chance = 0.10
+        self.state.question_room_shop_chance = 0.03
+        self.state.question_room_treasure_chance = 0.02
+        self.state.question_room_last_encounter = ""
+
+    def _set_current_event(self, event: "Event") -> None:
+        self._current_event = event
+        self.state.current_event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
+        self.state.current_event_key = str(getattr(event, "event_key", "") or "")
+        self.state.phase = RunPhase.EVENT
+
+    def _clear_current_event(self) -> None:
+        self._current_event = None
+        self.state.current_event_id = None
+        self.state.current_event_key = None
+        self.state.current_event_state = {}
+
+    def _has_event_relic(self, relic_id: str) -> bool:
+        return relic_id in set(getattr(self.state, "relics", []) or [])
+
+    def _is_event_key_available(self, event_key: str, *, shrine: bool) -> bool:
+        if event_key == "Dead Adventurer" and self.state.floor <= 6:
+            return False
+        if event_key == "Mushrooms" and self.state.floor <= 6:
+            return False
+        if event_key == "The Cleric" and self.state.player_gold < 35:
+            return False
+        if event_key == "Beggar" and self.state.player_gold < 75:
+            return False
+        if event_key == "Colosseum":
+            room = self.get_current_room()
+            total_rows = max(1, len({node.y for node in self.state.map_nodes}) or 1)
+            room_depth = int(getattr(room, "y", 0) or 0)
+            return room is not None and room_depth > (total_rows // 2)
+        if event_key == "The Moai Head":
+            has_idol = self._has_event_relic("GoldenIdol")
+            hp_ratio = float(self.state.player_hp) / float(max(1, self.state.player_max_hp))
+            return has_idol or hp_ratio <= 0.5
+        if not shrine:
+            return True
+        if event_key == "Fountain of Cleansing":
+            from sts_py.engine.run.events import _is_curse_card
+
+            return any(_is_curse_card(card_id) for card_id in self.state.deck)
+        if event_key == "Designer":
+            return self.state.act in {2, 3} and self.state.player_gold >= 75
+        if event_key == "Duplicator":
+            return self.state.act in {2, 3}
+        if event_key == "FaceTrader":
+            return self.state.act in {1, 2}
+        if event_key == "Knowing Skull":
+            return self.state.act == 2 and self.state.player_hp > 12
+        if event_key == "N'loth":
+            return self.state.act == 2 and len(self.state.relics) >= 2
+        if event_key == "The Joust":
+            return self.state.act == 2 and self.state.player_gold >= 50
+        if event_key == "The Woman in Blue":
+            return self.state.player_gold >= 50
+        if event_key == "SecretPortal":
+            return self.state.act == 3 and float(getattr(self.state, "playtime_seconds", 0.0) or 0.0) >= 800.0
+        if event_key == "NoteForYourself":
+            return int(getattr(self.state, "ascension", 0) or 0) < 15
+        return True
+
+    def _draw_event_key_from_pool(self, *, shrine: bool) -> str | None:
+        if self.state.rng is None:
+            return None
+        pool = list(self.state.shrine_list if shrine else self.state.event_list)
+        if shrine:
+            for event_key in self.state.special_one_time_event_list:
+                if self._is_event_key_available(event_key, shrine=True):
+                    pool.append(event_key)
+        else:
+            pool = [event_key for event_key in pool if self._is_event_key_available(event_key, shrine=False)]
+
+        if not pool:
+            return None
+
+        event_key = pool[self.state.rng.event_rng.random_int(len(pool) - 1)]
+        if shrine:
+            if event_key in self.state.shrine_list:
+                self.state.shrine_list.remove(event_key)
+            elif event_key in self.state.special_one_time_event_list:
+                self.state.special_one_time_event_list.remove(event_key)
+        else:
+            if event_key in self.state.event_list:
+                self.state.event_list.remove(event_key)
+        return event_key
+
+    def _generate_event_key(self) -> str | None:
+        from sts_py.engine.run.events import SHRINE_CHANCE
+
+        if self.state.rng is None:
+            return None
+        if self.state.rng.event_rng.random_float() < SHRINE_CHANCE:
+            if self.state.shrine_list or self.state.special_one_time_event_list:
+                event_key = self._draw_event_key_from_pool(shrine=True)
+                if event_key is not None:
+                    return event_key
+            return self._draw_event_key_from_pool(shrine=False)
+        event_key = self._draw_event_key_from_pool(shrine=False)
+        if event_key is None:
+            event_key = self._draw_event_key_from_pool(shrine=True)
+        return event_key
 
     def _init_neow(self) -> None:
         self.state.pending_neow_choice = None
@@ -1131,6 +1278,10 @@ class RunEngine:
         if target_node is None:
             return False
 
+        previous_room = self.get_current_room()
+        self.state.previous_room_type_for_event_roll = (
+            previous_room.room_type.value if previous_room is not None else ""
+        )
         self.state.current_node_idx = target_node.node_id
         self.state.floor = target_node.floor
         self.state.path_taken.append(target_node.room_type.value)
@@ -1146,6 +1297,8 @@ class RunEngine:
         return True
 
     def force_enter_node(self, floor: int, x: int, y: int, room_type_str: str, event_id: str | None = None) -> None:
+        from sts_py.engine.run.events import build_event, EVENT_KEY_BY_ID, EVENT_KEY_ALIASES
+
         JAVA_TO_PYTHON_ROOM_TYPE = {
             "MonsterRoom": "M",
             "MonsterRoomElite": "E",
@@ -1163,6 +1316,10 @@ class RunEngine:
             self.state.floor = floor
             self._reseed_rng_for_floor(floor)
 
+        previous_room = self.get_current_room()
+        self.state.previous_room_type_for_event_roll = (
+            previous_room.room_type.value if previous_room is not None else ""
+        )
         self.state.current_node_idx = -1
         self.state.path_taken.append(py_room_type)
         self.state.path_trace.append({
@@ -1173,7 +1330,18 @@ class RunEngine:
         })
 
         if room_type_str == "EventRoom":
-            self.state.phase = RunPhase.EVENT
+            if event_id:
+                canonical_key = EVENT_KEY_BY_ID.get(event_id) or EVENT_KEY_ALIASES.get(event_id)
+                if canonical_key:
+                    self._set_current_event(build_event(canonical_key, getattr(getattr(self.state, "rng", None), "event_rng", None)))
+                    if canonical_key in self.state.event_list:
+                        self.state.event_list.remove(canonical_key)
+                    if canonical_key in self.state.shrine_list:
+                        self.state.shrine_list.remove(canonical_key)
+                    if canonical_key in self.state.special_one_time_event_list:
+                        self.state.special_one_time_event_list.remove(canonical_key)
+                    return
+            self._enter_event()
         else:
             dummy_node = MapNode(floor=floor, room_type=RoomType(py_room_type), x=x, y=y)
             self._enter_room(dummy_node)
@@ -1236,74 +1404,64 @@ class RunEngine:
             self._enter_treasure()
 
     def _enter_question_room(self, floor: int) -> None:
-        """Handle question room encounter resolution.
-
-        Wiki rules:
-        - Monster: 10% base, +10% each time no monster encountered
-        - Treasure: 2% base, +2% each time no treasure encountered
-        - Shop: 3% base, +3% each time no shop encountered
-
-        Three types are EQUAL and checked independently.
-        Each type only resets its own probability when encountered.
-        When an encounter type is NOT found, its chance increases by base increment.
-
-        Example: after 4 ? rooms without shop, shop chance = 3% + 4*3% = 15%
-        If a shop is found, only shop chance resets to 3%, others keep increasing.
-
-        Relics:
-        - Tiny Chest: Every 4th ? room is guaranteed treasure (resets treasure chance)
-        - Juzu Bracelet: Regular monster combats cannot occur in ? rooms
-        """
+        """Resolve question rooms using Java EventHelper.roll semantics."""
         self.state.question_room_count += 1
-        relics = self.state.relics
-        has_tiny_chest = "TinyChest" in relics
-        has_juzu_bracelet = "佛珠手链" in relics
 
-        if has_tiny_chest and self.state.question_room_count % 4 == 0:
-            self.state.question_room_last_encounter = "treasure"
-            self.state.question_room_treasure_chance = 0.02
-            self._enter_treasure()
-            return
+        force_treasure = False
+        if self._has_relic("TinyChest"):
+            tiny_chest_counter = int(self.state.relic_counters.get("TinyChest", 0) or 0) + 1
+            if tiny_chest_counter >= 4:
+                tiny_chest_counter = 0
+                force_treasure = True
+            self.state.relic_counters["TinyChest"] = tiny_chest_counter
 
-        monster_chance = self.state.question_room_monster_chance
-        if has_juzu_bracelet:
-            monster_chance = 0.0
+        roll_value = self.state.rng.event_rng.random_float() if self.state.rng is not None else 0.5
+        monster_size = int(self.state.question_room_monster_chance * 100.0)
+        shop_size = int(self.state.question_room_shop_chance * 100.0)
+        treasure_size = int(self.state.question_room_treasure_chance * 100.0)
+        if self.state.previous_room_type_for_event_roll == RoomType.SHOP.value:
+            shop_size = 0
 
-        monster_hit = self.ai_rng.random_boolean_chance(monster_chance)
-        treasure_hit = self.ai_rng.random_boolean_chance(self.state.question_room_treasure_chance)
-        shop_hit = self.ai_rng.random_boolean_chance(self.state.question_room_shop_chance)
+        possible_results = ["EVENT"] * 100
+        fill_index = 0
+        for idx in range(fill_index, min(100, fill_index + monster_size)):
+            possible_results[idx] = "MONSTER"
+        fill_index += monster_size
+        for idx in range(fill_index, min(100, fill_index + shop_size)):
+            possible_results[idx] = "SHOP"
+        fill_index += shop_size
+        for idx in range(fill_index, min(100, fill_index + treasure_size)):
+            possible_results[idx] = "TREASURE"
 
-        if not monster_hit:
-            self.state.question_room_monster_chance = min(1.0, self.state.question_room_monster_chance + 0.10)
+        choice = possible_results[min(99, int(roll_value * 100.0))]
+        if force_treasure:
+            choice = "TREASURE"
+
+        if choice == "ELITE":
+            self.state.question_room_elite_chance = 0.0
         else:
+            self.state.question_room_elite_chance += 0.1
+
+        if choice == "MONSTER":
+            if self._has_relic("JuzuBracelet"):
+                choice = "EVENT"
             self.state.question_room_monster_chance = 0.10
-
-        if not treasure_hit:
-            self.state.question_room_treasure_chance = min(1.0, self.state.question_room_treasure_chance + 0.02)
         else:
-            self.state.question_room_treasure_chance = 0.02
+            self.state.question_room_monster_chance += 0.10
 
-        if not shop_hit:
-            self.state.question_room_shop_chance = min(1.0, self.state.question_room_shop_chance + 0.03)
-        else:
-            self.state.question_room_shop_chance = 0.03
+        self.state.question_room_shop_chance = 0.03 if choice == "SHOP" else self.state.question_room_shop_chance + 0.03
+        self.state.question_room_treasure_chance = 0.02 if choice == "TREASURE" else self.state.question_room_treasure_chance + 0.02
+        self.state.question_room_last_encounter = choice.lower()
 
-        if monster_hit:
-            self.state.question_room_last_encounter = "monster"
+        if choice == "MONSTER":
             self._start_combat(self._get_encounter_for_floor(floor))
             return
-
-        if treasure_hit:
-            self.state.question_room_last_encounter = "treasure"
+        if choice == "TREASURE":
             self._enter_treasure()
             return
-
-        if shop_hit:
-            self.state.question_room_last_encounter = "shop"
+        if choice == "SHOP":
             self._enter_shop()
             return
-
-        self.state.question_room_last_encounter = "event"
         self._enter_event()
 
     def _get_encounter_for_floor(self, floor: int) -> str:
@@ -1575,6 +1733,7 @@ class RunEngine:
         self._pending_relic_rewards = []
         self._pending_relic_reward = None
         self._resume_victory_after_reward = False
+        self._clear_current_event()
         self._clear_current_event_combat()
 
     def _queue_pending_relic_reward(self, relic_id: str) -> None:
@@ -2117,6 +2276,8 @@ class RunEngine:
         self._shop_engine = None
         self._current_event = None
         self._clear_pending_campaign_state()
+        self.state.event_list = []
+        self.state.shrine_list = []
 
         self._reseed_rng_for_act(4)
         self._generate_map()
@@ -2147,6 +2308,8 @@ class RunEngine:
         self.state.combat_history = []
         self.state.card_choices = []
         self._clear_pending_campaign_state()
+        self._initialize_event_pools_for_act()
+        self._reset_question_room_probabilities()
 
         self._reseed_rng_for_act(self.state.act)
         self._generate_encounters_for_act()
@@ -2167,6 +2330,8 @@ class RunEngine:
         self._shop_engine = None
         self._current_event = None
         self._clear_pending_campaign_state()
+        self._initialize_event_pools_for_act()
+        self._reset_question_room_probabilities()
 
         self._reseed_rng_for_act(act)
         self._generate_encounters_for_act()
@@ -2183,11 +2348,13 @@ class RunEngine:
     _shop_engine: "ShopEngine | None" = None
 
     def _enter_event(self) -> None:
-        from sts_py.engine.run.events import get_event_for_act
+        from sts_py.engine.run.events import build_event
         if self.state.rng is None:
             return
-        self._current_event = get_event_for_act(self.state.act, self.state.rng.event_rng)
-        self.state.phase = RunPhase.EVENT
+        event_key = self._generate_event_key()
+        if event_key is None:
+            return
+        self._set_current_event(build_event(event_key, self.state.rng.event_rng))
 
     def get_current_event(self) -> "Event | None":
         return self._current_event
@@ -2206,25 +2373,28 @@ class RunEngine:
         if choice is None:
             return {"success": False, "reason": "invalid_choice"}
 
-        if event.id == "Dead Adventurer":
+        event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
+        event_key = str(getattr(event, "event_key", "") or "")
+
+        if event_id in {"DeadAdventurer", "Dead Adventurer"} or event_key == "Dead Adventurer":
             return self._handle_dead_adventurer(choice_index)
-        if event.id == "Golden Shrine":
+        if event_id in {"GoldenIdolEvent", "Golden Shrine"} or event_key == "Golden Idol":
             return self._handle_golden_shrine(choice_index)
-        if event.id == "Golden Shrine Trap":
+        if event_id == "Golden Shrine Trap" or event_key == "Golden Shrine Trap":
             return self._handle_golden_shrine_trap(choice_index)
-        if event.id == "World of Goop":
+        if event_id in {"GoopPuddle", "World of Goop"} or event_key == "World of Goop":
             return self._handle_world_of_goop(choice_index)
-        if event.id == "Wing Statuette":
+        if event_id in {"GoldenWing", "Wing Statuette"} or event_key == "Golden Wing":
             return self._handle_wing_statuette(choice_index)
-        if event.id == "Living Wall":
+        if event_id in {"LivingWall", "Living Wall"} or event_key == "Living Wall":
             return self._handle_living_wall(choice_index)
-        if event.id == "Mushrooms":
+        if event_id == "Mushrooms" or event_key == "Mushrooms":
             return self._handle_mushrooms(choice_index)
-        if event.id == "Scrap Ooze":
+        if event_id in {"ScrapOoze", "Scrap Ooze"} or event_key == "Scrap Ooze":
             return self._handle_scrap_ooze(choice_index)
-        if event.id == "Shining Light":
+        if event_id in {"ShiningLight", "Shining Light"} or event_key == "Shining Light":
             return self._handle_shining_light(choice_index)
-        if event.id == "Face Trader":
+        if event_id in {"FaceTrader", "Face Trader"} or event_key == "FaceTrader":
             return self._handle_face_trader(choice_index)
 
         from sts_py.engine.run.events import EventEffectType
@@ -2269,10 +2439,11 @@ class RunEngine:
         self.state.event_choices.append({
             "floor": self.state.floor,
             "event_id": event.id,
+            "event_key": getattr(event, "event_key", None),
             "choice_index": choice_index,
             "choice_text": choice.description,
         })
-        self._current_event = None
+        self._clear_current_event()
         self.state.phase = RunPhase.MAP
 
         if self.state.player_hp <= 0:
@@ -2340,12 +2511,13 @@ class RunEngine:
         self.state.event_choices.append({
             "floor": self.state.floor,
             "event_id": event.id,
+            "event_key": getattr(event, "event_key", None),
             "choice_index": choice_index,
             "choice_text": choice.description,
             "card_id": card_id,
         })
 
-        self._current_event = None
+        self._clear_current_event()
         self.state.pending_card_choice = None
         self.state.phase = RunPhase.MAP
 
@@ -2533,10 +2705,11 @@ class RunEngine:
             self.state.event_choices.append({
                 "floor": self.state.floor,
                 "event_id": event.id,
+                "event_key": getattr(event, "event_key", None),
                 "choice_index": choice_index,
                 "choice_text": "Leave",
             })
-            self._current_event = None
+            self._clear_current_event()
             self.state.phase = RunPhase.MAP
             return {"success": True, "action": "left"}
 
@@ -2548,10 +2721,11 @@ class RunEngine:
             return {"success": False, "reason": "invalid_choice"}
 
         self._acquire_relic("GoldenIdol", source=RelicSource.EVENT, record_pending=True)
-        self._current_event = self._create_golden_shrine_trap_event()
+        self._set_current_event(self._create_golden_shrine_trap_event())
         self.state.event_choices.append({
             "floor": self.state.floor,
             "event_id": event.id,
+            "event_key": getattr(event, "event_key", None),
             "choice_index": choice_index,
             "choice_text": "Take Golden Idol",
         })
@@ -2564,6 +2738,8 @@ class RunEngine:
             id="Golden Shrine Trap",
             name="Golden Shrine Trap",
             name_cn="金神像陷阱",
+            event_key="Golden Shrine Trap",
+            pool_bucket="special",
             description="A massive boulder rolls toward you!",
             description_cn="一块巨大的圆石向你滚来！",
             choices=[
@@ -2924,6 +3100,8 @@ class RunEngine:
         }
 
     def _update_scrap_ooze_choices(self, event: "Event", so_state: dict) -> None:
+        from sts_py.engine.run.events import EventChoice
+
         attempts = so_state["attempts"]
         new_damage = 3 + attempts
         new_chance = 25 + (10 * attempts)

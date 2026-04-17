@@ -1,11 +1,13 @@
 """Event system for Slay The Spire.
 
-Implements random events that can occur during a run.
-Events are triggered in Event rooms and provide choices with various effects.
+This module contains both the legacy local event tables and the canonical
+Java-aligned event registry used by runtime generation, audit, and harness
+surfaces.
 """
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Callable
@@ -464,6 +466,9 @@ class Event:
     id: str
     name: str
     name_cn: str = ""
+    event_key: str = ""
+    pool_bucket: str = "act_event"
+    gating_flags: list[str] = field(default_factory=list)
     description: str = ""
     description_cn: str = ""
     description_variants: list[str] = field(default_factory=list)
@@ -471,6 +476,10 @@ class Event:
     choices: list[EventChoice] = field(default_factory=list)
     act: int = 1
     min_floor: int = 0
+
+    @property
+    def event_id(self) -> str:
+        return self.id
 
     def get_choice(self, index: int) -> EventChoice | None:
         if 0 <= index < len(self.choices):
@@ -483,6 +492,9 @@ class Event:
             self.description = self.description_variants[idx]
             self.description_cn = self.description_cn_variants[idx]
         return self
+
+    def clone(self) -> "Event":
+        return deepcopy(self)
 
 
 ACT1_EVENTS: dict[str, Event] = {
@@ -1790,20 +1802,478 @@ ALL_STAGE_EVENTS: dict[str, Event] = {
         act=0,
     ),
 }
+ACT1_EVENT_KEYS = [
+    "Big Fish",
+    "The Cleric",
+    "Dead Adventurer",
+    "Golden Idol",
+    "Golden Wing",
+    "World of Goop",
+    "Liars Game",
+    "Living Wall",
+    "Mushrooms",
+    "Scrap Ooze",
+    "Shining Light",
+]
+
+ACT2_EVENT_KEYS = [
+    "Addict",
+    "Back to Basics",
+    "Beggar",
+    "Colosseum",
+    "Cursed Tome",
+    "Drug Dealer",
+    "Forgotten Altar",
+    "Ghosts",
+    "Masked Bandits",
+    "Nest",
+    "The Library",
+    "The Mausoleum",
+    "Vampires",
+]
+
+ACT3_EVENT_KEYS = [
+    "Falling",
+    "MindBloom",
+    "The Moai Head",
+    "Mysterious Sphere",
+    "SensoryStone",
+    "Tomb of Lord Red Mask",
+    "Winding Halls",
+]
+
+SHRINE_EVENT_KEYS = [
+    "Match and Keep!",
+    "Golden Shrine",
+    "Transmorgrifier",
+    "Purifier",
+    "Upgrade Shrine",
+    "Wheel of Change",
+]
+
+SPECIAL_ONE_TIME_EVENT_KEYS = [
+    "Accursed Blacksmith",
+    "Bonfire Elementals",
+    "Designer",
+    "Duplicator",
+    "FaceTrader",
+    "Fountain of Cleansing",
+    "Knowing Skull",
+    "Lab",
+    "N'loth",
+    "NoteForYourself",
+    "SecretPortal",
+    "The Joust",
+    "WeMeetAgain",
+    "The Woman in Blue",
+]
+
+TERMINAL_EVENT_KEYS = ["SpireHeart"]
+
+ACT_EVENT_KEYS_BY_ACT = {
+    1: ACT1_EVENT_KEYS,
+    2: ACT2_EVENT_KEYS,
+    3: ACT3_EVENT_KEYS,
+}
+
+SHRINE_EVENT_KEYS_BY_ACT = {
+    1: SHRINE_EVENT_KEYS,
+    2: SHRINE_EVENT_KEYS,
+    3: SHRINE_EVENT_KEYS,
+}
+
+SHRINE_CHANCE = 0.25
+
+EVENT_KEY_ALIASES: dict[str, str] = {
+    "Golden Shrine Trap": "Golden Idol",
+    "Wing Statuette": "Golden Wing",
+    "Golden Wing": "Golden Wing",
+    "GoopPuddle": "World of Goop",
+    "World of Goop": "World of Goop",
+    "Sssserpent": "Liars Game",
+    "Liars Game": "Liars Game",
+    "Ghost": "Ghosts",
+    "Ghosts": "Ghosts",
+    "The Nest": "Nest",
+    "Nest": "Nest",
+    "The Colosseum": "Colosseum",
+    "Colosseum": "Colosseum",
+    "Winding": "Winding Halls",
+    "Winding Halls": "Winding Halls",
+    "Lady In Blue": "The Woman in Blue",
+    "The Woman in Blue": "The Woman in Blue",
+    "Fountain": "Fountain of Cleansing",
+    "Blacksmith": "Accursed Blacksmith",
+    "Bonfire": "Bonfire Elementals",
+    "Duplicate": "Duplicator",
+    "Gold Shrine": "Golden Shrine",
+    "Purify": "Purifier",
+    "Wheel": "Wheel of Change",
+    "Self Note": "NoteForYourself",
+    "Joust": "The Joust",
+    "Red Mask": "Masked Bandits",
+    "Face Trader": "FaceTrader",
+    "Mind Bloom": "MindBloom",
+    "Secret Portal": "SecretPortal",
+    "Sensory Stone": "SensoryStone",
+    "Moai Head": "The Moai Head",
+    "Corrupt Heart": "SpireHeart",
+}
+
+EVENT_ID_BY_KEY = {
+    "Big Fish": "BigFish",
+    "The Cleric": "Cleric",
+    "Dead Adventurer": "DeadAdventurer",
+    "Golden Idol": "GoldenIdolEvent",
+    "Golden Wing": "GoldenWing",
+    "World of Goop": "GoopPuddle",
+    "Liars Game": "Sssserpent",
+    "Living Wall": "LivingWall",
+    "Mushrooms": "Mushrooms",
+    "Scrap Ooze": "ScrapOoze",
+    "Shining Light": "ShiningLight",
+    "Addict": "Addict",
+    "Back to Basics": "BackToBasics",
+    "Beggar": "Beggar",
+    "Colosseum": "Colosseum",
+    "Cursed Tome": "CursedTome",
+    "Drug Dealer": "DrugDealer",
+    "Forgotten Altar": "ForgottenAltar",
+    "Ghosts": "Ghosts",
+    "Masked Bandits": "MaskedBandits",
+    "Nest": "Nest",
+    "The Library": "TheLibrary",
+    "The Mausoleum": "TheMausoleum",
+    "Vampires": "Vampires",
+    "Falling": "Falling",
+    "MindBloom": "MindBloom",
+    "The Moai Head": "MoaiHead",
+    "Mysterious Sphere": "MysteriousSphere",
+    "SensoryStone": "SensoryStone",
+    "Tomb of Lord Red Mask": "TombRedMask",
+    "Winding Halls": "WindingHalls",
+    "Match and Keep!": "GremlinMatchGame",
+    "Golden Shrine": "GoldShrine",
+    "Transmorgrifier": "Transmogrifier",
+    "Purifier": "PurificationShrine",
+    "Upgrade Shrine": "UpgradeShrine",
+    "Wheel of Change": "GremlinWheelGame",
+    "Accursed Blacksmith": "AccursedBlacksmith",
+    "Bonfire Elementals": "Bonfire",
+    "Designer": "Designer",
+    "Duplicator": "Duplicator",
+    "FaceTrader": "FaceTrader",
+    "Fountain of Cleansing": "FountainOfCurseRemoval",
+    "Knowing Skull": "KnowingSkull",
+    "Lab": "Lab",
+    "N'loth": "Nloth",
+    "NoteForYourself": "NoteForYourself",
+    "SecretPortal": "SecretPortal",
+    "The Joust": "TheJoust",
+    "WeMeetAgain": "WeMeetAgain",
+    "The Woman in Blue": "WomanInBlue",
+    "SpireHeart": "SpireHeart",
+}
+
+EVENT_POOL_BUCKET_BY_KEY = {
+    **{key: "act_event" for key in ACT1_EVENT_KEYS + ACT2_EVENT_KEYS + ACT3_EVENT_KEYS},
+    **{key: "shrine" for key in SHRINE_EVENT_KEYS},
+    **{key: "special_one_time" for key in SPECIAL_ONE_TIME_EVENT_KEYS},
+    **{key: "terminal" for key in TERMINAL_EVENT_KEYS},
+}
+
+EVENT_GATING_FLAGS_BY_KEY = {
+    "Dead Adventurer": ["floor_gt_6"],
+    "Mushrooms": ["floor_gt_6"],
+    "The Cleric": ["gold_gte_35"],
+    "Beggar": ["gold_gte_75"],
+    "Colosseum": ["map_depth_gt_half"],
+    "The Moai Head": ["golden_idol_or_half_hp"],
+    "Fountain of Cleansing": ["player_is_cursed"],
+    "Designer": ["act_2_or_3", "gold_gte_75"],
+    "Duplicator": ["act_2_or_3"],
+    "FaceTrader": ["act_1_or_2"],
+    "Knowing Skull": ["act_2", "hp_gt_12"],
+    "N'loth": ["act_2", "relic_count_gte_2"],
+    "The Joust": ["act_2", "gold_gte_50"],
+    "The Woman in Blue": ["gold_gte_50"],
+    "SecretPortal": ["act_3", "playtime_seconds_gte_800"],
+    "NoteForYourself": ["ascension_lt_15"],
+}
+
+_LEGACY_EVENT_SOURCE_MAP: dict[str, tuple[dict[str, Event], str]] = {
+    "Big Fish": (ACT1_EVENTS, "Big Fish"),
+    "The Cleric": (ACT1_EVENTS, "The Cleric"),
+    "Dead Adventurer": (ACT1_EVENTS, "Dead Adventurer"),
+    "Golden Idol": (ACT1_EVENTS, "Golden Shrine"),
+    "Golden Wing": (ACT1_EVENTS, "Wing Statuette"),
+    "World of Goop": (ACT1_EVENTS, "World of Goop"),
+    "Liars Game": (ACT1_EVENTS, "Liars Game"),
+    "Living Wall": (ACT1_EVENTS, "Living Wall"),
+    "Mushrooms": (ACT1_EVENTS, "Mushrooms"),
+    "Scrap Ooze": (ACT1_EVENTS, "Scrap Ooze"),
+    "Shining Light": (ACT1_EVENTS, "Shining Light"),
+    "Addict": (ACT2_EVENTS, "Addict"),
+    "Back to Basics": (ACT2_EVENTS, "Ancient Writing"),
+    "Beggar": (ACT2_EVENTS, "Beggar"),
+    "Colosseum": (ACT2_EVENTS, "The Colosseum"),
+    "Cursed Tome": (ACT2_EVENTS, "Cursed Tome"),
+    "Drug Dealer": (ACT2_EVENTS, "Addict"),
+    "Forgotten Altar": (ACT2_EVENTS, "Forgotten Altar"),
+    "Ghosts": (ACT2_EVENTS, "Ghost"),
+    "Masked Bandits": (ACT2_EVENTS, "Red Mask"),
+    "Nest": (ACT2_EVENTS, "The Nest"),
+    "The Library": (ACT2_EVENTS, "The Library"),
+    "The Mausoleum": (ACT2_EVENTS, "The Mausoleum"),
+    "Vampires": (ACT2_EVENTS, "Vampires"),
+    "Falling": (ACT3_EVENTS, "Falling"),
+    "MindBloom": (ACT3_EVENTS, "Mind Bloom"),
+    "The Moai Head": (ACT3_EVENTS, "Moai Head"),
+    "Mysterious Sphere": (ACT3_EVENTS, "Mysterious Sphere"),
+    "SensoryStone": (ACT3_EVENTS, "Sensory Stone"),
+    "Tomb of Lord Red Mask": (ACT3_EVENTS, "Tomb of Lord Red Mask"),
+    "Winding Halls": (ACT3_EVENTS, "Winding"),
+    "Match and Keep!": (ALL_STAGE_EVENTS, "Match and Keep"),
+    "Golden Shrine": (ALL_STAGE_EVENTS, "Gold Shrine"),
+    "Transmorgrifier": (ALL_STAGE_EVENTS, "Transmogrifier"),
+    "Purifier": (ALL_STAGE_EVENTS, "Purify"),
+    "Upgrade Shrine": (ALL_STAGE_EVENTS, "Upgrade Shrine"),
+    "Wheel of Change": (ALL_STAGE_EVENTS, "Wheel"),
+    "Accursed Blacksmith": (ALL_STAGE_EVENTS, "Blacksmith"),
+    "Bonfire Elementals": (ALL_STAGE_EVENTS, "Bonfire"),
+    "Designer": (ALL_STAGE_EVENTS, "Designer"),
+    "Duplicator": (ALL_STAGE_EVENTS, "Duplicate"),
+    "FaceTrader": (ACT2_EVENTS, "Face Trader"),
+    "Fountain of Cleansing": (ALL_STAGE_EVENTS, "Fountain"),
+    "Knowing Skull": (ACT2_EVENTS, "Knowing Skull"),
+    "Lab": (ALL_STAGE_EVENTS, "Lab"),
+    "N'loth": (ACT2_EVENTS, "N'loth"),
+    "NoteForYourself": (ALL_STAGE_EVENTS, "Self Note"),
+    "SecretPortal": (ACT3_EVENTS, "Secret Portal"),
+    "The Joust": (ACT2_EVENTS, "Joust"),
+    "WeMeetAgain": (ALL_STAGE_EVENTS, "WeMeetAgain"),
+    "The Woman in Blue": (ALL_STAGE_EVENTS, "Lady In Blue"),
+    "SpireHeart": (ACT3_EVENTS, "Corrupt Heart"),
+}
+
+
+def _resolve_event_key(identifier: str) -> str | None:
+    if identifier in EVENT_ID_BY_KEY:
+        return identifier
+    if identifier in EVENT_KEY_ALIASES:
+        return EVENT_KEY_ALIASES[identifier]
+    for key, event_id in EVENT_ID_BY_KEY.items():
+        if event_id == identifier:
+            return key
+    return None
+
+
+def _canonicalize_event_template(event_key: str) -> Event:
+    source = _LEGACY_EVENT_SOURCE_MAP.get(event_key)
+    if source is None:
+        raise KeyError(f"Unknown event key: {event_key}")
+    source_bucket, source_key = source
+    event = source_bucket[source_key].clone()
+    event.event_key = event_key
+    event.id = EVENT_ID_BY_KEY[event_key]
+    event.pool_bucket = EVENT_POOL_BUCKET_BY_KEY[event_key]
+    event.gating_flags = list(EVENT_GATING_FLAGS_BY_KEY.get(event_key, []))
+    return event
+
+
+def _set_choice_text(event: Event, descriptions: list[str]) -> None:
+    for idx, label in enumerate(descriptions):
+        if idx >= len(event.choices):
+            break
+        event.choices[idx].description = label
+        event.choices[idx].description_cn = ""
+
+
+def _apply_event_truth_overrides(event: Event) -> None:
+    event.description_cn = ""
+    for choice in event.choices:
+        choice.description_cn = ""
+
+    if event.event_key == "Back to Basics":
+        event.name = "Back to Basics"
+        event.description = "Inside the ancient ruins, two paths present themselves: embrace elegance and remove a card, or choose simplicity and upgrade all your starter Strikes and Defends."
+        event.choices = [
+            EventChoice(description="[Elegance] Remove a card from your deck."),
+            EventChoice(description="[Simplicity] Upgrade all starter Strikes and Defends."),
+        ]
+    elif event.event_key == "Drug Dealer":
+        event.name = "Drug Dealer"
+        event.description = "A hooded dealer lays out three offers: a dose of J.A.X., a risky two-card experiment, or a mutagenic injection."
+        event.choices = [
+            EventChoice(description="[J.A.X.] Obtain J.A.X."),
+            EventChoice(description="[Experiment] Transform 2 cards."),
+            EventChoice(description="[Inject Mutagens] Obtain Mutagenic Strength."),
+        ]
+    elif event.event_key == "Ghosts":
+        event.name = "Ghosts"
+        event.description = "A chorus of whispering spirits offers ethereal power in exchange for part of your life."
+        _set_choice_text(event, [
+            "[Accept] Lose 50% Max HP. Obtain Apparitions.",
+            "[Leave] Walk away.",
+        ])
+    elif event.event_key == "Masked Bandits":
+        event.name = "Masked Bandits"
+        event.description = "Masked bandits step from the shadows and demand your gold. You can pay up, or refuse and fight."
+        event.choices = [
+            EventChoice(description="[Pay] Lose all your gold.", effects=[EventEffect(EventEffectType.LOSE_GOLD, amount=9999)]),
+            EventChoice(description="[Fight] Refuse and battle the bandits.", trigger_combat=True, combat_enemies=["Pointy", "Romeo", "Bear"]),
+        ]
+    elif event.event_key == "Nest":
+        event.name = "Nest"
+        event.description = "You discover a nest of stolen treasures and a choice between shiny coins and a strange ritual dagger."
+    elif event.event_key == "Colosseum":
+        event.name = "Colosseum"
+        event.description = "The arena crowd spots you. First comes the spectacle, and if you crave more, a second brutal match awaits."
+        event.choices = [EventChoice(description="[Continue] Step into the arena.")]
+    elif event.event_key == "The Library":
+        event.description = "You uncover a quiet library. You may rest among the books, or study and claim one of the offered cards."
+        event.choices = [
+            EventChoice(description="[Read] Choose a card to add to your deck."),
+            EventChoice(description="[Sleep] Heal 33% of max HP."),
+        ]
+    elif event.event_key == "Forgotten Altar":
+        event.description = "A forgotten altar looms in the dark. Its offerings change depending on whether you still carry the Golden Idol."
+    elif event.event_key == "Knowing Skull":
+        event.description = "The skull offers repeated bargains: potion, gold, or a colorless card. Each answer costs life."
+        event.choices = [EventChoice(description="[Approach] Hear the skull's offers.")]
+    elif event.event_key == "MindBloom":
+        event.name = "Mind Bloom"
+        event.description = "A strange bloom offers three impossible answers: fight an old boss, take immense gold with a curse, or bless your whole deck with the Mark of the Bloom."
+        event.choices = [
+            EventChoice(description="[I am War] Fight an Act 1 boss. Gain a rare relic and gold."),
+            EventChoice(description="[I am Awake] Upgrade all cards. Obtain Mark of the Bloom."),
+            EventChoice(description="[I am Rich / Healthy] Gain the floor-based reward and its curse."),
+        ]
+    elif event.event_key == "SecretPortal":
+        event.name = "Secret Portal"
+        event.description = "A hidden portal tears open in the Beyond, offering a shortcut to the final stretch."
+        event.choices = [
+            EventChoice(description="[Enter] Skip ahead to Act 3 floor 50."),
+            EventChoice(description="[Ignore] Leave."),
+        ]
+    elif event.event_key == "SensoryStone":
+        event.name = "Sensory Stone"
+        event.description = "A sensory stone floods your mind with memories. Endure them to claim a set of colorless cards."
+    elif event.event_key == "Falling":
+        event.description = "As you fall through darkness, you must let go of an Attack, Skill, or Power to survive."
+    elif event.event_key == "The Moai Head":
+        event.name = "Moai Head"
+        event.description = "An immense stone head offers devotion or sacrifice. The Golden Idol unlocks its richer bargain."
+    elif event.event_key == "Mysterious Sphere":
+        event.description = "A crackling sphere hovers in your path. You can walk away or disturb it and fight for a rare reward."
+        event.choices = [
+            EventChoice(description="[Open] Fight 2 Orb Walkers. Obtain a rare relic.", trigger_combat=True, combat_enemies=["OrbWalker", "OrbWalker"]),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "Tomb of Lord Red Mask":
+        event.description = "The tomb of the Red Mask offers gold, but the mask itself may react if you already possess it."
+    elif event.event_key == "Winding Halls":
+        event.name = "Winding Halls"
+        event.description = "The halls twist your thoughts. Endure the maze, embrace madness for power, or turn back."
+    elif event.event_key == "Accursed Blacksmith":
+        event.description = "A demonic smith offers to upgrade a card, but there is a chance of taking a curse."
+    elif event.event_key == "Bonfire Elementals":
+        event.description = "A bonfire crackles with hungry elementals. Feed it a card to receive a powerful blessing."
+    elif event.event_key == "Designer":
+        event.description = "A bizarre designer offers cleanup, adjustments, or the full service for gold."
+    elif event.event_key == "Duplicator":
+        event.description = "A shrine invites you to duplicate one card in your deck."
+        event.choices = [
+            EventChoice(description="[Pray] Duplicate a card in your deck."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "FaceTrader":
+        event.name = "Face Trader"
+        event.description = "A gaunt man offers to touch your face or trade for one of his masks."
+    elif event.event_key == "Fountain of Cleansing":
+        event.description = "A cleansing fountain can purge curses from your deck."
+        event.choices = [
+            EventChoice(description="[Drink] Remove all curses from your deck."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "Golden Shrine":
+        event.description = "A radiant shrine glitters with coins. It promises wealth, but greed may spring a trap."
+    elif event.event_key == "Match and Keep!":
+        event.description = "A Gremlin invites you to play a memory game for cards."
+        event.choices = [EventChoice(description="[Play] Begin the match game.")]
+    elif event.event_key == "Lab":
+        event.description = "A hidden lab offers free potions to the bold."
+        event.choices = [
+            EventChoice(description="[Search] Obtain 3 random potions."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "N'loth":
+        event.description = "N'loth offers his gift in exchange for one of two relics."
+    elif event.event_key == "NoteForYourself":
+        event.description = "A note from another run offers a stored card if you are willing to trade one away."
+    elif event.event_key == "Purifier":
+        event.description = "A purifying shrine offers to remove a card from your deck."
+        event.choices = [
+            EventChoice(description="[Pray] Remove a card from your deck."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "Transmorgrifier":
+        event.description = "A mutating shrine offers to transform a card from your deck."
+        event.choices = [
+            EventChoice(description="[Pray] Transform a card in your deck."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "Upgrade Shrine":
+        event.description = "An ancient shrine offers to upgrade a card in your deck."
+        event.choices = [
+            EventChoice(description="[Pray] Upgrade a card in your deck."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "WeMeetAgain":
+        event.description = "A familiar figure asks for one of three things: a potion, gold, or a card. Pay the requested price for a relic."
+    elif event.event_key == "The Woman in Blue":
+        event.description = "The woman in blue sells potions for 20, 30, or 40 gold, or sends you away empty-handed."
+        event.choices = [
+            EventChoice(description="[Buy 1] Lose 20 gold. Obtain 1 potion."),
+            EventChoice(description="[Buy 2] Lose 30 gold. Obtain 2 potions."),
+            EventChoice(description="[Buy 3] Lose 40 gold. Obtain 3 potions."),
+            EventChoice(description="[Leave] Leave."),
+        ]
+    elif event.event_key == "Wheel of Change":
+        event.description = "A giant wheel offers fortune and misfortune in equal measure."
+        event.choices = [EventChoice(description="[Spin] Spin the wheel.")]
+    elif event.event_key == "The Joust":
+        event.description = "A betting table offers odds on the murder of a peasant or the fall of a beast."
+    elif event.event_key == "SpireHeart":
+        event.name = "Spire Heart"
+        event.description = "The Spire Heart pulses before you as the run reaches its final threshold."
+        event.choices = [EventChoice(description="[Continue] Face the Heart.")]
+
+
+def build_event(event_key: str, event_rng: Any | None = None) -> Event:
+    canonical_key = _resolve_event_key(event_key)
+    if canonical_key is None:
+        raise KeyError(f"Unknown event identifier: {event_key}")
+    event = _canonicalize_event_template(canonical_key)
+    _apply_event_truth_overrides(event)
+    if event_rng is not None:
+        event.select_variant(event_rng)
+    return event
+
+
+EVENTS_BY_KEY: dict[str, Event] = {
+    key: build_event(key)
+    for key in ACT1_EVENT_KEYS + ACT2_EVENT_KEYS + ACT3_EVENT_KEYS + SHRINE_EVENT_KEYS + SPECIAL_ONE_TIME_EVENT_KEYS + TERMINAL_EVENT_KEYS
+}
+
+SHRINE_EVENTS: dict[str, Event] = {key: EVENTS_BY_KEY[key] for key in SHRINE_EVENT_KEYS}
+SPECIAL_ONE_TIME_EVENTS: dict[str, Event] = {key: EVENTS_BY_KEY[key] for key in SPECIAL_ONE_TIME_EVENT_KEYS}
+EVENT_KEY_BY_ID: dict[str, str] = {event.event_id: key for key, event in EVENTS_BY_KEY.items()}
 
 
 def get_event_for_act(act: int, event_rng: Any) -> Event:
-    from dataclasses import replace
-    if act == 1:
-        events = ACT1_EVENTS
-    elif act == 2:
-        events = ACT2_EVENTS
-    elif act == 3:
-        events = ACT3_EVENTS
-    else:
-        events = ALL_STAGE_EVENTS
-    event_ids = list(events.keys())
-    if not event_ids:
-        return replace(ACT1_EVENTS["Big Fish"]).select_variant(event_rng)
-    idx = event_rng.random_int(len(event_ids) - 1)
-    return events[event_ids[idx]].select_variant(event_rng)
+    event_keys = list(ACT_EVENT_KEYS_BY_ACT.get(act, ACT1_EVENT_KEYS))
+    if not event_keys:
+        return build_event("Big Fish", event_rng)
+    idx = event_rng.random_int(len(event_keys) - 1) if event_rng is not None else 0
+    return build_event(event_keys[idx], event_rng)

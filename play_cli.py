@@ -575,9 +575,13 @@ def handle_event(engine: RunEngine) -> None:
         result = engine.choose_event_option(choice_idx)
         if result.get("requires_card_choice"):
             handle_card_selection(engine)
+            if engine.state.phase == RunPhase.EVENT:
+                continue
             return
-        if result.get("success", True) or engine.state.phase != RunPhase.EVENT:
+        if engine.state.phase != RunPhase.EVENT:
             return
+        if result.get("success", True):
+            continue
         _pause_for_feedback(_format_failure("选择失败", result.get("reason")))
 
 

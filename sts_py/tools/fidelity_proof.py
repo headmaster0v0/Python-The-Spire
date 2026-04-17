@@ -313,6 +313,8 @@ EVENT_CARD_SIGNATURES = {
     "event:choose_card_to_remove",
     "event:gain_card",
     "event:remove_card",
+    "event:transform_random_card",
+    "event:upgrade_card",
     "event_gating:requires_card_removal",
     "event_gating:requires_card_transform",
     "event_gating:requires_card_upgrade",
