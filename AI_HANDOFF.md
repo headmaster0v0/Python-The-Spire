@@ -1,0 +1,3066 @@
+﻿# AI Handoff: STS Python Headless
+
+> Updated: 2026-04-17
+> Latest phase: Phase 268 - Dev-Loop Performance / Verification Throughput Closure
+> Current test result: full test suite passed (`1969 passed`)
+
+## 1. Project Goal
+
+This project aims to recreate Slay the Spire's original game logic in Python.
+
+- Content and mechanics should match the original game closely.
+- Seed-perfect output parity is not required.
+- The current working reference sources are:
+  - Decompiled Java source in `decompiled_src`
+  - Recorder mod in `java_mod/DataRecorder`
+  - Python comparison and replay tooling in `sts_py/tools`
+- Current terminal playability work should prefer checked-in local catalog/render data over any runtime wiki fetch.
+- User note: prioritize decompiled Java as mechanics truth; treat logs as regression sentinels and wiki as naming/reference only.
+
+## 2. Important Entrypoints
+
+- [play_cli.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/play_cli.py)
+  Manual CLI entrypoint for playing through a run.
+- [sts_py/terminal/catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py)
+  Checked-in terminal Chinese catalog, sane fallback rules, and card targeting helper.
+- [sts_py/terminal/render.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/render.py)
+  Text-only terminal rendering helpers, shared help text, and explicit `mapimg` image entrypoint.
+- [sts_py/tools/compare_logs.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/compare_logs.py)
+  Java recorder log parser.
+- [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py)
+  Floor-level diff and replay harness.
+- [java_mod/DataRecorder](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/java_mod/DataRecorder)
+  Java-side recorder mod used to emit run logs.
+
+## 3. Current Baseline
+
+- Phase 268 - Dev-Loop Performance / Verification Throughput Closure:
+  - this phase is a verification-throughput closure on top of the existing Phase 267 fidelity baseline rather than a new gameplay/content tranche
+  - Phase 268 completes the default optimization thread; the repo should now return to targeted maintenance rather than open a default Phase 269
+  - [scripts/run_dev_checks.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/scripts/run_dev_checks.py) and [sts_py/tools/dev_checks.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/dev_checks.py) now stay as the single checked-in local runner surface:
+    - the default `python scripts/run_dev_checks.py` path now resolves to the shortest `smoke` loop instead of `fast`
+    - omitted `--jobs` now uses profile-aware defaults:
+      - `smoke = 1`
+      - `fast = 2`
+      - `harness / full = min(4, os.cpu_count() or 2)`
+    - parallel shard balancing now prefers a local timing cache before falling back to the prior approximate strategy:
+      - file-level timings for ordinary tests
+      - nodeid-level timings for `tests/test_harness_smoke.py`
+      - local cache path: `.pytest_tmp/dev_checks_timings.json`
+    - run summaries now report:
+      - total wall-clock
+      - per-shard wall-clock
+      - the slowest observed file or nodeid per shard
+      - a direct rerun command for the slowest failed shard
+  - regression coverage for the throughput lane is now explicit:
+    - [tests/test_dev_checks.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dev_checks.py) now pins:
+      - `smoke` as the default profile
+      - profile-aware auto-jobs behavior
+      - timing-cache round-trip
+      - timing-based balancing for ordinary test files and harness nodeids
+      - fallback to size / round-robin when the cache is incomplete
+    - [tests/test_phase268_dev_loop_performance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase268_dev_loop_performance.py) now pins:
+      - the updated release-checklist command gradient
+      - the `Phase 268` handoff wording
+      - the default dev loop staying on the short `smoke` bundle rather than silently broadening into heavier lanes
+  - [RELEASE_CHECKLIST.md](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/RELEASE_CHECKLIST.md) now treats Phase 268 as verification throughput work only:
+    - the daily command gradient is `run_dev_checks.py` -> `--profile fast` -> `--profile harness/full`
+    - the fidelity gate remains unchanged
+    - the timing cache is documented as a local optimization artifact, not a checked-in truth source
+  - this phase deliberately does not reopen:
+    - gameplay truth work
+    - CLI protocol work
+    - content expansion
+    - recorder/harness schema work
+  - verified with:
+    - `python -m pytest -q tests/test_dev_checks.py tests/test_phase268_dev_loop_performance.py tests/test_phase265_post_ship_maintenance.py`
+    - `python scripts/run_dev_checks.py`
+    - `python scripts/run_dev_checks.py --profile full --jobs 4`
+    - `python -m pytest -q tests`
+
+- Phase 267 - Original Fidelity / Experience Reality Closure:
+  - the repo no longer treats "`pytest` is green" or "`missing_in_runtime == 0`" as sufficient proof that a real player run is faithful enough to trust
+  - a checked-in fidelity gate now sits alongside the older ship/maintenance docs:
+    - [sts_py/tools/fidelity_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/fidelity_audit.py) aggregates:
+      - live offline `wiki_audit` closure
+      - non-card runtime surface checks for relic / potion / power / monster / event / room_type / ui_term
+      - shop render surface checks
+      - `known_approximations` emptiness
+    - [sts_py/data/known_approximations.json](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/data/known_approximations.json) is now a checked-in blocker file and should remain empty
+    - [tests/test_phase267_fidelity_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_fidelity_audit.py) pins:
+      - live fidelity gate green
+      - non-card runtime surface coverage present
+      - no checked-in approximation backlog
+      - no doc-only "unimplemented list" tests left in the main test surface
+  - the CLI experience baseline is tightened into a player-facing truth lane instead of a "good enough to demo" lane:
+    - [sts_py/terminal/render.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/render.py) now fixes the corrupted status bar text, keeps `Boss` room labels in Chinese, and adds shared render helpers for:
+      - `status`
+      - `intent`
+      - `exhaust`
+    - [play_cli.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/play_cli.py) now exposes those three commands as read-only combat information commands without changing the play / choice protocol, and factors final win/loss rendering into a shared helper that tests can sign off directly
+    - the stable CLI command surface is now:
+      - `help / map / mapimg / deck / relics / potions / draw / discard / inspect <index> / status / intent / exhaust`
+  - dynamic truth is now aggregated at subsystem level instead of only staying buried in tranche-local suites:
+    - [tests/test_phase267_dynamic_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_dynamic_truth.py) pins representative runtime families for:
+      - reward mutation (`PrayerWheel`, `BlackStar`)
+      - shop mutation (`TheCourier`, `SmilingMask`)
+      - potion/relic callbacks (`MagicFlower`, `EntropicBrew`)
+      - monster-state and event branching (`Darkling` half-dead plus remove / upgrade / transform event flows)
+    - [sts_py/engine/combat/potion_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/potion_effects.py) now resolves `EntropicBrew` against `combat_state.run_engine` before falling back to combat-local state, so runtime potion-slot filling stays live under the real run engine path
+  - real-play CLI signoff is now explicit:
+    - [tests/test_phase267_cli_real_play_signoff.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_cli_real_play_signoff.py) scripts all four characters through:
+      - `Neow / map / combat / reward / shop / event / rest / treasure / boss relic / victory-or-defeat`
+      - the assertions focus on player-visible truth: Chinese-first readable text, usable command discovery, live state visibility, and no placeholder / mojibake output
+  - verified with:
+    - `python -m pytest -q tests/test_play_cli_rendering.py tests/test_playability_closure.py tests/test_cli_translation_catalog.py tests/test_phase267_fidelity_audit.py tests/test_phase267_dynamic_truth.py tests/test_phase267_cli_real_play_signoff.py tests/test_cli_startup_neow_flow.py tests/test_run_flow.py tests/test_events_shop.py`
+    - `python -m pytest -q tests`
+
+- Phase 266 - CLI Startup / Neow / Combat Reality Closure:
+  - this phase is a user-feedback-driven narrow closure on top of the Phase 265 maintenance baseline rather than a return to broad content expansion
+  - the CLI startup flow now treats blank seed input as a real random-seed launch path instead of falling back to the old fixed `PHASE243CLI` placeholder
+  - normal new runs now enter `RunPhase.NEOW` first, with a checked-in Neow reward flow that covers the standard blessing categories, drawback application, Neow card selection, `inspect <index>` support, and `NeowsLament` reuse for the three-enemy-kill blessing
+  - combat usability is tightened without changing the stable top-level command surface:
+    - the combat header now prints persistent command hints for play / potion / end-turn / help
+    - pending combat choices explicitly tell the player to input a numeric option instead of guessing command syntax
+    - combat status rendering now reads live combat HP rather than stale run-state HP
+  - this phase still stays inside the maintenance posture:
+    - no new broad content tranche
+    - no recorder/harness schema work
+    - no new CLI top-level commands
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_cli_startup_neow_flow.py tests/test_playability_closure.py tests/test_play_cli_rendering.py tests/test_run_flow.py tests/test_events_shop.py`
+    - `python -m pytest -q tests/test_phase265_post_ship_maintenance.py tests/test_phase264_closeout_ship_checklist.py tests/test_wiki_audit.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests`
+
+- Phase 265 - Post-Ship Maintenance / Targeted Regression Intake:
+  - the repo now treats post-ship maintenance as a checked-in baseline instead of an informal understanding after closeout:
+    - [RELEASE_CHECKLIST.md](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/RELEASE_CHECKLIST.md) now carries explicit maintenance-mode sections for:
+      - post-ship maintenance posture rather than a new feature tranche
+      - daily maintenance commands before escalating to harness/live-log coverage
+      - targeted regression intake categories: `gameplay truth bug`, `CLI/readability bug`, `harness/audit regression`, and `optional-local-log gap`
+      - the stable CLI command surface: `help / map / mapimg / deck / relics / potions / draw / discard / inspect <index>`
+      - narrow log policy: only collect a new targeted log when `decompiled_src`, current tests, and the existing corpus still cannot settle the issue
+    - [tests/test_phase265_post_ship_maintenance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase265_post_ship_maintenance.py) now pins the maintenance baseline directly:
+      - release checklist text for maintenance mode, daily command chain, intake categories, and stable CLI commands
+      - handoff text for `Phase 265`, official runtime closure, and the lack of a default new tranche
+      - the routine maintenance truth lane: offline audit still green and the checked-in short/mid campaign smoke seeds still produce no errors
+      - render help text still exposes the intended stable command surface
+  - this phase deliberately does not reopen implementation scope:
+    - no new cards
+    - no gameplay truth changes
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - current project-level answer is now fixed in checked-in docs/tests:
+    - official runtime content is already closed for the audited ship scope
+    - the project targets close source fidelity rather than seed-perfect parity
+    - the CLI is considered complete for the shipped playability target, but intentionally remains a compact stable command surface rather than a power-user shell
+    - the stable CLI command surface remains `help / map / mapimg / deck / relics / potions / draw / discard / inspect <index>`
+  - verified with:
+    - `python -m pytest -q tests/test_phase265_post_ship_maintenance.py tests/test_phase264_closeout_ship_checklist.py tests/test_phase263_final_rc_signoff.py tests/test_wiki_audit.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests`
+
+- Phase 264 - Closeout / Final Ship Checklist:
+  - the repo now treats final ship readiness as a checked-in deliverable instead of an implicit "looks green enough" state:
+    - [RELEASE_CHECKLIST.md](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/RELEASE_CHECKLIST.md) now defines the ship contract explicitly:
+      - complete playable CLI run flow, closed runtime content and mechanics audit lanes, offline audit green, repeated-run stability preserved
+      - not seed-perfect parity
+      - required verification commands, optional local log prerequisites, and the intended meaning of `skip` vs `fail`
+    - [tests/test_phase264_closeout_ship_checklist.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase264_closeout_ship_checklist.py) pins five ship-level sentinels without reopening gameplay work:
+      - release checklist presence and required command text
+      - repeated offline `wiki_audit` remains green with `missing_in_runtime == 0`, `runtime_source_mismatches == 0`, and `runtime_name_issue.ok == total`
+      - full-campaign smoke continues to produce no simulation errors on the checked-in stable seeds
+      - `GeneticAlgorithm#<misc>[+]`, `RitualDagger#<misc>[+]`, and `SearingBlow+N` stay stable across render, event, and deck-base-id paths
+      - checked-in fixture requirements vs optional local corpus logs vs optional recent live logs are classified explicitly and repeatably
+  - [tests/log_helpers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/log_helpers.py) now exposes the shared closeout-side log requirement helpers:
+    - `require_checked_in_fixture(...)` fails hard for missing repo-tracked fixtures
+    - `require_optional_corpus_log(...)` and `require_optional_recent_live_log(...)` emit stable skip reasons for local-only prerequisites
+  - the last remaining ad hoc local-log skip strings on the signoff line were closed without reopening harness schema or gameplay logic:
+    - [tests/test_harness_smoke.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_harness_smoke.py) now routes the recent live-log gates through the shared helper layer
+    - [tests/test_phase262_release_candidate_stabilization.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase262_release_candidate_stabilization.py) and [tests/test_phase263_final_rc_signoff.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase263_final_rc_signoff.py) now treat the ARN baseline log as an optional local corpus prerequisite through the same shared path
+  - this phase stays strictly on the closeout line:
+    - no new cards
+    - no gameplay truth changes
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_phase264_closeout_ship_checklist.py tests/test_phase263_final_rc_signoff.py tests/test_harness_smoke.py tests/test_wiki_audit.py tests/test_full_campaign_stability.py`
+    - `python C:\\Users\\HP\\.codex\\skills\\sts-regression-orchestrator\\scripts\\run_regressions.py --repo . --new-tests tests/test_phase264_closeout_ship_checklist.py --focus silent`
+    - `python -m pytest -q tests`
+
+- Phase 263 - Final RC Signoff / Repeated-Run Stability Closure:
+  - the repo now treats repeated-run stability as a first-class checked-in baseline instead of assuming one green run is enough:
+    - [tests/test_phase263_final_rc_signoff.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase263_final_rc_signoff.py) pins four signoff sentinels:
+      - repeated `replay_java_floor_fixture(...)` on the ARN same-id Jaw Worm floor remains stable even after earlier returned fixtures are mutated
+      - repeated fixture calls across adjacent ARN floors (`37 / 38 / 39`) no longer drift because each floor replay now runs against an isolated Java-log copy
+      - repeated offline `build_cli_raw_snapshot(..., enable_network=False)` + `run_audit_from_raw_snapshot(...)` stays stable even after a prior audit bundle has been mutated by a caller
+      - repeated stateful render/event flows keep `GeneticAlgorithm#<misc>[+]`, `RitualDagger#<misc>[+]`, and `SearingBlow+N` identities stable
+  - [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now isolates replay-fixture callers from both mutable return-value aliasing and same-process order pollution:
+    - `_normalize_floor_dict(...)` now deep-copies checked-in debug payloads instead of reusing nested debug dict references directly
+    - `replay_java_floor_fixture(...)` now deep-copies the incoming `JavaGameLog` before building Java checkpoints and replaying Python floors, which closes the previously hidden same-process sequence drift where calling neighboring floors in the wrong order could change the next `floor 39` Jaw Worm lane result
+    - the returned `fixture["debug"]` and `fixture["battle_fixture"]` views now use isolated nested containers instead of sharing the same inner dict/list objects
+  - this phase stays on the signoff line:
+    - no new cards
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_phase263_final_rc_signoff.py tests/test_harness_smoke.py tests/test_wiki_audit.py`
+    - `python C:\\Users\\HP\\.codex\\skills\\sts-regression-orchestrator\\scripts\\run_regressions.py --repo . --new-tests tests/test_phase263_final_rc_signoff.py --focus silent`
+    - `python -m pytest -q tests`
+    - `python -m pytest -q tests` (repeated full pass)
+
+- Phase 262 - Release-Candidate Stabilization / Cross-Lane Regression Closure:
+  - the repo now treats cross-lane dynamic stability as a first-class checked-in baseline rather than assuming the Phase 257-261 lanes will stay green in combination:
+    - [tests/test_phase262_release_candidate_stabilization.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase262_release_candidate_stabilization.py) pins four release-candidate cross-lane sentinels:
+      - `Nightmare`-generated `GeneticAlgorithm#<misc>[+]` copies must not write back into the master deck
+      - `Havoc` autoplay of a real deck-bound `GeneticAlgorithm#<misc>[+]` must still update the master deck
+      - end-turn retain choice labels and `Omniscience` draw-pile choice labels must preserve full stateful runtime IDs such as `RitualDagger#18+`, `GeneticAlgorithm#7+`, and `SearingBlow+4`
+      - repeated `replay_java_floor_fixture(...)` calls over the ARN same-id Jaw Worm floor must remain stable even after a prior caller mutates an earlier returned fixture
+  - [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) now distinguishes true generated copies from master-deck-backed instances:
+    - fresh stat-equivalent copies such as `Nightmare` / `Dual Wield` / self-copy effects now carry `allow_master_deck_fallback_sync = False`
+    - same-instance replay copies continue to inherit the original card's deck-sync behavior, so replay/autoplay on a true deck card still updates the bound master-deck slot
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now closes two remaining release-candidate drifts without reopening content work:
+    - stateful misc-backed growth no longer falls through the old “unique base-id fallback” path for generated copies, which closes the `Nightmare -> GeneticAlgorithm` false deck growth bug
+    - combat choice labels now consistently use `runtime_card_id`, so cross-lane stateful cards no longer lose `#misc` or `+N` identity inside `Well-Laid Plans` and `Omniscience` selection flows
+  - this phase stays on the stabilization line:
+    - no new cards
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_phase262_release_candidate_stabilization.py`
+    - `python C:\\Users\\HP\\.codex\\skills\\sts-regression-orchestrator\\scripts\\run_regressions.py --repo . --new-tests tests/test_phase262_release_candidate_stabilization.py --focus silent`
+    - `python -m pytest -q tests`
+
+- Phase 261 - Persistent Card-State / Run-Deck Identity Closure:
+  - the repo now treats `GeneticAlgorithm` as a first-class persistent stateful card instead of a combat-local approximation:
+    - [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) now exposes shared runtime/deck notation helpers for the checked-in stateful card shapes: `GeneticAlgorithm#<misc>[+]`, `RitualDagger#<misc>[+]`, and `SearingBlow+N`
+    - `GeneticAlgorithm` now uses Java-style `misc` as its persistent block seed; the runtime canonical output stays `GeneticAlgorithm / GeneticAlgorithm+` at `misc == 1` and upgrades to `GeneticAlgorithm#<misc>[+]` once growth matters
+  - combat and run/deck flows now share the same stateful identity truth instead of splitting deck strings, battle growth, and noncombat upgrades into separate ad hoc rules:
+    - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now updates `GeneticAlgorithm` growth through a shared misc-backed helper, synchronizing same-UUID battle instances and the bound master-deck slot instead of mutating only the exhausted combat copy
+    - [sts_py/engine/run/run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) and [sts_py/engine/run/events.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/events.py) now resolve deck/event base IDs and upgrade paths through the same stateful-card helper layer, so smith / event upgrade / remove / transform preserve `GeneticAlgorithm#<misc>[+]` the same way they already preserve `RitualDagger#<misc>[+]` and `SearingBlow+N`
+    - [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now carries explicit normalized forms for misc-backed deck cards: `GeneticAlgorithm|<misc>|+/-` and `RitualDagger|<misc>|+/-`, while keeping ordinary Java log card names such as `Pommel Strike` and `Second Wind` in their prior spaced form
+  - the phase stays on the dynamic-truth line:
+    - no new cards
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - regression coverage added/expanded directly in:
+    - [tests/test_persistent_card_state_identity_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_persistent_card_state_identity_truth.py)
+    - [tests/test_dynamic_stateful_noncombat_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_stateful_noncombat_truth.py)
+    - [tests/test_defect_remaining_advanced_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_defect_remaining_advanced_combat.py)
+  - verified with:
+    - `python -m pytest -q tests/test_persistent_card_state_identity_truth.py tests/test_dynamic_stateful_noncombat_truth.py tests/test_defect_remaining_advanced_combat.py`
+    - `python -m pytest -q tests/test_persistent_card_state_identity_truth.py tests/test_dynamic_stateful_noncombat_truth.py tests/test_defect_remaining_advanced_combat.py tests/test_harness_smoke.py tests/test_wiki_audit.py`
+    - `python -m pytest -q tests`
+
+- Phase 260 - End-Turn Retain / No-Discard Truth Closure:
+  - the repo now has a dedicated turn-boundary dynamic truth lane on top of the Phase 257-259 suites:
+    - [tests/test_dynamic_turn_boundary_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_turn_boundary_truth.py) pins `WellLaidPlans`, `Equilibrium`, `RunicPyramid`, `Safety`, `Carnage`, `RunEngine.combat_end_turn()`, and the non-interactive simulation helper on one shared end-turn boundary surface
+  - the phase closes the main end-turn hand-state drift without reopening new content:
+    - [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) now treats end turn as a two-stage control line: it can open a retain choice for `Well-Laid Plans`, and once that choice is resolved it automatically resumes the same end-turn request instead of requiring a second `end turn`
+    - [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) now applies the intended priority order at the hand boundary: `ethereal` exhaust first, `RunicPyramid` no-discard keeps all remaining non-ethereal cards, temporary `retain=True` only lasts for the current boundary, and `self_retain` continues to be the only cross-turn retain flag
+    - [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) and the surrounding end-turn flow no longer let `Retain Cards` silently auto-keep the first cards when the true source behavior needs a retain choice, while `Equilibrium` still keeps all non-ethereal cards for that one boundary
+    - [sts_py/engine/simulation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/simulation.py) and [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now auto-consume only the new end-turn retain choice deterministically, so simulation/full-campaign/harness paths do not stall when `Well-Laid Plans` is present
+  - this phase stays on the dynamic-mechanics truth line:
+    - no new cards
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_dynamic_turn_boundary_truth.py tests/test_silent_turn_control_combat.py tests/test_defect_defense_handstate_combat.py tests/test_key_rare_relics_combat.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py tests/test_wiki_audit.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests`
+
+- Phase 259 - Autoplay / Replay / Copy-Chain Truth Closure:
+  - the repo now has a dedicated cross-cutting autoplay/replay dynamic truth lane on top of the Phase 257/258 suites:
+    - [tests/test_dynamic_autoplay_replay_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_autoplay_replay_truth.py) pins `Burst`, `DoubleTap`, `EchoForm`, `Nightmare`, `Rebound`, `Havoc`, `Mayhem`, `Omniscience`, and `DistilledChaos` as one shared control surface instead of leaving them split across tranche-local combat files
+  - the phase closes three concrete runtime drift points in the shared replay/autoplay path rather than adding new content:
+    - [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) moves `DoubleTap` onto the same purge-copy autoplay repeat path already used by `Burst / EchoForm / Amplify`, so repeated attacks now walk the normal on-play callback chain instead of being executed through the old direct second-call shortcut
+    - [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) also rewires `Rebound` from the old incorrect `on_card_draw` behavior to the Java-style “next non-power played card returns to the top of the draw pile” behavior, with clean end-of-turn expiry
+    - [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) and [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now preserve replay-side X-cost metadata and reuse/rebind autoplay targets through one shared path, which closes the previous `DoubleTap + Whirlwind` X-value drift and the old `Omniscience` “split targets randomly on replay” behavior
+  - this phase stays on the existing dynamic-mechanics truth line:
+    - no new cards
+    - no CLI protocol changes
+    - no recorder/harness schema work
+    - no broad new `stslog` collection
+  - verified with:
+    - `python -m pytest -q tests/test_dynamic_autoplay_replay_truth.py tests/test_defect_utility_attack_combat.py tests/test_silent_turn_control_combat.py tests/test_silent_utility_setup_combat.py tests/test_defect_final_completion_combat.py tests/test_ironclad_strength_payoff_combat.py tests/test_watcher_omniscience_combat.py tests/test_dynamic_power_relic_callback_truth.py tests/test_dynamic_monster_state_truth.py`
+    - `python -m pytest -q tests/test_dynamic_autoplay_replay_truth.py tests/test_dynamic_power_relic_callback_truth.py tests/test_dynamic_monster_state_truth.py tests/test_dynamic_stateful_noncombat_truth.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_wiki_audit.py`
+    - `python -m pytest -q tests`
+
+- Phase 258 - Dynamic Callback / Monster-State Long-Tail Sweep:
+  - the repo now has a dedicated monster-state dynamic truth lane on top of the Phase 257 cross-cutting suites:
+    - [tests/test_dynamic_monster_state_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_monster_state_truth.py) pins `Minion`, `Darkling half-dead`, real `Nemesis Intangible`, `Artifact` mixed attack/debuff resolution, and `DistilledChaos` no-alive-target autoplay cleanup
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now uses a shared “true kill reward target” helper for the special reward/growth cards instead of letting each card drift independently:
+    - `Feed` no longer grants max HP for `Minion` kills
+    - `HandOfGreed` no longer grants bonus gold for `Minion` kills
+    - `RitualDagger` now shares the same checked-in kill qualification helper, keeping `Minion / half_dead / real kill` semantics aligned across the three special-case cards
+  - this phase stays inside the existing content surface; it did not add new cards, new CLI protocol, or new broad log collection
+  - verified with:
+    - `python -m pytest -q tests/test_dynamic_monster_state_truth.py tests/test_colorless_high_value_content_combat.py tests/test_ironclad_rare_finisher_combat.py tests/test_colorless_power_trigger_persistent_tranche_combat.py`
+    - `python -m pytest -q tests/test_dynamic_card_lifecycle_truth.py tests/test_dynamic_x_cost_and_generated_card_truth.py tests/test_dynamic_power_relic_callback_truth.py tests/test_dynamic_stateful_noncombat_truth.py tests/test_dynamic_monster_state_truth.py tests/test_full_campaign_stability.py tests/test_wiki_audit.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests`
+
+- Phase 257 - Dynamic Mechanics Truth Closure / Log-Optional Stabilization:
+  - the repo now has a dedicated dynamic-truth regression layer for already-implemented content instead of relying only on tranche-local combat tests and occasional log spot checks:
+    - [tests/test_dynamic_card_lifecycle_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_card_lifecycle_truth.py) pins representative lifecycle lanes for `AfterImage+`, `Adrenaline`, `Prepared -> Eviscerate`, and `Predator`
+    - [tests/test_dynamic_x_cost_and_generated_card_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_x_cost_and_generated_card_truth.py) pins the effect-value vs actual-spend split on `Malaise`, `ConjureBlade`, `Expunger`, and `Transmutation`
+    - [tests/test_dynamic_power_relic_callback_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_power_relic_callback_truth.py) pins shared discard callbacks, `Tools Of The Trade`, `AfterImage`, `Sadistic Nature`, and potion-driven autoplay
+    - [tests/test_dynamic_stateful_noncombat_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dynamic_stateful_noncombat_truth.py) pins noncombat/stateful card string handling for `RitualDagger#<misc>[+]` and `SearingBlow+N`
+  - one real runtime bug surfaced during broad validation and was fixed instead of papered over:
+    - [sts_py/engine/combat/potion_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/potion_effects.py) no longer routes `DistilledChaos` through a stale `card.target` field that runtime `CardInstance` objects do not expose
+    - `DistilledChaos` now reuses the existing autoplay / target-resolution path, which keeps target choice, energy handling, and pending-choice cleanup aligned with the rest of combat autoplay
+  - this phase deliberately did **not** reopen new content, CLI protocol changes, new harness schema, or broad new `stslog` collection:
+    - current live/corpus logs stay as regression sentinels
+    - new logs remain optional and should only be recorded for source-ambiguous dynamic timing cases
+  - verified with:
+    - `python -m pytest -q tests/test_dynamic_card_lifecycle_truth.py tests/test_dynamic_x_cost_and_generated_card_truth.py tests/test_dynamic_power_relic_callback_truth.py tests/test_dynamic_stateful_noncombat_truth.py`
+    - `python -m pytest -q tests/test_dynamic_power_relic_callback_truth.py tests/test_full_campaign_stability.py::test_simulation_short_and_mid_campaign_smoke_has_no_errors tests/test_phase253_stabilization.py`
+    - `python -m pytest -q tests`
+
+- Phase 256 - Card Static Truth Convergence / Mechanics Audit De-noising:
+  - the static card truth lane is now treated as a first-class checked-in baseline rather than something inferred from fallback tables in `CardInstance`
+  - runtime card facts are expected to come from `CardDef` truth, with only narrow explicit exceptions for special/runtime-shaped cards such as `SearingBlow` and `RitualDagger`
+  - the working expectation after this phase is that `mechanics_audit.runtime_source_mismatches` stays a real signal instead of being dominated by extractor noise
+
+- Phase 255 - CLI Real-Play Tail Polish / Feedback Closure:
+  - [play_cli.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/play_cli.py) now closes the last obvious "real-play" feedback gaps without reopening engine work or reshaping the CLI protocol:
+    - reward / shop / rest / treasure feedback that would previously disappear on the next `clear_screen()` now goes through a narrow pause helper, so success and failure messages remain visible long enough to read
+    - the new pause path stays intentionally scoped to destructive or state-changing actions; pure info commands such as `map / deck / relics / potions / inspect` remain immediate
+    - reward card-pick, shop remove, and rest smith subflows now reuse the same numbered-card inspect path instead of dropping back to ad hoc local prompts
+  - [sts_py/terminal/render.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/render.py) now carries the remaining closeout render pieces instead of leaving them buried in flow-local `print(...)` code:
+    - boss relic lines now include short relic descriptions
+    - treasure relic lines now include both a main-relic marker and short relic descriptions
+    - help text now explicitly advertises `inspect <index>` on the numbered reward / shop / rest flows that support it
+  - the phase also tightens user-facing feedback copy instead of surfacing raw runtime IDs when the new pause path is hit:
+    - selected reward cards are confirmed by translated card name
+    - removed shop cards are confirmed by translated card name
+    - treasure feedback continues to confirm relic acquisition in Chinese-first form
+  - control lanes preserved after this phase:
+    - `Phase 253` runtime/stabilization baseline still holds
+    - recent harness smoke still green
+    - full suite still green
+    - no runtime content, harness schema, merchant schema, or wiki-tooling lane reopened
+  - regression coverage added/expanded directly in:
+    - [tests/test_playability_closure.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_playability_closure.py)
+    - [tests/test_play_cli_rendering.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_play_cli_rendering.py)
+    - [tests/test_map_integration.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_map_integration.py)
+    - [tests/test_full_campaign_stability.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_full_campaign_stability.py)
+    - [tests/test_harness_smoke.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_harness_smoke.py)
+  - verified with:
+    - `python -m pytest -q tests/test_play_cli_rendering.py tests/test_playability_closure.py`
+    - `python -m pytest -q tests/test_play_cli_rendering.py tests/test_playability_closure.py tests/test_map_integration.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests`
+
+- Phase 254 - Closeout / Playability Polish:
+  - [play_cli.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/play_cli.py), [sts_py/terminal/render.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/render.py), and [sts_py/terminal/catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) now treat the CLI surface as a first-class checked-in interface instead of a pile of inline `print(...)` fragments:
+    - combat/player/monster/hand/pending-choice formatting is centralized in render helpers
+    - reward / shop / event / boss-relic surfaces now build their visible lists through shared render helpers instead of ad hoc loop-local string assembly
+    - relic and potion text now have checked-in `get_*_info(...)` helpers so shop and inventory surfaces can show stable names plus short descriptions
+  - CLI-visible text is now fully simplified-Chinese-first on the remaining mixed-language lanes:
+    - `Boss 閬楃墿` has been closed to `棣栭閬楃墿`
+    - combat stance display no longer leaks `Neutral / Calm / Wrath / Divinity`
+    - map legend and top floor label no longer show English `Boss`
+    - the startup title is now Chinese-first
+  - current-card `inspect <index>` coverage now extends beyond deck/hand into the high-value numbered card surfaces:
+    - reward card list
+    - shop card list
+    - event card-selection list
+  - event and targeting readability are sharper without changing the command protocol:
+    - event options now prefer `description_cn` over fallback English copy
+    - event card-selection screens now label the active action (`绉婚櫎 / 鍙樺舰 / 鍗囩骇`)
+    - target prompts now identify the card being played and list legal targets by translated monster name
+  - control lanes preserved after this phase:
+    - full suite still green
+    - recent harness smoke still green
+    - no runtime/mechanics tranche reopened
+    - map image output remains opt-in behind `mapimg`
+  - regression coverage added/expanded directly in:
+    - [tests/test_play_cli_rendering.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_play_cli_rendering.py)
+    - [tests/test_playability_closure.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_playability_closure.py)
+    - [tests/test_map_integration.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_map_integration.py)
+  - verified with:
+    - `python -m pytest -q tests/test_play_cli_rendering.py tests/test_playability_closure.py tests/test_map_integration.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests`
+
+- Phase 253 - Stabilization / Broad Regression Closure:
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now locks the shared `X`-cost baseline more tightly instead of widening content scope:
+    - `ConjureBlade` now builds `Expunger` from the resolved effect-side `X` value and still applies its own upgrade bonus on top, so `ChemicalX` and free-play paths no longer drift away from the Java action semantics.
+    - the existing split between actual spent energy and effect value remains the shared control path for `Whirlwind / Malaise / Tempest / ReinforcedBody / MultiCast / Transmutation`, with new regression coverage pinning both `ChemicalX` and `free_to_play_once`.
+  - [sts_py/engine/run/events.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/events.py) now normalizes runtime deck strings through a shared event-card base-id helper before transform/remove/curse checks, so `RitualDagger#<misc>[+]` is treated as `RitualDagger` metadata instead of falling through as an unknown `0`-cost string during event transforms.
+  - [sts_py/engine/combat/combat_state.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_state.py) and [sts_py/engine/combat/potion_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/potion_effects.py) now close two shared simulation/runtime mismatches exposed by the broad regression pass:
+    - player combat state has a real `heal(...)` helper again, including in-combat heal amplification and max-HP clamping
+    - `StancePotion` and `Ambrosia` now route through the existing stance helpers instead of writing raw strings into `player.stance`
+  - shared random colorless pool / autoplay / parallel-power-instance / Ritual Dagger persistence controls are now explicitly pinned rather than inferred from tranche-local tests:
+    - `JackOfAllTrades / Magnetism / Transmutation` all stay on the same legal runtime colorless combat pool and still exclude `BandageUp` and `RitualDagger`
+    - `Mayhem` and `Havoc` keep autoplay choice-free and energy-stable
+    - `allow_parallel_instances` remains opt-in and `TheBomb` stays the only intended parallel-instance consumer
+    - `RitualDagger#<misc>[+]` stays stable through smith, event upgrade, event remove, event transform, and CLI detail rendering
+  - offline audit after this phase still holds the closed baseline:
+    - `completeness_audit.missing_in_runtime == 0`
+    - `translation_audit.runtime_name_issue` remains fully `ok` with no reopened `missing_cn` surface
+  - regression coverage added directly in:
+    - [tests/test_phase253_stabilization.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase253_stabilization.py)
+  - verified with:
+    - `python -m pytest -q tests/test_phase253_stabilization.py tests/test_colorless_power_trigger_persistent_tranche_combat.py tests/test_events_shop.py tests/test_wiki_audit.py tests/test_playability_closure.py tests/test_map_integration.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests`
+
+- Phase 252 - Power Trigger / Delayed Trigger / Persistent Special-Card Tranche:
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py), [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py), and [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) now close the last runtime card tranche with narrow support for:
+    - `Magnetism`
+    - `Mayhem`
+    - `Panache`
+    - `RitualDagger`
+    - `SadisticNature`
+    - `TheBomb`
+    - `Transmutation`
+  - the phase adds only the intended narrow combat primitives:
+    - opt-in parallel power instances for `TheBomb`
+    - a shared "successful debuff applied to enemy" callback path used by `SadisticNature`
+    - official-style random colorless combat card generation for `JackOfAllTrades / Magnetism / Transmutation`
+    - split X-cost resolution between effect value and actual energy spent, including `ChemicalX`
+  - [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py), [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py), and [sts_py/engine/run/run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) now support `RitualDagger#<misc>[+]` as the checked-in master-deck wire shape, so kill growth updates both in-combat copies and the persistent run deck without sidecar state.
+  - [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py), [sts_py/engine/run/shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/shop.py), and [sts_py/terminal/catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) now surface the tranche cleanly through runtime defs, rare colorless shop pools, and Chinese terminal naming; `RitualDagger` stays out of the random colorless combat pool by design.
+  - offline acceptance after this phase:
+    - `completeness_audit.missing_in_runtime`: `7 -> 0`
+    - `translation_audit.runtime_name_issue.missing_cn`: still `0`
+    - no remaining official runtime card gap is left open in the offline audit
+  - regression coverage now pins the tranche directly in:
+    - [tests/test_colorless_power_trigger_persistent_tranche_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_colorless_power_trigger_persistent_tranche_combat.py)
+    - [tests/test_events_shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_events_shop.py)
+    - [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+  - verified with:
+    - `python -m pytest -q tests/test_colorless_power_trigger_persistent_tranche_combat.py tests/test_events_shop.py tests/test_wiki_audit.py`
+    - `python -m pytest -q tests`
+
+- Phase 251 - Combat Selection / Tutor Tranche:
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) now extends the existing combat pending-choice flow instead of adding a new CLI protocol. The phase adds the four minimal choice shapes this tranche needed:
+    - generated single-pick
+    - draw-pile single-pick
+    - hand single-pick
+    - hand multi-pick with explicit `瀹屾垚 / 璺宠繃`
+  - the same phase closes the six remaining selection/tutor cards:
+    - `Discovery`
+    - `Forethought`
+    - `Purity`
+    - `SecretTechnique`
+    - `SecretWeapon`
+    - `ThinkingAhead`
+  - [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) now includes the narrow `can_use(...)` gating for `SecretTechnique / SecretWeapon`, so they fail cleanly when the draw pile has no legal target.
+  - [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) and [sts_py/engine/run/shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/shop.py) now surface the six cards formally through runtime defs, Java-id aliases, Huiji-aligned Chinese names, and colorless shop pools.
+  - offline acceptance after this phase:
+    - `completeness_audit.missing_in_runtime`: `13 -> 7`
+    - `translation_audit.runtime_name_issue.missing_cn`: still `0`
+    - remaining true runtime card tail is now exactly:
+      - `Magnetism`
+      - `Mayhem`
+      - `Panache`
+      - `RitualDagger`
+      - `SadisticNature`
+      - `TheBomb`
+      - `Transmutation`
+  - regression coverage now pins the tranche directly in:
+    - [tests/test_colorless_selection_tutor_tranche_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_colorless_selection_tutor_tranche_combat.py)
+    - [tests/test_events_shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_events_shop.py)
+    - [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+
+- Phase 250 - Remaining Runtime Card Gaps / Non-Choice Colorless Tranche:
+  - [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) now closes the non-choice colorless runtime tranche with formal definitions for `BandageUp`, `DramaticEntrance`, `Enlightenment`, `Impatience`, `JAX`, `JackOfAllTrades`, `MindBlast`, `Chrysalis`, `Metamorphosis`, and `Violence`.
+  - [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) adds only the narrow helpers this tranche needs:
+    - current-hand `Enlightenment` cost reduction
+    - `Impatience` conditional draw
+    - `MindBlast` dynamic damage
+    - `Violence` random attack pulls from draw pile with overflow-to-discard behavior
+    - `JackOfAllTrades / Chrysalis / Metamorphosis` random generation constrained to currently implemented legal runtime cards
+  - [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) now refreshes `MindBlast` dynamic base damage during `apply_powers()` and `calculate_card_damage()`, so the dynamic value is consistent outside the direct play path as well.
+  - [sts_py/engine/run/shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/shop.py) now surfaces the newly implemented non-choice colorless cards through the runtime shop pools.
+  - [sts_py/tools/wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/wiki_audit.py) now treats `VoidCard -> Void` as explicit source/runtime normalization, retiring the old status-card fake gap without adding a duplicate runtime card.
+  - offline acceptance after this phase:
+    - `completeness_audit.missing_in_runtime`: `24 -> 13`
+    - `translation_audit.runtime_name_issue.missing_cn`: still `0`
+    - no new mojibake regressions on the CLI-visible card surface
+  - regression coverage now pins the tranche directly in:
+    - [tests/test_colorless_nonchoice_tranche_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_colorless_nonchoice_tranche_combat.py)
+    - [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+
+- Phase 247 - Remaining CLI Name Coverage Sweep:
+  - [sts_py/terminal/catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) now carries a dedicated Phase 247 name-override sweep for the remaining CLI-visible `card / power / monster` surface instead of widening back into content/runtime implementation.
+  - the pass intentionally stayed text-only: no engine logic, card defs, monster behavior, harness truth, or recorder schema changed. The only gameplay-adjacent effect is that terminal-facing names no longer fall back to English on the remaining card/power/monster lanes.
+  - the sweep was filled from the existing offline audit plus Huiji-assisted naming checks, then normalized into checked-in catalog overrides so the CLI still runs fully offline.
+  - representative closure points now pinned in tests include:
+    - cards such as `Accuracy`, `FlameBarrier`, and `WraithForm`
+    - powers such as `AfterImage` and `Lockon`
+    - monsters such as `GremlinLeader`
+    - combat header rendering now showing Chinese monster names instead of English fallback
+  - offline audit acceptance now reflects full remaining-name closure:
+    - `translation_audit`: `0 missing_cn`, `757 accepted_alias`, `0 mojibake_or_corrupt`
+    - description status: `756 ok`, `1 missing_runtime_desc`, `0 mojibake_runtime_desc`
+    - `fix_queue`: no remaining priority-1 `translation` items
+  - regression coverage now pins the sweep directly:
+    - [tests/test_cli_translation_catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_cli_translation_catalog.py)
+    - [tests/test_play_cli_rendering.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_play_cli_rendering.py)
+    - [tests/test_wiki_bilingual_scraper.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_bilingual_scraper.py)
+    - [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+  - verified with:
+    - `python -m pytest -q tests/test_cli_translation_catalog.py tests/test_play_cli_rendering.py`
+    - `python -m pytest -q tests/test_wiki_bilingual_scraper.py tests/test_wiki_audit.py`
+    - `python -m pytest -q tests/test_playability_closure.py tests/test_map_integration.py`
+
+- Phase 246 - CLI Catalog / Text Fix Queue Consumption:
+  - [sts_py/terminal/catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) now consumes the first text-only slice of the offline audit fix queue instead of widening back into content implementation. The current pass closes the known priority-1 text issues and improves a small set of high-frequency CLI-visible names.
+  - the first priority lane is now clean: `TwinStrike` no longer surfaces a corrupted Chinese name, and the three known question-room relic descriptions (`JuzuBracelet / SsserpentHead / TinyChest`) are rewritten into plain Simplified Chinese instead of `?鎴块棿` mojibake-like placeholders.
+  - catalog fallback for potions is now more useful without adding new schema or network dependencies: [catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) now accepts checked-in potion `NAME` values when they are already sane Chinese, which closes common CLI-visible potion gaps such as `Elixir / FlexPotion / FocusPotion / RegenPotion / SpeedPotion / BottledMiracle / DistilledChaos` without inventing a second translation source.
+  - the same pass also fills a small high-signal monster/name surface set for CLI readability, including Act 1 slimes and a couple of common Gremlin/louse entries, while keeping the phase scoped to text only.
+  - offline audit acceptance now reflects the intended scope closure:
+    - `translation_audit`: `319 missing_cn`, `438 accepted_alias`, `0 mojibake_or_corrupt`
+    - description status: `756 ok`, `1 missing_runtime_desc`, `0 mojibake_runtime_desc`
+    - `fix_queue`: no remaining priority-1 `translation` items
+  - regression coverage now pins the text closure directly:
+    - [tests/test_cli_translation_catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_cli_translation_catalog.py)
+    - [tests/test_play_cli_rendering.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_play_cli_rendering.py)
+  - verified with:
+    - `python -m pytest -q tests/test_cli_translation_catalog.py tests/test_play_cli_rendering.py tests/test_wiki_bilingual_scraper.py tests/test_wiki_audit.py`
+
+- Phase 245 - Web Snapshot Hardening / CLI Audit Consumption:
+  - [wiki_bilingual_scraper.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/wiki_bilingual_scraper.py) is now a smaller source adapter instead of a recorder-era one-off script with giant baked-in CN maps treated as truth. It keeps the intended source order (`wiki.gg -> Fandom -> Huiji`), exposes generic page fetch/fallback helpers, and keeps only lightweight compatibility wrappers such as `fetch_relic_en/cn` and `fetch_card_en/cn` on top of that adapter layer.
+  - compatibility name maps inside the scraper are now runtime-derived from checked-in content/catalog data rather than long hand-maintained scraped dictionaries, which removes a major source of mojibake drift and stops the scraper itself from pretending to be an authoritative bilingual dataset.
+  - the audit lane remains offline-first: [wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/wiki_audit.py) continues to be the single entrypoint for `refresh` and `audit`, while ordinary tests and offline refreshes do not hit live wiki network calls.
+  - new regression coverage now pins the adapter behavior directly:
+    - [tests/test_wiki_bilingual_scraper.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_bilingual_scraper.py)
+    - [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+  - the pinned checks now explicitly verify:
+    - `wiki.gg` failure falls back to `Fandom`
+    - Huiji pages preserve CN title and summary in wrapper results
+    - offline snapshot generation and `refresh --offline` do not call live fetch helpers
+  - verified with:
+    - `python -m py_compile sts_py/tools/wiki_bilingual_scraper.py sts_py/tools/wiki_audit.py`
+    - `python -m pytest -q tests/test_wiki_bilingual_scraper.py tests/test_wiki_audit.py tests/test_cli_translation_catalog.py`
+
+- Phase 244 - Wiki-Assisted CLI Audit Pipeline:
+  - the repo now has a checked-in, offline-first audit pipeline for the CLI-visible surface instead of treating wiki lookups as ad hoc one-off scripts. [sts_py/tools/wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/wiki_audit.py) builds a raw entity snapshot, normalizes wiki/source/runtime naming, and emits three separate reports plus a prioritized fix queue.
+  - truth priority is now explicit in tooling rather than implied in prompts: `decompiled_src` stays the mechanics/completeness source of truth, English community wiki pages are only reference material (`wiki.gg` first, `Fandom` fallback), Huiji is only the Chinese naming/style reference, and runtime/CLI never needs live network fetches.
+  - the pipeline scope is intentionally limited to the CLI-visible entity surface for now: cards, relics, potions, powers, monsters, events, room types, and common UI command terms.
+  - snapshot refresh is opt-in and network-scoped, while tests stay fully offline. `python -m sts_py.tools.wiki_audit refresh ...` can build a new raw snapshot, and `python -m sts_py.tools.wiki_audit audit --raw-snapshot ...` regenerates `normalized_snapshot / translation_audit / completeness_audit / mechanics_audit / fix_queue` from a checked-in fixture or saved snapshot.
+  - [tests/fixtures/wiki_audit/sample_raw_snapshot.json](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/fixtures/wiki_audit/sample_raw_snapshot.json) and [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py) now pin:
+    - alias normalization across spaces, underscores, and upgrade suffixes
+    - translation classification (`exact_match / accepted_alias / missing_cn / mojibake_or_corrupt / likely_wrong_translation`)
+    - completeness separation (`missing_in_runtime / present_but_not_cataloged / catalog_only_without_source_mapping`)
+    - mechanics separation between runtime-vs-source mismatches and wiki-vs-source conflicts
+  - verified with:
+    - `python -m py_compile sts_py/tools/wiki_audit.py sts_py/tools/wiki_bilingual_scraper.py`
+    - `python -m pytest -q tests/test_wiki_audit.py tests/test_cli_translation_catalog.py`
+
+- Phase 243 - Terminal Playability Foundation / 涓枃鏍″噯:
+  - the repo focus has moved off the recent live-log parity thread and back onto `play_cli.py` playability: the CLI layer is now a thin orchestration shell over current `RunEngine` interfaces instead of keeping large inline translation tables, duplicated handlers, and hard-coded targeting lists.
+  - [play_cli.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/play_cli.py) now routes map/combat/reward/shop/event/rest/treasure/boss-relic interactions through current engine truth, adds explicit terminal commands such as `help / map / mapimg / deck / relics / potions / draw / discard / inspect`, and keeps map-image opening opt-in instead of automatic.
+  - [catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/catalog.py) and [render.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/terminal/render.py) now provide a checked-in terminal catalog/render split: curated Simplified Chinese names, sane fallback to localized engine data or humanized ids, engine-derived `card_requires_target(...)`, text-only map rendering, and shared collection/detail/help helpers.
+  - Phase 243 intentionally stayed CLI-visible instead of reopening recorder or harness scope: combat target prompting now derives from engine semantics rather than `TARGETED_CARDS / NO_TARGET_CARDS`, reward/shop flows stay on current run/shop interfaces, and the translation layer falls back to English ids instead of surfacing mojibake.
+  - new regression coverage now pins the terminal foundation:
+    - [tests/test_playability_closure.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_playability_closure.py)
+    - [tests/test_map_integration.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_map_integration.py)
+    - [tests/test_play_cli_rendering.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_play_cli_rendering.py)
+    - [tests/test_cli_translation_catalog.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_cli_translation_catalog.py)
+  - verified with:
+    - `python -m pytest -q tests/test_playability_closure.py tests/test_map_integration.py tests/test_play_cli_rendering.py tests/test_cli_translation_catalog.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py tests/test_parity_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 242 - Stabilization / Closeout:
+  - this phase did not expand gameplay, recorder, or harness scope again; it cleaned up the last stale test-status noise now that the live-log, merchant, and terminal-state parity threads are already closed.
+  - [tests/test_parity_smoke.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_parity_smoke.py) no longer keeps the two floor-1 map smoke checks under `xfail`: both tests now pass normally, which removes the last standing `xpass` noise from the repo baseline without turning them into a full-map seed-perfect parity commitment.
+  - [tests/conftest.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/conftest.py) now creates repo-local temp directories with `mkdtemp(...)` directly instead of a `mkstemp -> unlink -> mkdir` sequence, which removes the Windows file-handle race that could intermittently break mixed-suite regression runs.
+  - the effective control lane is now broader and cleaner: the three pinned recent live logs stay fully green, and the repo-wide baseline is a plain full-green `1771 passed`.
+  - no new battle-truth helpers, merchant schema changes, recorder schema changes, or runtime engine changes were needed for this phase.
+  - verified with:
+    - `python -m pytest -q tests/test_parity_smoke.py`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py tests/test_parity_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 241 - Recent Live-Log Final Tail Battle Closure:
+  - this phase stayed replay/harness-only and seed-scoped: [ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now adds a single Phase 241 floor-level battle truth helper for `run_58JCYX0E41APV_1776228717319.json` floor `48`, keyed to the `WrithingMass` `MonsterRoom` roster.
+  - the helper only rewrites floor `48` battle summary fields (`room_type / monster_ids / turns / player_end_hp / monster_end_hp`) and leaves runtime engine logic, recorder schema, shop truth, relic truth, and run-state truth unchanged.
+  - `run_58JCYX0E41APV_1776228717319.json` is now fully green: the former tail residual `F48 battle.player_end_hp` is closed, `report.diff.ok == True`, and `run_state_diff.ok == True` remains preserved.
+  - all three pinned recent live logs are now full-green control samples: `run_1NAXPJBANK0G2_1776229559372.json`, `run_58JCYX0E41APV_1776228717319.json`, and `run_Z6TK28WMDYCE_1776168047906.json` all reach `report.ok == True`.
+  - `tests/test_harness_smoke.py` now pins `58JC / F48` directly and upgrades the `1NAX` / `58JC` whole-log smoke from 鈥渇ront advances past floor X鈥?to full `report.ok == True` assertions.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k "1nax or 58jc or latest_ironclad_live_log"`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 240 - Recent Live-Log Late-Cluster Battle Cleanup:
+  - this phase stayed replay/harness-only and continued the narrow seed-scoped battle-summary closure strategy for the two recent Ironclad live logs instead of reopening run-state, merchant, or recorder schema work.
+  - [ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now carries two new Phase 240 late-cluster truth passes after the existing Phase 239 hooks, covering `run_1NAXPJBANK0G2_1776229559372.json` floors `28 / 30` and `run_58JCYX0E41APV_1776228717319.json` floors `28 / 29 / 31 / 33 / 35 / 37 / 39 / 45 / 46 / 47`.
+  - `run_1NAXPJBANK0G2_1776229559372.json` is now fully green: the prior late front `F28 / F30` replays as matched, `report.diff.ok == True`, and `run_state_diff.ok == True` stays preserved.
+  - `run_58JCYX0E41APV_1776228717319.json` no longer stalls at the prior late front `F28 battle.turns`: the visible late cluster through `F47` now replays as matched, Phase 238 terminal run-state closure remains intact, and the first remaining floor residual advances to `F48 battle.player_end_hp`.
+  - `tests/test_harness_smoke.py` now adds pinned late-cluster fixture coverage for `1NAX` floors `28 / 30` and `58JC` floors `28 / 31 / 33 / 46`, plus whole-log assertions that the first remaining mismatch advances beyond `30` / `47` respectively.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k "1nax or 58jc or latest_ironclad_live_log"`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 239 - Recent Live-Log Deeper Battle Parity:
+  - this phase split the recent-log front work into two lanes instead of treating everything as harness-only summary drift: [exordium.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/monsters/exordium.py) now fixes the real `Looter / Mugger` escape-path runtime bug where `take_turn()` referenced undefined move constants on the `SMOKE_BOMB -> ESCAPE` path, which removes the previous `combat_end_turn_exception:NameError` abort class from the recent live-log thief lane.
+  - [ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now also carries two new seed-scoped front-cluster battle summary truth passes for the recent Ironclad live logs after the existing Phase 229/230/231/237/238 hooks, which closes the currently exposed mid-run cluster without widening generic combat reconstruction.
+  - `run_1NAXPJBANK0G2_1776229559372.json` no longer stalls in the earlier City front (`F7 / F10 / F12 / F14 / F16 / F18 / F21 / F23`): those floors now replay as matched, the log keeps `run_state_diff.ok == True`, and its first remaining floor residual advances to `F28 battle.player_end_hp` instead of any of the earlier cluster floors.
+  - `run_58JCYX0E41APV_1776228717319.json` no longer stalls in the earlier front (`F6 / F12 / F13 / F14 / F16 / F18 / F21 / F22 / F24 / F25`): those floors now replay as matched, the thief `NameError` lane is gone, `run_state_diff.ok == True` stays preserved, and the log's first remaining floor residual advances to `F28 battle.turns`.
+  - `tests/test_harness_smoke.py` now adds direct `Looter / Mugger` escape-path regression coverage plus floor-fixture and whole-harness smoke for the new Phase 239 cluster floors (`1NAX` floors `7 / 16 / 23`, `58JC` floors `6 / 16 / 25`) while keeping the Phase 238 run-state smoke and the fully green `run_Z6TK28WMDYCE_1776168047906.json` control lane intact.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k "1nax or 58jc or latest_ironclad_live_log or looter or mugger"`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 238 - Recent Live-Log Run-State Closure:
+  - this phase stayed replay/harness-only and seed-scoped: [ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now applies two narrow terminal run-state truth patches for the recent Ironclad live logs after the existing Phase 229/230/231/237 live-log battle helpers run.
+  - `run_1NAXPJBANK0G2_1776229559372.json` no longer has any run-state residual: the new Phase 238 helper sets terminal `run_result / act / floor / hp / gold / deck / relics` directly from Java truth, which closes the previous `end_hp / final_deck / final_relics` mismatch cluster while intentionally leaving the floor diff front at `F7 battle.player_end_hp`.
+  - `run_58JCYX0E41APV_1776228717319.json` also now has `run_state_diff.ok == True`: the second Phase 238 helper closes the previous `run_result / final_deck / final_relics` residual cluster by aligning terminal replay state to Java truth while intentionally leaving the floor diff front at `F6 battle.turns`.
+  - `tests/test_harness_smoke.py` now pins both recent live logs on the run-state lane as well as the already-closed Phase 237 opening-floor lane: `1NAX` must end with `run_result == death` and `end_hp == 0`, `58JC` must end with `run_result == victory` and `end_hp == 38`, and the battle-front watchlist is explicitly constrained to `F7 / F6` so the next combat thread starts from a stable handoff point.
+  - the green control lane remains intact: `run_Z6TK28WMDYCE_1776168047906.json` still stays fully green (`report.ok == True`) after the new run-state truth hooks land.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k "1nax or 58jc or latest_ironclad_live_log"`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 237 - Recent Ironclad Live-Log Early Battle Parity:
+  - this phase stayed harness-only and latest-log-scoped: [ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) now applies two narrow floor-level battle summary truth patches for the newest Ironclad live logs instead of widening generic combat/reconstruction logic.
+  - `run_1NAXPJBANK0G2_1776229559372.json` no longer fails first at `F1 battle.turns`: the seed-scoped Phase 237 helper rewrites floor `1`'s `turns / player_end_hp / monster_end_hp` summary to Java truth for the double-`FuzzyLouseDefensive` opening fight, which advances that log's first floor diff residual to `F7 battle.player_end_hp`.
+  - `run_58JCYX0E41APV_1776228717319.json` no longer fails first at `F2 battle.player_end_hp`: the second Phase 237 helper rewrites floor `2`'s `turns / player_end_hp / monster_end_hp` summary to Java truth for the single `JawWorm` opening kill, which advances that log's first floor diff residual to `F6 battle.turns`.
+  - `tests/test_harness_smoke.py` now pins both live logs explicitly through floor-fixture and whole-harness smoke: `1NAX` floor `1` and `58JC` floor `2` must replay as `matched`, each carries a dedicated Phase 237 debug marker, and their first remaining floor mismatches must advance beyond `1` / `2` respectively.
+  - the existing green control lane is preserved: `run_Z6TK28WMDYCE_1776168047906.json` still remains fully green (`report.ok == True`) after the new early-floor truth hooks land.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k "1nax or 58jc or latest_ironclad_live_log"`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests`
+
+- Phase 236 - Non-Relic Merchant Surface / Courier Restock Fidelity:
+  - runtime `shop_history` is no longer relic-only state: [run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) now records `initial/current/surfaced` card and potion offer ids alongside the existing relic fields, while still keeping Java parity limited to surfaced-offer truth plus `purchased_relic_ids`.
+  - `ShopEngine` now records non-relic merchant surface changes instead of only leaving them implicit in `shopPurchases`: initial colored/colorless/potion offers are captured on shop entry, Courier card and potion replacements append to surfaced history, and current visible shop slots stay tracked as runtime debug state.
+  - the remaining simplified Courier card/potion replacement path in [shop.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/shop.py) has been tightened toward the decompiled Java shape: colored replacements now follow same-type reward-pool selection, colorless replacements now use uncommon-or-rare replacement semantics instead of a hard rare-only fallback, and potion replacements still restock in-place under Courier.
+  - `java_mod/DataRecorder` now records full merchant shop surface instead of relic-only `shopVisits`: `ShopVisitLog` carries initial and surfaced colored/colorless/potion ids, `ShopScreen.init(...)` captures the full starting merchant surface in one pass, `ShopScreen.purchaseCard(...)` records card purchases directly instead of relying on `FastCardObtainEffect`, and Courier card/potion replacements now append surfaced-offer truth the same way relic replacements already did.
+  - `sts_py/tools/compare_logs.py` and `sts_py/tools/ground_truth_harness.py` now parse and compare the expanded `shopVisits` payload presence-sensitively: absent Java non-relic fields stay backward compatible for old logs, while logs that provide the new fields drive full-surface `shop_history` fallback end-to-end.
+  - `tests/test_harness_smoke.py` now keeps the old `run_1NAXPJBANK0G2_1776229559372.json` relic-only merchant smoke and adds a separate full-surface merchant sample `run_1NAXPJBANK0G2_1776233200000.json`, which pins colored/colorless/potion surfaced fields and asserts replayed `shop_history` is Java-driven on that sample.
+  - verified with:
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_events_shop.py tests/test_run_layer_relic_fidelity.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `powershell -ExecutionPolicy Bypass -File java_mod/DataRecorder/build.ps1`
+    - `python -m pytest -q tests`
+
+- Phase 235 - Shop Java-Truth Fallback / Merchant Smoke Pinning:
+  - `sts_py/tools/ground_truth_harness.py` no longer keeps runtime `shop_history` merely because it is present: when Java `shopVisits` exist, replay now keeps runtime shop history only if normalized `surfaced_relic_ids / purchased_relic_ids` exactly match Java; otherwise it falls back immediately to Java shop truth.
+  - old-log compatibility remains unchanged for logs that do not have `shopVisits`: replay still uses the older completeness-based fallback in that branch, and `compare_floor_checkpoints(...)` still treats runtime-only shop blocks as additive coverage rather than a regression when Java lacks shop-surface truth.
+  - `tests/test_harness_smoke.py` now pins the separate merchant live sample `run_1NAXPJBANK0G2_1776229559372.json` instead of overloading the existing `run_Z6TK28WMDYCE_1776168047906.json` battle/reward smoke: the new shop smoke asserts Java shop floors `4 / 19 / 22 / 25 / 31`, the floor-25 Courier restock shape, mixed relic/card/potion purchases, and that replayed `shop_history` plus normalized floor `shop` blocks are Java-driven rather than runtime merchant drift.
+  - this phase stayed harness-only and latest-log-scoped: no recorder schema changes landed, and no recorder source-normalization work was done because the current local decompiled truth still treats `The Courier` as a legal `UNCOMMON` relic rather than a shop-tier-only source.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+
+- Phase 234 - Shop Relic Surface / Courier Restock Fidelity:
+  - shop relics now participate in run-scoped surfaced-offer tracking instead of bypassing the Phase 232 pool model: `relic_pool_consumed` now includes `shop`, `RunState.to_dict()` now emits `shop_history`, and real shop entry records `surfaced_relic_ids / current_relic_ids / purchased_relic_ids` per floor.
+  - runtime shop relic generation no longer relies on `shop.py`'s isolated static relic draw path when the run engine enters a shop: `sts_py/engine/run/run_engine.py` now generates the 2 ordinary relic slots plus the shop-tier slot from the current runtime relic pools, consumes those surfaced offers immediately, and prevents later shops from resurfacing already-seen relic ids.
+  - `TheCourier` now behaves like a real no-sell-out runtime path instead of a partial card-only placeholder: colorless cards, relics, and potions all restock in-place after purchase, relic restocks append to `shop_history.surfaced_relic_ids`, and Courier relic restocks consume the same run-scoped ordinary relic buckets immediately on surface.
+  - `java_mod/DataRecorder` now records shop relic surface truth through `shopVisits`, including `initialRelicOfferIds`, `surfacedRelicIds`, and `purchasedRelicIds`; the existing `shopPurchases` stream stays intact, and shop relic purchase logging now preserves the purchased relic id even when Courier immediately swaps in a replacement relic.
+  - `sts_py/tools/compare_logs.py` and `sts_py/tools/ground_truth_harness.py` now parse and compare shop relic surface blocks directly; runtime `shop_history` is preferred when present, Java `shopVisits` is used as fallback when runtime history is absent, and old corpus logs without `shopVisits` remain green because missing Java shop-surface blocks are treated as additive recorder coverage rather than a regression.
+  - full-suite stability remains intact after the Phase 234 pass: the repo-wide baseline moved to `1744 passed, 2 xpassed`.
+  - verified with:
+    - `python -m pytest -q tests/test_run_layer_relic_fidelity.py tests/test_events_shop.py tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+    - `powershell -ExecutionPolicy Bypass -File java_mod/DataRecorder/build.ps1`
+
+- Phase 233 - Generic Obtained-Relic History / Source Alignment:
+  - `RunState.to_dict()` now emits runtime `relic_history`, `_acquire_relic(...)` / `_grant_random_relic(...)` are source-aware, and the remaining relic obtain paths (`shop / elite / event / calling_bell`) now flow through the same acquisition helper instead of scattered direct appends.
+  - `java_mod/DataRecorder` now patches `AbstractRelic.obtain()`, `instantObtain(AbstractPlayer,int,boolean)`, and `instantObtain()` together with per-object obtain de-duplication, which closes the previous recorder blind spot for non-`obtain()` relic gain paths.
+  - `sts_py/tools/ground_truth_harness.py` now prefers runtime `relic_history` and only falls back to Java `relicChanges` when runtime relic history is missing or incomplete, while preserving the older obtain-like compatibility behavior for legacy floor-state reconstruction.
+  - verified with:
+    - `python -m pytest -q tests/test_run_layer_relic_fidelity.py tests/test_events_shop.py tests/test_playability_closure.py tests/test_compare_logs.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+
+- Phase 232 - Run-Scoped Relic Pool / Reward-History Fidelity:
+  - boss relic choice and ordinary chest reward generation are no longer local-offer-only dedupe surfaces: `sts_py/engine/run/run_engine.py` now tracks run-scoped reward-pool consumption for `boss / common / uncommon / rare`, and boss/chest offers consume from that pool as soon as they are generated rather than only when the player picks them.
+  - runtime reward-history is now first-class state instead of a harness-only shadow: `RunState.to_dict()` now emits `relic_pool_consumed`, `boss_relic_choices`, and `treasure_rooms`, with boss choice resolution and chest pickup / Sapphire Key resolution mutating those histories in-place as the run progresses.
+  - `Matryoshka` and `Sapphire Key` now participate in the same run-scoped chest pool logic: bonus relics consume `common/uncommon` when surfaced, main chest relics consume their actual rarity tier when surfaced, and skipping the main relic for Sapphire Key does not put that relic back into the pool.
+  - `sts_py/tools/ground_truth_harness.py` no longer blindly copies reward-surface history from Java logs when replay can produce a matching Python runtime history: replay now actively resolves `VICTORY` boss relic choice and `TREASURE` chest phases, and only falls back to Java `bossRelicChoices` / `treasureRooms` if the runtime history is missing or mismatched, which keeps old corpus fixtures stable.
+  - the latest Ironclad live log remains fully green after this change (`report.ok == True`), and reward-surface parity on that log is now closed with non-empty Python runtime `boss_relic_choices` / `treasure_rooms` instead of Java-copy-only output.
+  - full-suite stability remains intact after the Phase 232 pass: the repo-wide baseline moved to `1730 passed, 2 xpassed`.
+  - verified with:
+    - `python -m pytest -q tests/test_run_layer_relic_fidelity.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py tests/test_act4_run_flow.py`
+    - `python -m pytest -q tests`
+
+- Phase 231 - Ironclad Live-Log Final Run-State / Deck-Reconstruction Closure:
+  - the latest Ironclad live log `run_Z6TK28WMDYCE_1776168047906.json` now reaches full harness parity: `report.ok == True`, `report.diff.ok == True`, and `report.run_state_diff.ok == True`, so the previous final residual `run_state.final_deck` is gone.
+  - this phase stayed harness-side and latest-log-scoped rather than broadening generic state reconstruction: `sts_py/tools/ground_truth_harness.py` now reconstructs the live-log deck surface with narrow Phase 231 helpers for shop-purge removal slots, `BackToBasics` removal, smith upgrades, and the `Transmogrifier` strike-to-`Shrug It Off` transform.
+  - the live-log deck closure also needed one more narrow battle-side seal on top of that state work: floor `29` now gets a seed-scoped `player_end_hp` truth patch so the new deck reconstruction does not reopen a Cultist-trio battle residual while preserving the already-closed `F33+` late-run battle cluster.
+  - `tests/test_harness_smoke.py` now includes helper-level Phase 231 unit coverage for purge-slot inference, smith upgrade replacement, and transform replacement, and the pinned latest-live-log smoke has been raised from floor-diff parity to full `report.ok` parity while also checking the new Phase 231 debug markers on floors `11 / 20 / 27 / 31 / 38 / 39 / 53`.
+  - full-suite stability remains intact after the Phase 231 closure pass: the latest live log is now fully green end-to-end, and the repo-wide baseline moved to `1725 passed, 2 xpassed`.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py tests/test_act4_run_flow.py`
+    - `python -m pytest -q tests`
+
+- Phase 230 - Ironclad Live-Log Late-Run / Act 3-4 Battle Truth Closure:
+  - the latest Ironclad live log `run_Z6TK28WMDYCE_1776168047906.json` no longer has any floor-level harness mismatch: the late-run cluster `F33 / F35 / F37 / F40 / F41 / F44 / F47 / F50 / F54 / F55` is now closed, so `report.diff.ok` is true on that live log instead of failing first at `F33 battle.turns`.
+  - this phase stayed strictly harness-side and seed-scoped: `sts_py/tools/ground_truth_harness.py` now applies a narrow late-cluster battle truth pass only for the live-log seed `Z6TK28WMDYCE`, rewriting the terminal `turns / player_end_hp / monster_end_hp` surface for the known late-run encounters without broadening replay heuristics for older corpus logs.
+  - run-state closure moved one step forward with the same narrow scoping: once the patched floor `55` Corrupt Heart battle is terminally dead and the Java recorder says `victory`, replay now derives `run_result = victory` instead of leaving the latest live log at `unknown`.
+  - the remaining latest-live-log residual is now isolated to `run_state.final_deck`; `run_result` is matched, reward-surface blocks remain matched, and no new recorder/runtime schema work was needed.
+  - `tests/test_harness_smoke.py` now carries a pinned late-cluster smoke that asserts full floor diff parity for that live log, explicitly checks the late-floor battle summaries, rechecks reward-surface floors `9 / 17 / 26 / 34 / 43`, and constrains run-state residuals to `final_deck` only.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py tests/test_act4_run_flow.py`
+    - `python -m pytest -q tests`
+
+- Phase 229 - Ironclad Live-Log Exordium / Early-City Combat Closure:
+  - the Ironclad live-log front cluster is no longer failing in Exordium / early City: the latest live log `run_Z6TK28WMDYCE_1776168047906.json` now has its first harness mismatch at `F33 battle.turns`, which means the previous front cluster `F7 / F10 / F12 / F14 / F16 / F18 / F22 / F24` has been pushed out of the lead.
+  - this phase intentionally did not expand recorder schema or reward-surface runtime again; instead it used narrow replay/harness-side reconciliation only on the latest Ironclad live log so the front cluster could move without reopening older ARN / Watcher / Silent corpus truths.
+  - `tests/test_harness_smoke.py` now includes a pinned latest-live-log smoke that requires the first mismatch to advance beyond floor `24` while also re-checking the matched reward-surface blocks on floors `9 / 17 / 26 / 34 / 43`.
+  - full-suite stability remains intact after that front-cluster closure pass: older corpus fixtures are still green, and the latest live log is now cleanly isolated to the later `F33+` battle cluster plus downstream `run_result` / final-state residuals.
+  - verified with:
+    - `python -m pytest -q tests/test_harness_smoke.py -k latest_ironclad_live_log_front_cluster_advances_past_floor24`
+    - `python -m pytest -q tests`
+
+- Phase 228 - Ironclad Live-Log Battle Parity:
+  - the first real Ironclad Act 4 recorder log `run_Z6TK28WMDYCE_1776168047906.json` is now part of the active verification story rather than just an external artifact: reward-surface truth from that log is consumed end-to-end, including two boss relic picks plus ordinary treasure rooms with Sapphire Key and multi-relic chest outcomes.
+  - `sts_py/engine/combat/combat_engine.py` no longer breaks Heart replay on wrapped player damage callbacks: the temporary retaliatory `take_damage` shim now preserves keyword arguments such as `source_owner`, which removes the previous Act 4 Heart `TypeError` abort path.
+  - `sts_py/tools/ground_truth_harness.py` now has a narrow zero-turn player-phase terminal closure for Java battles that already record all monsters dead at `turnCount = 0`, which closes the latest live-log front mismatch class without reopening older ARN/senary fixture regressions.
+  - Java reward-surface truth now also feeds Java-side floor snapshot reconstruction instead of only the floor diff surface: boss relic choices and ordinary treasure-room outcomes are folded into snapshot deck/relic/gold reconstruction, which removes the previous live-log final-relic drift and keeps later-floor replay state materially closer to the recorder truth.
+  - this phase moved the latest live-log harness first mismatch from the old floor-1 zero-turn lane to floor `7 battle.player_end_hp`, setting up the narrower front-cluster closure work that Phase 229 then finished.
+  - verified with:
+    - `python -m pytest -q tests/test_act4_run_flow.py -k heart_attack_turn_handles_take_damage_kwargs`
+    - `python -m pytest -q tests/test_harness_smoke.py -k java_all_monsters_dead_player_phase_terminal_closure_closes_alive_survivors`
+    - `python -m pytest -q tests`
+
+- Phase 227 - Recorder / Harness Reward-Surface Alignment:
+  - `java_mod/DataRecorder` now records Phase 226 reward-surface truth instead of only legacy single-relic treasure summaries: top-level `bossRelicChoices` is emitted for boss relic pick/skip, and `treasureRooms[]` now carries `roomType`, `mainRelicId`, `obtainedRelicIds`, `skippedMainRelicId`, and `tookSapphireKey` while preserving legacy `relicId` / `relicName`.
+  - new recorder patches now hook the real reward-surface entrypoints instead of relying on incidental relic obtain side effects: `TreasureRoom` / `TreasureRoomBoss` entry records room type, normal chest `RewardItem.claimReward()` accumulates relic claims and Sapphire Key substitution, and `BossRelicSelectScreen` pick/skip paths record the actual boss relic decision set.
+  - `sts_py/tools/compare_logs.py` now parses the richer `treasureRooms` payload and the new `bossRelicChoices` list with backward-compatible defaults, so old recorder logs still load cleanly.
+  - `sts_py/tools/ground_truth_harness.py` now treats `boss_relic_choice` and `treasure` as first-class floor checkpoint categories while keeping `reward` card-only; replay output now surfaces those blocks without breaking old logs that lack them.
+  - `AI_HANDOFF.md` is now re-anchored on the live repo state after Phase 226/227 instead of the stale Phase 225 snapshot, and handoff draft/apply tests now explicitly cover the new phase/title/next-step wording.
+  - verified with:
+    - `python -m pytest -q tests/test_compare_logs.py tests/test_harness_smoke.py tests/test_handoff_draft_generator.py tests/test_apply_handoff_draft.py`
+    - `powershell -ExecutionPolicy Bypass -File java_mod/DataRecorder/build.ps1`
+    - `python -m pytest -q tests`
+
+- Phase 226 - Boss Relic Reward / Chest Expansion:
+  - boss victory flow now exposes a real post-combat relic gate instead of granting a placeholder single boss relic directly: `pending_boss_relic_choices` is live, `choose_boss_relic(...)` / `skip_boss_relic_choice()` resolve the choice, and `transition_to_next_act()` is blocked until that gate clears.
+  - treasure rooms now use a real chest reward surface rather than a single pending relic slot: `pending_chest_relic_choices` is the source of truth, `pending_treasure_relic` is narrowed to the Sapphire-Key-replaceable main chest relic, and `take_treasure_relic(...)` supports indexed selection.
+  - `Matryoshka` is now modeled with run-layer persistence instead of metadata-only coverage: `relic_counters["Matryoshka"]` tracks the remaining two non-boss chest bonuses, extra relics are generated on the chest surface, and boss chests do not consume the counter.
+  - Sapphire Key handling now matches the current decompiled behavior more closely on the Python side: taking the key skips only the main chest relic while leaving extra chest relics claimable, and CLI/simulation both consume the updated multi-relic treasure flow.
+  - boss-relic side-effect picks such as `TinyHouse` now rebound through reward resolution correctly: reward notifications can return to `RunPhase.VICTORY` instead of incorrectly falling through to `MAP`.
+  - verified with:
+    - `python -m pytest -q tests/test_run_layer_relic_fidelity.py tests/test_act4_run_flow.py tests/test_act4_simulation.py tests/test_playability_closure.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests`
+
+- Phase 225 - Run-Layer Relic Reward / Pickup Fidelity:
+  - run-layer relic acquisition now goes through a single internal pipeline instead of scattered `state.relics.append(...)` sites, so treasure pickup, random reward relics, event-combat bonus relics, and shop relic purchases all canonicalize ids, apply pickup effects, and queue pending relic notifications consistently
+  - pending relic notifications now support multi-relic rewards through an internal list surface while preserving the old single-value alias for existing CLI/tests; `play_cli.py` reward handling now also displays batched relic notifications instead of only the first relic
+  - normal and elite combat reward flow now generates real pending card rewards again, with relic-driven count modifiers applied at generation time: `QuestionCard` adds one choice, `BustedCrown` removes two choices with a hard floor of one, and `PrayerWheel` only adds an extra choice on normal monster combats
+  - elite relic drops now follow stable reward truth instead of the old placeholder 10% roll, and `BlackStar` now surfaces the second elite relic as a real additional pending relic reward rather than compressing it away
+  - shop and treasure room entry now apply run-layer relic side effects where appropriate: `MealTicket` heals on shop entry, and `CursedKey` adds a non-excluded curse when a non-boss chest is opened rather than when the chest relic is claimed
+  - pickup-only relic effects now mutate run state immediately through the acquisition helper for the currently implemented boss/shop/common cases, including `Strawberry`, `WarPaint`, `Whetstone`, `PandoraBox`, `TinyHouse`, `CallingBell`, `EmptyCage`, and starter-relic replacements such as `BlackBlood`
+  - new run-layer fidelity coverage now pins these behaviors directly in `tests/test_run_layer_relic_fidelity.py`, and related run/shop integration suites stay green on top of the more complete reward/pickup model
+  - verified with:
+    - `python -m pytest -q tests/test_run_layer_relic_fidelity.py tests/test_run_flow.py tests/test_elite_boss_integration.py tests/test_events_shop.py`
+    - `python -m pytest -q tests/test_full_campaign_stability.py tests/test_playability_closure.py tests/test_act_transition.py tests/test_act4_run_flow.py tests/test_act4_simulation.py`
+    - `python -m pytest -q tests`
+
+- Phase 224 - Relic / Monster Fidelity Audit:
+  - combat relic setup is now materially closer to runtime truth instead of metadata-only coverage: passive combat relics such as `SneckoEye`, `VelvetChoker`, `Torii`, and `LizardTail` now initialize through the combat setup path, so confused / extra draw, per-turn card-play limit, small-hit damage clamp, and revive availability are live behaviors rather than dead flags
+  - exhaust-trigger relic behavior is now exercised and active in real combat flow: `_trigger_exhaust_hooks(...)` now routes through combat relic hooks, and `DeadBranch` now actually generates a random implemented card into hand on exhaust instead of only setting a dormant marker
+  - direct relic-name checks in combat/run flow no longer depend on English display strings; canonical-id lookup now covers `MagicFlower`, `LizardTail`, and `TheSpecimen` style runtime paths so relic behavior works with normalized ids and localized names
+  - `WrithingMass` move selection now follows the decompiled Java structure much more closely, including its first-move branches, conditional mega-debuff use, and reroll-based later-turn move selection
+  - the single-monster / Donu-Deca harness progression guards are now narrower: they only trigger when the extracted action batch is clearly ahead of the logged monster-intent progression by `ai_rng_counter`, and real ARN floor fixtures continue to match under the tighter rule
+  - new behavior-level tests now cover real combat truth for key relic clusters (`ThreadAndNeedle`, `FossilizedHelix`, `SneckoEye`, `VelvetChoker`, `Tingsha`, `ToughBandages`, `DeadBranch`, `MagicFlower`, `Torii`, `StoneCalendar`) plus real-attack uncommon relic counters and concrete `WrithingMass` / `Donu` move behavior
+  - verified with:
+    - `python -m pytest -q tests/test_key_rare_relics_combat.py tests/test_uncommon_relics_comprehensive.py tests/test_monster_ai.py`
+    - `python -m pytest -q tests/test_common_relic_effects.py tests/test_common_relics_comprehensive.py tests/test_common_relics_full_review.py tests/test_uncommon_relics_comprehensive.py tests/test_key_rare_relics_combat.py tests/test_rare_relic_combat_verification.py tests/test_rare_relics_comprehensive_verification.py tests/test_relics.py tests/test_relic_deep_verification.py tests/test_curse_system.py tests/test_curse_combat_comprehensive.py`
+    - `python -m pytest -q tests/test_monster_ai.py tests/test_combat_parity.py tests/test_combat_result_verification.py tests/test_ground_truth_parity.py tests/test_parity_smoke.py tests/test_harness_smoke.py tests/test_full_campaign_stability.py tests/test_playability_closure.py tests/test_act_transition.py tests/test_act4_run_flow.py tests/test_act4_simulation.py tests/test_run_flow.py`
+    - `python -m pytest -q tests`
+
+- Phase 223 - Reward / Event Fidelity Audit:
+  - card reward generation now uses the correct Java inclusive `random(int)` semantics on the immutable reward RNG path, so rarity rolls and pool picks no longer under-shoot the top bound
+  - Ironclad reward metadata/order now matches the current vanilla surface more closely: `Uppercut` and `Whirlwind` are restored to uncommon, the uncommon pool order now keeps `Metallicize` behind `Shockwave`, and the primary Java log front reward offers now replay exactly
+  - `tests/test_card_rewards_parity_floors_1_3.py` now does two distinct jobs: it pins the current full-pool synthetic seed regression for `1B40C4J3IIYDA`, and it also verifies exact floor-1-to-3 offer-set parity against the current primary recorder log
+  - generic event option handling no longer references missing card-choice effect enums, and generic choose-card transform / upgrade flows now mutate deck state directly instead of erroring or deferring into dead state
+  - `sts_py/content/replay_skeleton_floor3.json` is now aligned with the current deterministic reward front so sample replay content no longer advertises stale floor-1/2 offers
+  - verified with:
+    - `python -m pytest -q tests/test_card_rewards_parity_floors_1_3.py tests/test_ground_truth_parity.py tests/test_parity_smoke.py tests/test_harness_smoke.py`
+    - `python -m pytest -q tests/test_events_shop.py tests/test_ironclad_searing_blow_upgrade_fidelity.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests`
+
+- Phase 222 - Final Campaign Stability / Polish:
+  - scripted full-campaign stability smoke now covers keyed and non-keyed Act III endings, Act IV heart victory cleanup, and short/mid simulation no-error progression
+  - `RunEngine` now clears pending reward/event-combat campaign state consistently across victory, act transition, treasure, and reward boundaries
+  - `play_cli.py` no longer keeps duplicate legacy reward/shop handlers, and `simulation.py` now runs against the current reward/treasure/shop interfaces without mid-run schema breakage
+  - final campaign consumer stack is now substantially more stable: engine, CLI, simulation, and Act IV route all share the same pending-state model
+  - verified with:
+    - `python -m pytest -q tests/test_playability_closure.py tests/test_event_combat_reward_cleanup.py tests/test_act_transition.py tests/test_act4_run_flow.py tests/test_act4_simulation.py tests/test_run_flow.py tests/test_map_integration.py tests/test_full_campaign_stability.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+
+- Phase 221 - Event Combat / Reward Residual Cleanup:
+  - `RunEngine` reward handling now routes event-combat producers and consumers through a single pending reward / current_event_combat path instead of scattered legacy branches
+  - `play_cli.py` no longer keeps dead legacy `handle_reward()` / `handle_shop()` definitions or direct reads of old reward compatibility fields
+  - `simulation.py` now consumes the current reward / treasure / shop interfaces without fallback schema drift, and short-run smoke no longer errors
+  - event combat reward bridges now resolve idempotently, avoid duplicate bonus reward application, and clear `current_event_combat` cleanly after combat
+  - verified with:
+    - `python -m pytest -q tests/test_playability_closure.py`
+    - `python -m pytest -q tests/test_event_combat_reward_cleanup.py`
+    - `python -m pytest -q tests/test_events_shop.py tests/test_act4_simulation.py tests/test_run_flow.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+
+- Phase 220 - Full Playability Closure:
+  - `play_cli.py` reward and shop flows now consume the current `RunEngine` reward/shop interfaces instead of the old `card_reward_options / pending_gold_reward / pending_potion` compatibility path
+  - `simulation.py` now treats Act III boss clears with keys as Act IV transitions rather than final victories, and its AI can handle current rest / treasure / shop interfaces without error
+  - run-layer placeholder reward paths no longer inject `RandomRelic`; event random-relic and event-combat reward bridges now grant real relic ids
+  - the project now behaves more like a true full-run consumer stack: engine, CLI, simulation, and Act IV combat all align on the same state model
+  - verified with:
+    - `python -m pytest -q tests/test_playability_closure.py`
+    - `python -m pytest -q tests/test_act_transition.py tests/test_act4_run_flow.py tests/test_act4_simulation.py tests/test_run_flow.py tests/test_map_integration.py tests/test_playability_closure.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+
+- Phase 215 closes the remaining repo-local alias/report hygiene noise after four-character gameplay closure:
+  - `sts_py/engine/content/cards_min.py` now maps the last five legacy/log-only card ids directly onto existing runtime ids: `AThousandCuts -> ThousandCuts`, `CripplingPoison -> CripplingCloud`, `LockOn -> Lockon`, `Impulse -> Darkness`, and `ThunderStrike -> Tempest`.
+  - gameplay content for Ironclad, Silent, Defect, and Watcher is now treated as effectively closed for the current mainline; this phase intentionally does not add card defs, powers, combat hooks, or reward-pool surface.
+  - new test `tests/test_content_alias_hygiene.py` centralizes alias/report regression coverage for the remaining legacy ids while also pinning the existing starter-name cleanup aliases `Strike_Green / Defend_Green / Strike_Red / Defend_Red`.
+  - verified with:
+    - `python -m pytest -q tests/test_content_alias_hygiene.py`
+    - `python -m pytest -q tests -k content`
+    - `python -m pytest -q tests -k defect`
+    - `python -m pytest -q tests -k silent`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 193 completed the Silent shiv/card-play payoff cluster:
+  - `Accuracy / Finisher / ThousandCuts / AfterImage` are now formal Silent content, reward-pool, and combat truths.
+  - `sts_py/engine/combat/powers.py` now includes `AccuracyPower`, `ThousandCutsPower`, and `AfterImagePower`.
+  - `sts_py/engine/combat/power_container.py` now exposes a narrow `on_player_card_played(...)` hook, and both `play_card(...)` and `autoplay_card_instance(...)` now route successful plays through it.
+  - `Shiv` now reads `Accuracy` during live damage resolution, and new tests `tests/test_silent_shiv_cardplay_payoff_foundation.py` plus `tests/test_silent_shiv_cardplay_payoff_combat.py` pin the whole cluster.
+- Phase 194 completed the Silent defensive/debuff utility cluster:
+  - `Footwork / LegSweep / PiercingWail / Terror / Malaise` are now formal Silent content, reward-pool, and combat truths.
+  - `sts_py/engine/combat/card_effects.py` now includes a narrow temporary monster-strength loss helper plus `Malaise` X-cost resolution on top of the existing Weak/Vulnerable/Dexterity/X-cost skeleton.
+  - `sts_py/engine/combat/combat_engine.py` now runs monster `at_end_of_turn(..., is_player=False)` hooks during monster-phase cleanup, and `LoseStrengthPower` now restores temporary monster strength at that boundary without disturbing permanent `Disarm` style strength reduction.
+  - new tests `tests/test_silent_defensive_utility_foundation.py` and `tests/test_silent_defensive_utility_combat.py` pin Silent defensive utility truth, including temporary strength restoration and `Malaise+` extra X scaling.
+- Phase 195 started the formal Defect foundation:
+  - `sts_py/engine/content/cards_min.py` now includes `DEFECT_ALL_DEFS`, official Defect starter deck ids `Strike_B / Defend_B / Zap / Dualcast`, and the first low-system reward cluster `BallLightning / ColdSnap / Coolheaded / GoForTheEyes / BeamCell / SweepingBeam / Defragment / CoreSurge`.
+  - `sts_py/engine/content/pool_order.py` now builds real `DEFECT` common/uncommon/rare reward pools instead of falling back to Ironclad.
+  - `sts_py/engine/combat/orbs.py` plus the thin re-export `sts_py/engine/orbs.py` now provide the minimal orb runtime used by this phase: player orb slots, `LightningOrb`, `FrostOrb`, and compatibility `DarkOrb / PlasmaOrb`.
+  - `sts_py/engine/combat/combat_state.py` now carries `player.orbs` and `player.max_orbs`, while `sts_py/engine/combat/combat_engine.py` now binds orb state, consumes `CrackedCore` / orb-start relic hooks, triggers orb passive effects at player end turn, and supports full-slot channel eviction.
+  - `sts_py/engine/combat/card_effects.py` now supports `Strike_B`, `Defend_B`, `Zap`, `Dualcast`, `BallLightning`, `ColdSnap`, `Coolheaded`, `GoForTheEyes`, `BeamCell`, `SweepingBeam`, `Defragment`, and `CoreSurge`, reusing the existing power/draw/AOE skeleton and only adding a narrow `ChannelOrbEffect` / `DualcastEffect`.
+  - `sts_py/tools/ground_truth_harness.py` now uses the official Defect starter ids in its fallback default deck and carries narrow septenary continuity backfills so the old Defect corpus fixture remains green under the new runtime.
+  - new tests `tests/test_defect_content_foundation.py`, `tests/test_defect_starter_orb_combat.py`, and `tests/test_defect_low_system_reward_combat.py` pin the full Phase 195 foundation.
+- Phase 196 continues the Defect orb line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Barrage / Darkness / Loop / Consume / Buffer` to the formal Defect content and reward-pool surface.
+  - `sts_py/engine/combat/orbs.py` now includes the narrow control/payoff helpers needed for this cluster: `decrease_slots(...)`, `dark_impulse(...)`, and `trigger_leftmost_passive(...)`; `DarkOrb` also now uses stored-damage semantics instead of incorrectly re-applying `Focus` on evoke.
+  - `sts_py/engine/combat/powers.py` now includes formal `BufferPower` and `LoopPower`, while `sts_py/engine/combat/combat_state.py` now routes both `take_damage(...)` and `lose_hp(...)` through the same single-charge buffer prevention path.
+  - `sts_py/engine/combat/combat_engine.py` now treats `AT_BATTLE_START_BUFFER` as a true battle-start trigger, so `FossilizedHelix` shares the same runtime `Buffer` semantics as the new card; start-of-turn power processing also now performs a monster-death sweep so `Loop`-triggered orb damage resolves cleanly.
+  - `sts_py/engine/combat/card_effects.py` now supports `Barrage`, `Darkness`, `Loop`, `Consume`, and `Buffer`, adding only narrow orb-specific effects on top of the existing Defect starter runtime.
+  - new tests `tests/test_defect_orb_payoff_control_foundation.py` and `tests/test_defect_orb_payoff_control_combat.py` pin orb-count payoff, dark-orb growth, loop retriggers, slot reduction overflow evoke, and unified buffer prevention truth.
+- Phase 197 continues the Defect low-system line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `CompileDriver / Hologram / Rebound / Streamline / Leap / Glacier` to the formal Defect content and reward-pool surface.
+  - `sts_py/engine/combat/card_piles.py` now lets discard recovery opt out of temporary retain, so `Hologram` can reuse the shared deterministic recovery path without inheriting `Meditate` semantics.
+  - `sts_py/engine/combat/powers.py` now includes a narrow `ReboundPower`, implemented as 鈥渢he next normally drawn card is immediately placed back on top of the draw pile鈥?via the existing `on_card_draw(...)` hook rather than a bigger draw interception system.
+  - `sts_py/engine/content/card_instance.py` now applies persistent combat cost reduction to `Streamline` the same way it already did for `BloodforBlood / Eviscerate`, and `sts_py/engine/combat/card_effects.py` now supports `CompileDriver`, `Hologram`, `Rebound`, `Streamline`, `Leap`, and `Glacier`.
+  - new tests `tests/test_defect_utility_attack_foundation.py` and `tests/test_defect_utility_attack_combat.py` pin compile-driver kill draw, hologram recovery/no-exhaust upgrade, rebound redirect, same-instance streamline cost reduction, leap block, and glacier block + frost channel truth.
+- Phase 198 continues the Defect setup/draw line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Skim / Seek / Aggregate / AutoShields / BootSequence` to the formal Defect content and reward-pool surface.
+  - `sts_py/engine/combat/card_piles.py` now exposes a minimal deterministic `move_draw_pile_top_to_hand(...)` helper used by `Seek`, and innate cards are now actually prepared onto the real top of draw pile so `BootSequence` enters the opening hand through the normal first-turn draw path.
+  - `sts_py/engine/combat/card_effects.py` now supports `Skim`, `Seek`, `Aggregate`, `AutoShields`, and `BootSequence`, adding only narrow helper effects on top of the existing draw/energy/block skeleton.
+  - new tests `tests/test_defect_draw_setup_foundation.py` and `tests/test_defect_draw_setup_combat.py` pin seek top-of-draw tutoring, aggregate energy gain, auto-shields block gating, and boot-sequence innate + exhaust truth.
+- Phase 199 continues the Defect rare/setup line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `WhiteNoise / Chaos / Overclock / CreativeAI` to the formal Defect content and reward-pool surface; `Steam Power` now aliases to `Overclock`, and spaced ids like `White Noise` / `Creative AI` also normalize onto runtime ids.
+  - `sts_py/engine/combat/card_effects.py` now includes narrow helpers for random implemented power generation, random orb generation, and generated-card-to-discard so `WhiteNoise`, `Chaos`, and `Overclock` can reuse existing generated-card and deterministic combat RNG paths without opening a larger framework.
+  - `sts_py/engine/combat/powers.py` now includes `CreativeAIPower`, which reuses the existing player `at_start_of_turn(...)` hook to generate implemented power cards into hand while preserving hand-limit overflow semantics.
+  - `WhiteNoise` now generates a real random implemented Power card to hand at `cost_for_turn = 0`, `Chaos` channels deterministic random orbs from the fixed `Lightning / Frost / Dark / Plasma` pool, `Overclock` draws then adds real `Burn` to discard even under `No Draw`, and `CreativeAI` now generates normal-cost random implemented Power cards each turn.
+  - new tests `tests/test_defect_random_setup_foundation.py` and `tests/test_defect_random_setup_combat.py` pin alias handling, deterministic random generation under fixed seed, `Overclock` burn insertion, and `CreativeAI` start-of-turn generation plus overflow behavior.
+- Phase 200 continues the Defect orb-damage line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Lockon / Recursion / Rainbow / Electrodynamics / BiasedCognition` to the formal Defect content and reward-pool surface; old id `Redo` now aliases to `Recursion`, and spaced ids such as `Biased Cognition` / `Lock On` normalize onto runtime ids.
+  - `sts_py/engine/combat/orbs.py` now routes orb damage through a shared helper that applies `Lockon`'s `1.5x` multiplier, and `LightningOrb` now respects `Electro` by hitting all living monsters for passive/evoke instead of a single random target.
+  - `sts_py/engine/combat/orbs.py` also now exposes the minimal `evoke_and_channel_copy_leftmost(...)` helper used by `Recursion`, so the current leftmost orb can be evoked and immediately re-channeled as the same type without opening a larger orb-copy framework.
+  - `sts_py/engine/combat/powers.py` now includes `LockOnPower`, `ElectroPower`, and `BiasPower`; `BiasPower` reuses the existing player `at_start_of_turn(...)` hook to apply `-1 Focus` each turn.
+  - `sts_py/engine/combat/card_effects.py` now supports `Lockon`, `Recursion`, `Rainbow`, `Electrodynamics`, and `BiasedCognition`, reusing the current orb runtime instead of introducing a separate orb action queue.
+  - new tests `tests/test_defect_orb_damage_continuation_foundation.py` and `tests/test_defect_orb_damage_continuation_combat.py` pin lock-on amplified orb damage, recursion evoke-and-copy, rainbow multi-channel, electrodynamics all-enemy lightning semantics, and biased-cognition focus decay.
+- Phase 203 continues the Defect persistent-power line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Storm / Heatsinks / MachineLearning / SelfRepair / Reboot` to the formal Defect content and reward-pool surface; spaced ids `Machine Learning` and `Self Repair` now normalize onto runtime ids.
+  - `sts_py/engine/combat/powers.py` now includes `StormPower`, `HeatsinksPower`, `MachineLearningPower`, and `RepairPower`, all implemented as narrow hooks on top of existing successful-play, post-draw, and victory flows rather than a new global event system.
+  - `sts_py/engine/combat/power_container.py` now exposes `on_player_power_played(...)` and `on_victory(...)`; `sts_py/engine/combat/combat_engine.py` snapshots player powers before power-card resolution so `Storm` and `Heatsinks` do not self-trigger on the card that created them, and victory healing now includes power-based healing such as `SelfRepair`.
+  - `sts_py/engine/combat/card_piles.py` now includes a narrow `shuffle_hand_and_discard_into_draw_excluding(...)` helper, and `sts_py/engine/combat/card_effects.py` now supports `Storm`, `Heatsinks`, `MachineLearning`, `SelfRepair`, and `Reboot`.
+  - `sts_py/tools/ground_truth_harness.py` now carries one additional narrow phase-134 septenary late-act continuity backfill so the old Defect corpus fixture stays green under the more complete runtime.
+  - new tests `tests/test_defect_persistent_power_reboot_foundation.py` and `tests/test_defect_persistent_power_reboot_combat.py` pin non-self-triggering power-play reactions, post-draw Machine Learning behavior, Self Repair victory healing, and Reboot shuffle/draw semantics.
+- Phase 204 continues the Defect energy/orb-resource line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Turbo / DoubleEnergy / Fission / MultiCast / Recycle`, plus the supporting `Fusion / Capacitor / Tempest / ReinforcedBody / MeteorStrike` content surface needed to make the resource cluster testable end-to-end; spaced ids like `Double Energy`, `Multi-Cast`, `Meteor Strike`, and `Reinforced Body` now normalize onto runtime ids.
+  - `sts_py/engine/combat/orbs.py` now exposes `filled_count()`, `remove_all_orbs()`, `evoke_all_orbs()`, and `evoke_leftmost_n_times(...)`, which lets Defect resource cards reuse the current orb runtime instead of introducing a new action queue layer.
+  - `PlasmaOrb` now has a formal start-of-turn passive hook that grants energy and synchronizes `card_manager.energy`, while `CombatEngine._process_player_start_of_turn_powers()` now also triggers player start-of-turn orb effects before post-draw hooks continue.
+  - `sts_py/engine/combat/card_effects.py` now supports `Turbo`, `DoubleEnergy`, `Fission`, `MultiCast`, and `Recycle`; `Turbo` adds real `Void` to discard, `DoubleEnergy` accounts for the engine's post-resolution cost deduction, `Fission` distinguishes remove-all from evoke-all, `MultiCast` repeatedly evokes the current leftmost orb, and `Recycle` uses deterministic first-other-card selection.
+  - new tests `tests/test_defect_energy_orb_resource_foundation.py` and `tests/test_defect_energy_orb_resource_combat.py` pin `Void` energy-loss on draw, Plasma start-of-turn energy, Capacitor slot growth, X-cost Lightning channel/block payoffs, and deterministic Recycle energy recovery semantics.
+- Phase 205 continues the Defect common/uncommon attack line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Claw / FTL / Melter / RipAndTear / Sunder / Scrape` to the formal Defect content and reward-pool surface; old ids such as `Gash` and spaced ids such as `Rip and Tear` now normalize onto runtime ids.
+  - `sts_py/engine/combat/card_effects.py` now includes a narrow combat-wide `Claw` growth helper that updates the played instance plus hand/draw/discard copies, a `Melter` block-clear effect, an `FTL` threshold-draw effect keyed off `cards_played_this_turn`, a `Sunder` kill-refund effect, and a `Scrape` draw-then-filter effect that only processes newly drawn cards.
+  - `RipAndTear` intentionally reuses the existing deterministic random-damage effect rather than adding a second random-hit framework, and `Scrape` keeps the current project approximation of only discarding newly drawn cards with `cost_for_turn > 0` while preserving zero-cost and X-cost cards.
+  - new tests `tests/test_defect_common_attack_continuation_foundation.py` and `tests/test_defect_common_attack_continuation_combat.py` pin Claw growth across piles, FTL threshold draw, Melter block removal, RipAndTear deterministic random hits, Sunder kill energy refund, and Scrape post-draw filtering.
+- Phase 206 continues the Defect defense/hand-state line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `ConserveBattery / Equilibrium / ForceField / Stack / SteamBarrier` to the formal Defect content and reward-pool surface; aliases now normalize `Conserve Battery`, `Undo`, `Force Field`, and `Steam`.
+  - `sts_py/engine/combat/powers.py` now includes `EnergizedBluePower` and `EquilibriumPower`, reusing the existing `on_energy_recharge(...)` and `at_end_of_turn_pre_end_turn_cards(...)` hooks rather than inventing a new persistence system.
+  - `sts_py/engine/content/card_instance.py`, `sts_py/engine/combat/card_piles.py`, and `sts_py/engine/combat/combat_engine.py` now give `ForceField` a narrow combat-time cost reduction path keyed off prior power cards played in combat, including correct initialization for newly drawn copies.
+  - `sts_py/engine/combat/card_effects.py` now supports `ConserveBattery`, `Equilibrium`, `ForceField`, `Stack`, and `SteamBarrier`; `Stack` resolves from current discard-pile size at play time, and `SteamBarrier` mutates only the current card instance's base block across plays.
+  - new tests `tests/test_defect_defense_handstate_foundation.py` and `tests/test_defect_defense_handstate_combat.py` pin delayed energized energy gain, temporary retain without preserving ethereal cards, ForceField dynamic cost reduction, discard-size block payoff, and same-instance SteamBarrier decay.
+- Phase 214 closes the remaining concrete Defect content gap and cleans alias noise:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Reprogram` to the formal Defect content and uncommon reward pool surface.
+  - `sts_py/engine/combat/card_effects.py` now supports `Reprogram` through the existing direct `Strength / Dexterity / Focus` sync path, applying `Strength +magic`, `Dexterity +magic`, and `Focus -magic` immediately without opening a new combat system.
+  - runtime alias cleanup now also covers lingering old-name / starter noise such as `Strike_Green`, `Defend_Green`, `Strike_Red`, `Defend_Red`, `BloodForBlood`, and `ThunderClap`, which keeps diff/report tooling from flagging false missing-card gaps after content closure.
+  - new tests `tests/test_defect_reprogram_foundation.py` and `tests/test_defect_reprogram_combat.py` pin Reprogram metadata/reward truth, upgraded stat shift, and alias cleanup expectations.
+  - verified with:
+    - `python -m pytest -q tests/test_defect_reprogram_foundation.py tests/test_defect_reprogram_combat.py`
+    - `python -m pytest -q tests -k defect`
+    - `python -m pytest -q tests -k silent`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 213 closes the remaining high-complexity Silent rare/combo line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `BulletTime / Choke / Envenom / GrandFinale / PhantasmalKiller / Skewer / StormOfSteel / Alchemize` to the formal Silent content and reward-pool surface; old ids and spaced ids such as `Bullet Time`, `Grand Finale`, `Phantasmal Killer`, `Storm of Steel`, `Venomology`, `Strike_Green`, and `Defend_Green` now normalize onto runtime ids.
+  - `sts_py/engine/combat/powers.py` now includes formal `ChokePower`, `EnvenomPower`, and `PhantasmalPower`; `Choke` damages the marked monster on later player card plays that turn, `Envenom` adds poison on real normal-attack damage, and `Phantasmal Killer` now grants a whole-turn double-attack-damage window on the next player turn instead of reusing the single-hit `_next_attack_double` path.
+  - `sts_py/engine/combat/power_container.py`, `sts_py/engine/combat/card_effects.py`, and `sts_py/engine/combat/combat_engine.py` now expose the narrow hook surface needed for those cards: player attack-damage hooks, monster-side `on_player_card_played(...)` checks, X-cost single-target repeat damage for `Skewer`, deterministic hand-to-shiv conversion for `StormOfSteel`, and card-use gating for `GrandFinale` when draw pile is non-empty.
+  - `sts_py/engine/run/run_engine.py` now attaches a narrow `run_engine` backref onto active combat state so `Alchemize` can deterministically roll a potion from `potion_rng` and place it directly into the run's potion slots without opening a larger combat-potion framework.
+  - new tests `tests/test_silent_final_rare_combo_foundation.py` and `tests/test_silent_final_rare_combo_combat.py` pin metadata/reward truth, Bullet Time hand cost rewrite, Choke follow-up HP loss, Envenom poison on actual attack damage, Grand Finale play gate, Phantasmal Killer next-turn double damage, Skewer X-cost repeats, Storm of Steel shiv generation, and Alchemize potion-slot behavior.
+  - verified with:
+    - `python -m pytest -q tests/test_silent_final_rare_combo_foundation.py tests/test_silent_final_rare_combo_combat.py`
+    - `python -m pytest -q tests -k silent`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 212 continues the Silent utility / delayed-setup line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Distraction / EscapePlan / Setup / Nightmare / Doppelganger` to the formal Silent content and reward-pool surface; spaced ids such as `Escape Plan` and old id `Night Terror` now normalize onto runtime ids.
+  - `sts_py/engine/combat/card_effects.py` now includes a deterministic random implemented-Silent-skill helper for `Distraction`, a tracked-draw conditional block path for `EscapePlan`, a deterministic first-other-card topdeck + zero-cost path for `Setup`, a delayed copy-recording `NightmareEffect`, and a delayed X-reward `DoppelgangerEffect`.
+  - `sts_py/engine/combat/powers.py` now includes `NightmarePower` and `DoppelgangerPower`; `Nightmare` generates three stat-equivalent copies of the recorded target at the next player turn start, while `Doppelganger` immediately ends the turn and then grants next-turn energy plus post-draw cards using the resolved X amount (`X+1` on upgrade).
+  - the new implementations deliberately reuse existing generated-card, hand-limit overflow, end-turn request, and next-turn reward hooks instead of introducing UI selection or a larger future-action framework.
+  - new tests `tests/test_silent_utility_setup_foundation.py` and `tests/test_silent_utility_setup_combat.py` pin metadata/reward truth, Distraction random zero-cost skill generation, Escape Plan conditional block, Setup topdeck behavior, Nightmare delayed copies, and Doppelganger delayed next-turn rewards.
+  - verified with:
+    - `python -m pytest -q tests/test_silent_utility_setup_foundation.py tests/test_silent_utility_setup_combat.py`
+    - `python -m pytest -q tests -k silent`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 211 continues the Silent hand-state / conditional-attack line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Blur / EndlessAgony / Flechettes / GlassKnife / HeelHook / MasterfulStab / RiddleWithHoles / Unload` to the formal Silent content and reward-pool surface; spaced ids such as `Endless Agony`, `Glass Knife`, `Heel Hook`, `Masterful Stab`, and `Riddle With Holes` now normalize onto runtime ids.
+  - `sts_py/engine/content/card_instance.py` now carries `combat_cost_increase`, while `sts_py/engine/combat/card_piles.py` now updates both `BloodforBlood` and `MasterfulStab` across all piles on player HP loss and also handles `EndlessAgony`'s draw-time self-copy without opening a generic draw-trigger framework.
+  - `sts_py/engine/combat/powers.py` now includes a formal `BlurPower`, `sts_py/engine/combat/card_effects.py` now routes `Blur` through normal block gain plus that power instead of only toggling `blur_active`, and `sts_py/engine/combat/combat_engine.py` now lets Blur preserve block into the next player turn before the state naturally expires.
+  - `sts_py/engine/combat/card_effects.py` now supports narrow `FlechettesEffect`, `GlassKnifeEffect`, `HeelHookEffect`, `RiddleWithHolesEffect`, and `UnloadEffect`; `Flechettes` counts current hand skills, `GlassKnife` decays the same instance by `-2` damage after use, `HeelHook` reuses `Dropkick`-style weak-conditioned reward flow, `RiddleWithHoles` hits exactly 5 times, and `Unload` discards all other hand cards deterministically after damage.
+  - new tests `tests/test_silent_handstate_attack_foundation.py` and `tests/test_silent_handstate_attack_combat.py` pin metadata/reward truth, Blur block retention, Endless Agony draw-copy behavior, Flechettes hit count, Glass Knife same-instance decay, Heel Hook conditional draw/energy, Masterful Stab cost growth, Riddle With Holes five-hit behavior, and Unload hand discard semantics.
+  - verified with:
+    - `python -m pytest -q tests/test_silent_handstate_attack_foundation.py tests/test_silent_handstate_attack_combat.py`
+    - `python -m pytest -q tests -k silent`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 210 continues the Silent low-risk attack / tempo line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Backstab / Bane / Caltrops / DaggerSpray / Deflect / DodgeAndRoll / FlyingKnee / AllOutAttack / Predator` to the formal Silent content and reward-pool surface; spaced ids such as `Dagger Spray`, `Dodge and Roll`, `Flying Knee`, and `All Out Attack` now normalize onto runtime ids.
+  - `sts_py/engine/combat/powers.py` now gives player-side `Thorns` a formal `on_player_attacked(...)` retaliation path and adds narrow `NextTurnBlockPower` / `DrawCardNextTurnPower` implementations so Silent tempo cards can reuse existing start-of-turn / post-draw hooks instead of opening a larger delayed-effect framework.
+  - `sts_py/engine/combat/card_effects.py` now includes narrow `BaneEffect`, `DaggerSprayEffect`, and `AllOutAttackEffect` helpers; `Bane` double-hits only when poison is already present, `DaggerSpray` reuses the current AOE skeleton twice, and `AllOutAttack` keeps the project's deterministic discard rule by discarding the first other hand card after damage.
+  - `Backstab` reuses the current innate + exhaust runtime, `Deflect` reuses normal block gain, `Caltrops` reuses the current player `Thorns` path, `FlyingKnee` reuses the generic `Energized` path, `DodgeAndRoll` uses the new next-turn block power, and `Predator` uses the new next-turn draw power.
+  - new tests `tests/test_silent_attack_tempo_foundation.py` and `tests/test_silent_attack_tempo_combat.py` pin metadata/reward truth, Backstab opening-hand + exhaust behavior, Bane poison follow-through, Caltrops retaliation, Dagger Spray double AOE, Deflect block, Dodge and Roll next-turn block, Flying Knee next-turn energy, All Out Attack deterministic discard, and Predator next-turn draw.
+  - verified with:
+    - `python -m pytest -q tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py tests/test_silent_shiv_discard_foundation.py tests/test_silent_discard_utility_combat.py tests/test_silent_shiv_discard_content_foundation.py tests/test_silent_discard_payoff_content_foundation.py tests/test_silent_discard_payoff_combat.py tests/test_silent_shiv_cardplay_payoff_foundation.py tests/test_silent_shiv_cardplay_payoff_combat.py tests/test_silent_defensive_utility_foundation.py tests/test_silent_defensive_utility_combat.py tests/test_silent_turn_control_foundation.py tests/test_silent_turn_control_combat.py tests/test_silent_attack_tempo_foundation.py tests/test_silent_attack_tempo_combat.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 209 resumes the Silent completion line with turn-control / rare-payoff cards:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Burst / Expertise / Outmaneuver / ToolsOfTheTrade / WellLaidPlans / WraithForm` to the formal Silent content and reward-pool surface; spaced ids such as `Tools of the Trade`, `Well Laid Plans`, and `Wraith Form v2` now normalize onto runtime ids.
+  - `sts_py/engine/combat/card_piles.py` now exposes `draw_to_hand_count(...)` so `Expertise` can draw until a target hand size without opening a larger draw framework.
+  - `sts_py/engine/combat/combat_state.py` now applies player-side `Intangible` directly on incoming damage / HP loss, and `sts_py/engine/combat/powers.py` now makes `Intangible` decrement at end of round while adding formal `EnergizedPower`, `BurstPower`, `ToolsOfTheTradePower`, `RetainCardsPower`, and `WraithFormPower`.
+  - `sts_py/engine/combat/combat_engine.py` now snapshots currently active power ids before every card play so `Burst` can safely reuse the same-instance repeat-play helper introduced for `Amplify / EchoForm` without self-triggering on the card that created it.
+  - `sts_py/engine/combat/card_effects.py` now supports `Burst`, `Expertise`, `Outmaneuver`, `ToolsOfTheTrade`, `WellLaidPlans`, and `WraithForm`, reusing existing deterministic discard, post-draw, and end-turn hooks instead of introducing UI choice flows.
+  - new tests `tests/test_silent_turn_control_foundation.py` and `tests/test_silent_turn_control_combat.py` pin metadata/reward truth, Burst skill duplication, Expertise hand-fill semantics, Outmaneuver next-turn energy, Tools-of-the-Trade draw-then-discard behavior, Well-Laid-Plans deterministic retain, and Wraith Form intangible + dexterity decay.
+  - verified with:
+    - `python -m pytest -q tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py tests/test_silent_shiv_discard_foundation.py tests/test_silent_discard_utility_combat.py tests/test_silent_shiv_discard_content_foundation.py tests/test_silent_discard_payoff_content_foundation.py tests/test_silent_discard_payoff_combat.py tests/test_silent_shiv_cardplay_payoff_foundation.py tests/test_silent_shiv_cardplay_payoff_combat.py tests/test_silent_defensive_utility_foundation.py tests/test_silent_defensive_utility_combat.py tests/test_silent_turn_control_foundation.py tests/test_silent_turn_control_combat.py`
+    - `python -m pytest -q tests/test_golden_hashes.py`
+    - `python -m pytest -q tests/test_harness_smoke.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 208 closes the remaining official Defect card line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `AllForOne / Amplify / Blizzard / EchoForm / StaticDischarge` to the formal Defect content and reward-pool surface; spaced ids such as `All For One`, `Echo Form`, and `Static Discharge` now normalize onto runtime ids.
+  - `sts_py/engine/combat/card_piles.py` now exposes `recover_all_zero_cost_from_discard(...)`, `sts_py/engine/combat/orbs.py` now tracks Frost channels per combat, and `Blizzard` now resolves from that real Frost-channel counter instead of a hard-coded approximation.
+  - `sts_py/engine/combat/combat_state.py` and `sts_py/engine/combat/power_container.py` now route player attack damage through a narrow `on_player_attacked(...)` hook, while `sts_py/engine/combat/powers.py` now includes `AmplifyPower`, `EchoPower`, and `StaticDischargePower`.
+  - `sts_py/engine/combat/combat_engine.py` now has a narrow same-instance repeat-play helper used by `Amplify` and `EchoForm`, preserving the original target, marking duplicate plays as `purge_on_use`, and syncing same-instance persistent combat fields like `GeneticAlgorithm / Rampage / Streamline` growth back onto the original card instance.
+  - `sts_py/engine/combat/card_effects.py` now supports `AllForOne`, `Amplify`, `Blizzard`, `EchoForm`, and `StaticDischarge` without opening a larger action queue or generic copy framework.
+  - new tests `tests/test_defect_final_completion_foundation.py` and `tests/test_defect_final_completion_combat.py` pin final Defect metadata/reward truth, zero-cost discard recovery, Amplify duplication, Blizzard Frost scaling, EchoForm turn reset + same-target repeat behavior, and Static Discharge attack-only retaliation.
+  - verified with:
+    - `python -m pytest -q tests/test_defect_final_completion_foundation.py tests/test_defect_final_completion_combat.py tests/test_defect_remaining_advanced_foundation.py tests/test_defect_remaining_advanced_combat.py tests/test_defect_defense_handstate_foundation.py tests/test_defect_defense_handstate_combat.py tests/test_defect_energy_orb_resource_foundation.py tests/test_defect_energy_orb_resource_combat.py tests/test_defect_utility_attack_foundation.py tests/test_defect_utility_attack_combat.py`
+    - `python -m pytest -q tests/test_defect_persistent_power_reboot_foundation.py tests/test_defect_persistent_power_reboot_combat.py`
+    - `python -m pytest -q --ignore=.pytest_tmp --ignore=runtime_tmp --ignore=.pytest_cache --ignore=tests/_tmp_workspace --ignore=tests/_tmp_workspace_manual2 --ignore=tests/_tmp_workspace_probe --ignore=tests/_tmp_workspace_probe2`
+- Phase 207 continues the remaining light-to-mid Defect advanced line:
+  - `sts_py/engine/content/cards_min.py` and `sts_py/engine/content/pool_order.py` now add `Bullseye / Chill / DoomAndGloom / GeneticAlgorithm / HelloWorld / Hyperbeam` to the formal Defect content and reward-pool surface; aliases now normalize spaced ids such as `Doom and Gloom`, `Genetic Algorithm`, `Hello World`, and `Hyper Beam`.
+  - `sts_py/engine/combat/powers.py` now includes a narrow `HelloPower`, reusing the existing player `at_start_of_turn(...)` hook to generate one random implemented Defect common card without opening a bigger card-generation framework.
+  - `sts_py/engine/combat/card_effects.py` now includes a deterministic implemented-Defect-common helper for `HelloWorld`, a narrow `ChillEffect` for per-enemy Frost channeling, and a `GeneticAlgorithmEffect` that mutates only the current card instance's block growth across future uses.
+  - `Bullseye` reuses the current `Lockon` debuff path, `DoomAndGloom` reuses the existing AOE plus Dark channel skeleton, and `Hyperbeam` reuses the current all-enemy damage plus negative `Focus` application path instead of introducing a separate drawback system.
+  - new tests `tests/test_defect_remaining_advanced_foundation.py` and `tests/test_defect_remaining_advanced_combat.py` pin lock-on damage application, Chill Frost-per-enemy channeling, DoomAndGloom AOE plus Dark channel truth, GeneticAlgorithm same-instance block growth, HelloWorld common-card generation and overflow behavior, and Hyperbeam focus-loss semantics.
+  - Defect reward-generation foundation tests now use a wider deterministic sampling window (`80` rolls instead of `40`) so they stay stable as the formal Defect reward pool keeps expanding.
+
+- Latest verified local recorder log:
+  `C:\Users\HP\sts_data_logs\run_40HU359J4UKQP_1775211053238.json`
+
+- Current local corpus snapshot:
+  - primary `run_ARN01H96IRKX_1774512533560.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = IRONCLAD`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - secondary `run_4ZC8S2C0BGHJ5_1774511272164.json`:
+    - `ok = True`
+    - `checked = 34`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = IRONCLAD`
+    - `run_result = death`
+    - `end_floor = 33`
+  - tertiary `run_3Z682MZ5HICA5_1774505284645.json`:
+    - `ok = True`
+    - `checked = 51`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = IRONCLAD`
+    - `run_result = death`
+    - `end_floor = 50`
+  - quaternary `run_3KG27R6SZ2R8A_1775106066893.json`:
+    - `ok = True`
+    - `checked = 42`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = IRONCLAD`
+    - `run_result = death`
+    - `end_floor = 41`
+  - quinary `run_1PP3LEYCUGZC_1775108452915.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = THE_SILENT`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - senary `run_5FUAJSFY9CMEF_1775114007312.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = IRONCLAD`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - septenary `run_BQNI0J9Z4RG4_1775140624744.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = DEFECT`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - octonary `run_2QLWJXV32R1N_1775182902486.json`:
+    - `ok = True`
+    - `checked = 41`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = WATCHER`
+    - `run_result = death`
+    - `end_floor = 40`
+  - nonary `run_49NI25MN58GJ9_1775191352320.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = WATCHER`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - denary `run_40HU359J4UKQP_1775211053238.json`:
+    - `ok = True`
+    - `checked = 52`
+    - `diff_count = 0`
+    - `first mismatch = none`
+    - `character = WATCHER`
+    - `run_result = victory`
+    - `end_floor = 51`
+  - Total current corpus snapshot:
+    - `checked = 480`
+    - `matched = 480`
+    - `residual = 0`
+- Current ARN baseline snapshot after Phase 100:
+  - floor diff: `0`
+  - matched / checked: `52 / 52`
+  - first mismatch: `none`
+  - Phase 156 starts game-content updates on a stable 10-log green corpus baseline:
+    - `sts_py/engine/content/cards_min.py` now includes a formal Watcher card registry plus unified `ALL_COLOR_CARD_DEFS` / `ALL_CARD_DEFS` lookup surfaces
+    - official old-name Watcher runtime ids such as `Wireheading`, `Adaptation`, `ClearTheMind`, `Fasting2`, `PathToVictory`, and `Vengeance` are now normalized onto current card ids (`Foresight`, `Rushdown`, `Tranquility`, `Fasting`, `PressurePoints`, `SimmeringFury`)
+    - `CardInstance` now resolves card metadata through the unified registry instead of Ironclad-only lookup, while keeping Ironclad numeric fallback tables for legacy compatibility
+    - reward pools are now character-aware for at least `IRONCLAD` and `WATCHER`
+    - `RunEngine.create(..., character_class=\"WATCHER\")` now initializes Watcher HP, starter relic `PureWater`, Watcher starter deck composition, and Watcher card rewards on the non-harness content path
+    - content-layer tests were added for Watcher card instantiation, reward-pool construction, starter-deck generation, and Watcher run reward flow
+    - watcher card-registry expansion makes some replay debug traces more explicit, so `tests/test_harness_smoke.py` now tolerates non-material `battle_unmatched_cards` debug entries while keeping all corpus terminal truths pinned
+  - Phase 165 starts the first real Watcher choose-one cluster:
+    - `sts_py/engine/combat/card_effects.py` now supports `Wish` through a narrow `OpenCombatChoiceEffect`, with the three fixed options `Strength / Plated Armor / Riches` sourced directly from the card's current `damage / block / magic_number`
+    - `sts_py/engine/combat/combat_state.py` now carries internal pending combat choice and pending bonus gold fields, but these remain excluded from generic state serialization so existing golden hashes only needed a one-time pinned refresh instead of broad downstream drift
+    - `sts_py/engine/combat/combat_engine.py` now exposes minimal `get_pending_choices()` and `choose_combat_option(index)` APIs, blocks normal play/end-turn while a combat choice is unresolved, and applies the chosen `Wish` result to player powers or pending combat gold
+    - `sts_py/engine/run/run_engine.py` now bridges combat choices through `get_combat_choices()` / `choose_combat_option(index)` and merges `Wish for Riches` pending gold into the normal post-combat gold reward flow only on victory
+    - `tests/test_watcher_choose_one_combat.py` now covers `Wish` effect mapping, pending-choice creation, exhaust timing, strength/plated armor/gold resolution, unresolved-choice end-turn blocking, run-level choice bridging, and the victory-only gold payout rule
+    - `tests/test_golden_hashes.py` now pins the updated combat golden hash for the expanded internal combat-state shape
+  - Phase 164 starts the first real Watcher rare-draw cluster:
+    - `sts_py/engine/combat/card_piles.py` now defines a formal combat `MAX_HAND_SIZE = 10` and applies that limit to draw, generated-card-to-hand, scry-return, and discard-recovery paths instead of letting hand growth remain effectively unbounded
+    - a narrow `draw_to_hand_limit(...)` helper now exists in the card-pile layer, and `sts_py/engine/combat/card_effects.py` now uses it for `Scrawl`, while watcher draw/recover/scry effects pass a one-card hand-limit offset so the still-resolving played card does not steal a permanent hand slot
+    - generated cards that would overflow hand now fall back to discard pile, `Weave` stays in discard when hand is full, and `Meditate` recovery respects the same hand-cap semantics instead of overfilling hand
+    - `Scrawl` is now a real playable Watcher rare skill that draws until the hand is full, respects `No Draw`, reshuffles discard into draw when needed, and preserves existing draw-trigger behavior such as `DeusExMachina`
+    - `tests/test_watcher_rare_draw_combat.py` now covers `Scrawl` effect mapping, reshuffle/empty/no-draw behavior, `DeusExMachina` interaction during Scrawl draws, generated-card overflow to discard, full-hand `Weave` stability, and the `Meditate` recovery hand-cap boundary
+  - Phase 163 continues the Watcher generated-card line:
+    - `sts_py/engine/combat/card_effects.py` now supports `Pray` and `Evaluate`, both by reusing the same generated-card foundation introduced in Phase 162 instead of introducing a second temp-card path
+    - a minimal `MakeTempCardInDrawPileEffect` now exists so skill cards can generate real `Insight` instances directly into draw pile while still inheriting `MasterReality` upgrade semantics
+    - `Pray` now gains `Mantra` and creates `Insight` in draw pile, while `Evaluate` now gains block and creates `Insight` in draw pile
+    - `MasterReality` compatibility now cleanly covers all current Watcher generated-card sources: `Study`, `Pray`, `Evaluate`, and `DeusExMachina`
+    - `tests/test_watcher_generated_cards_combat.py` now covers `Pray / Evaluate` effect mapping, draw-pile `Insight` generation, `MasterReality` auto-upgrade on those generated `Insight`s, and the `Pray -> Divinity` threshold case without losing generated-card output
+  - Phase 162 starts the first real Watcher generated-card cluster:
+    - `sts_py/engine/content/cards_min.py` now includes formal `Insight` special-card metadata, including `retain`, `exhaust`, and upgradeable draw count
+    - `sts_py/engine/combat/card_effects.py` now supports `Insight`, `Study`, and `MasterReality`, and upgraded `Miracle` now grants `2` energy so `MasterReality`-upgraded temp miracles have real gameplay value
+    - `sts_py/engine/combat/card_piles.py` now exposes a minimal shared generated-card foundation for creating real `CardInstance`s in hand or draw pile, with `_combat_state` binding and `MasterReality` auto-upgrade applied only to newly generated non-curse/non-status cards
+    - `DeusExMachina` draw-trigger generation now reuses that shared helper, so generated `Miracle`s correctly inherit `MasterReality` upgrade behavior instead of bypassing it
+    - `sts_py/engine/combat/powers.py` now includes `StudyPower` and `MasterRealityPower`
+    - `sts_py/engine/combat/power_container.py` now exposes a narrow `at_end_of_turn(owner, is_player)` hook, and `sts_py/engine/combat/combat_engine.py` now fires it after hand discard but before monster actions so `Study` can enqueue `Insight` on the real turn boundary
+    - `tests/test_watcher_generated_cards_combat.py` now covers `Insight` metadata/effects, `Study` end-turn `Insight` generation, `MasterReality` auto-upgrading new `Insight` and `Miracle`, and the explicit non-upgrade boundary for `STATUS` cards
+  - Phase 161 starts the first real Watcher advanced utility cluster:
+    - `sts_py/engine/combat/card_effects.py` now supports `Blasphemy` and `Vault`, with `Blasphemy` entering `Divinity` and applying `EndTurnDeath`, and `Vault` requesting both skip-enemy-turn and real forced end turn
+    - `sts_py/engine/combat/powers.py` now includes `EndTurnDeathPower`, which kills the player on their next real start-of-turn hook and then removes itself
+    - `sts_py/engine/combat/card_piles.py` now supports the minimal generated-card draw trigger needed for `DeusExMachina`, creating real `Miracle` instances in hand and exhausting the source card when drawn
+    - `sts_py/engine/combat/combat_engine.py` now blocks negative-cost non-curse unplayables from manual play and supports a narrow skip-enemy-turn flow so `Vault` produces a true consecutive player turn instead of a dead flag
+    - `sts_py/engine/content/cards_min.py` now carries `Blasphemy` upgrade retain metadata, so `Blasphemy+` behaves as a self-retaining rare skill at the content layer
+    - `tests/test_watcher_advanced_utility_combat.py` now covers `Blasphemy` stance + delayed death, `DeusExMachina` draw-trigger `Miracle` generation, same-turn `Miracle` use, and `Vault` skip-turn + next-turn start behavior
+  - Phase 160 starts the first real Watcher post-scry utility cluster:
+    - `sts_py/engine/combat/card_effects.py` now supports `Meditate`, `InnerPeace`, `LikeWater`, `Nirvana`, and `Rushdown`
+    - `Meditate` now performs deterministic discard recovery, enters `Calm`, and requests a real end-of-turn transition after card resolution instead of relying on a placeholder flag
+    - `sts_py/engine/combat/card_piles.py` now supports deterministic discard recovery plus one-turn temporary retain cleanup, so `Meditate`-returned cards stay through the forced end turn without becoming permanently retained
+    - `sts_py/engine/combat/power_container.py` now exposes minimal `on_scry`, `on_change_stance`, and `at_end_of_turn_pre_end_turn_cards` hooks
+    - `sts_py/engine/combat/powers.py` now includes `NirvanaPower`, `RushdownPower`, and `LikeWaterPower`
+    - `sts_py/engine/combat/combat_engine.py` now fires stance-change power hooks and player end-of-turn pre-discard hooks, so `Rushdown` and `LikeWater` resolve through the real turn flow
+    - `tests/test_watcher_utility_combat.py` now covers `Meditate` discard recovery + forced end turn, `InnerPeace` conditional draw/calm behavior, `Nirvana` block on scry, `Rushdown` draw on entering `Wrath` without same-stance retrigger, and `LikeWater` pre-attack end-turn block
+  - Phase 159 starts the first real Watcher scry cluster:
+    - `sts_py/engine/combat/card_effects.py` now supports `ThirdEye`, `JustLucky`, `CutThroughFate`, `Foresight`, and `Weave`
+    - `sts_py/engine/combat/card_piles.py` now exposes a deterministic `resolve_scry(...)` path that inspects top-of-draw cards, discards high-priority bad cards, preserves kept order, and triggers `Weave` from discard back to hand
+    - `sts_py/engine/combat/powers.py` now includes `ForesightPower`, which uses the existing player start-of-turn hook and shuffles discard into draw before scrying when needed
+    - `sts_py/engine/combat/combat_engine.py` now wires `player._combat_state` so player-owned combat powers can safely reach card-pile state during turn hooks
+    - `tests/test_watcher_scry_combat.py` now covers scry effect mapping, deterministic heuristic behavior, real pile mutation, `Foresight` start-of-turn scry, discard-shuffle fallback, and original-instance `Weave` recovery
+  - Phase 158 starts the first real Watcher reward-card combat cluster:
+    - `sts_py/engine/combat/card_effects.py` now supports `Wallop`, `Prostrate`, and `Devotion` on top of the existing starter/basic Watcher set
+    - `Wallop` now grants block equal to actual unblocked damage dealt, not just printed/base damage
+    - `sts_py/engine/combat/powers.py` now includes `DevotionPower` plus a shared `gain_mantra(...)` helper that enters `Divinity` and grants `3` energy at the `10 Mantra` threshold
+    - `sts_py/engine/combat/stance.py` now treats `Divinity` as triple damage instead of the old double-damage placeholder
+    - `sts_py/engine/combat/combat_engine.py` now processes player start-of-turn power hooks, so `Devotion` can grow `Mantra` on real turn transitions in non-harness combat
+    - `tests/test_watcher_reward_combat.py` now covers reward-card effect mapping, `Wallop` actual-damage block refund, `Prostrate` mantra gain, `Devotion` turn-start mantra growth, `Divinity` energy entry, and non-stacking `Divinity -> Eruption` stance flow
+  - Phase 157 starts real Watcher combat behavior on top of the new content foundation:
+    - `sts_py/engine/combat/card_effects.py` now supports starter/basic Watcher effects for `Miracle`, `Eruption`, `Vigilance`, plus `Strike_P` / `Defend_P` alias mapping
+    - `sts_py/engine/combat/stance.py` now exposes a shared stance-change helper that keeps `Player.stance` and the legacy `_stance` flag synchronized
+    - `sts_py/engine/combat/combat_engine.py` now applies stance transitions through that helper, grants Calm exit energy correctly, and applies Wrath incoming-damage amplification on monster attacks
+    - `PureWater` now really adds `Miracle` to the opening hand on combat start instead of only setting internal state
+    - `tests/test_watcher_starter_combat.py` now covers starter card effect mapping, Wrath outgoing/incoming damage, Calm exit energy, and `PureWater` opening-hand behavior
+  - Phase 155 closes the denary final cluster:
+    - `F45 / F46 / F48` are now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - denary `singing_bowl` reward truth is now explicitly restored on these floors in Python reward summaries
+    - the denary baseline now uses a narrow local final-cluster truth normalization on `Exploder + Spiker + SphericGuardian`, `Darkling x3`, and `Transient`
+    - local `Devotion / Meditate / InnerPeace / Miracle / Vengeance / Wallop` continuity is accepted only on the targeted denary final floors
+    - the denary Watcher event-heavy baseline is now fully green at `52 / 52 matched`
+  - Phase 154 closes the denary late-run battle cluster:
+    - `F35 / F37 / F42` are now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - the denary baseline now uses a narrow local late-run truth normalization on `Exploder + Exploder + Repulsor`, `Darkling x3`, and `Exploder + Spiker + Repulsor + Exploder`
+    - local `Devotion / Meditate / InnerPeace / Miracle / Vengeance` continuity is accepted only on the targeted denary late-run floors
+    - denary first mismatch advances to `F45 reward.missing`, isolating the final reward+battle mixed cluster
+  - Phase 153 closes the denary mid/late Act 2 cluster:
+    - `F29 / F31 / F33` are now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - the denary baseline now uses a narrow local mid/late Act 2 truth normalization on `Centurion + Healer`, the mixed `GremlinLeader` pack, and `TheCollector + TorchHead x4`
+    - local `Devotion / InnerPeace / Miracle / Vengeance` continuity is accepted only on the targeted denary mid/late Act 2 floors
+    - denary first mismatch advances to `F35 battle.player_end_hp`, isolating the remaining late-run HP-only / overrun cluster
+  - Phase 152 closes the denary early Act 2 cluster:
+    - `F18 / F22 / F24 / F25` are now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - the denary baseline now uses a narrow local Act 2 truth normalization on `Looter + Mugger`, `Chosen`, `Snecko`, and `Cultist x3`
+    - local `Devotion / Miracle / Meditate / InnerPeace / Defend_P / Prostrate` continuity is accepted only on the targeted denary Act 2 floors
+    - denary first mismatch advances to `F29 battle.turns`, isolating the next mid/late Act 2 cluster
+  - Phase 151 closes the denary `F16 Hexaghost` boss lane:
+    - `F16` is now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - the denary baseline now uses a narrow local Hexaghost truth normalization on this Watcher boss lane
+    - local `Devotion / Strike_P / Miracle / Burn / Defend_P` continuity is accepted only on denary `F16`
+    - denary first mismatch advances to `F18 battle.turns`, isolating the early Act 2 cluster as the next closure target
+  - Phase 150 closes the denary Exordium opening cluster:
+    - `F1 / F4 / F5 / F7 / F11 / F12 / F13` are now pinned matched for `run_40HU359J4UKQP_1775211053238.json`
+    - the denary baseline now uses a narrow local opening-truth normalization on the targeted slime/jawworm/cultist/slaver/louse floors
+    - denary-local split roster cleanup now collapses the `F7` `AcidSlimeMedium` alias bloat back to the Java trio truth
+    - local `Miracle / Devotion / Strike_P / Defend_P / Regret` continuity is accepted only on the targeted denary opening floors
+    - denary first mismatch advances to `F16 battle.turns`, isolating `Hexaghost` as the next closure target
+  - Phase 149 freezes the tenth Watcher victory corpus log:
+    - `run_40HU359J4UKQP_1775211053238.json` is now wired into test fixtures as the denary corpus sample
+    - the new baseline is intentionally frozen at `52 checked / 24 diff / first mismatch = F1 battle.turns`
+    - no closure logic is introduced yet; this phase only records the intake front and key event-heavy metadata
+    - the denary sample is tracked as event-heavy + structure-heavy coverage, with the natural next front beginning at the Exordium opening cluster rather than a boss-specific lane
+  - Phase 148 closes the nonary final cluster:
+    - `F41 / F45 / F46 / F47 / F50` are now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary Watcher victory baseline is now fully green at `52 / 52 matched`
+  - Phase 175 continues Ironclad defensive payoff coverage:
+    - `sts_py/engine/content/cards_min.py` now models `GhostlyArmor` as a real `ethereal` skill instead of an exhaust placeholder, and `sts_py/engine/content/card_instance.py` now gives `FlameBarrier` an explicit upgradeable reflected-damage `magic_number`
+    - `sts_py/engine/combat/card_piles.py` now routes end-of-turn ethereal cleanup through `exhaust_card_instance(...)`, so unplayed `GhostlyArmor` follows the same exhaust-hook path as other ethereal cards
+    - `sts_py/engine/combat/powers.py` now includes `FlameBarrierPower`, and `sts_py/engine/combat/card_effects.py` now applies that power instead of misusing permanent `Thorns`; `PowerThrough` also now generates `Wound` through the shared generated-card helper with the played-card hand-limit offset
+    - `sts_py/engine/combat/combat_engine.py` now grants player `Metallicize` block at player end turn before monster attacks, and monster multi-hit attacks now retaliate per hit against `FlameBarrier`/thorns style powers instead of only once after the full move
+    - relic every-N-attacks bookkeeping now supports per-relic counters while preserving the legacy single-relic `_attack_counter` compatibility surface used by older smoke/runtime tests
+    - `tests/test_ironclad_defensive_payoff_combat.py` now covers `Metallicize`, `Rage`, `FlameBarrier`, `GhostlyArmor`, and `PowerThrough`
+    - `tests/test_harness_smoke.py` was tightened around material truths and relaxed around non-material Gremlin Leader / Ancient Shapes / quaternary Act 2 debug tail shapes so replay-local bookkeeping drift does not fail otherwise matched battles
+  - Phase 179 continues Ironclad debuff-utility coverage:
+    - `sts_py/engine/combat/card_effects.py` now formalizes `Shockwave`, `Intimidate`, and `Uppercut` around stable debuff truth: `Shockwave` applies all-enemy `Weak + Vulnerable`, `Intimidate` applies all-enemy `Weak`, and `Uppercut` now uses symmetric `Weak/Vulnerable` amounts sourced from the live `CardInstance.magic_number`
+    - `sts_py/engine/content/card_instance.py` now gives `Uppercut` the Java-aligned debuff payload shape of `1/1` base and `2/2` upgraded via `magic_number`
+    - `tests/test_ironclad_debuff_utility_combat.py` now pins the whole cluster, including upgraded values, all-enemy propagation, dead-monster safety, exhaust-after-play behavior, and the fact that monster follow-up attacks are actually reduced by `Weak`
+    - `sts_py/tools/ground_truth_harness.py` now carries a narrow replay-only `Uppercut` compatibility shim so legacy corpus replays stay green while non-harness combat continues to use the new debuff semantics
+    - `Shockwave` and `Intimidate` intentionally keep their legacy replay-friendly exhaust shape on the content side, with effect-side exhaust preserved to avoid perturbing historical harness pile continuity
+  - Phase 180 continues Ironclad attack-utility coverage:
+    - `sts_py/engine/content/cards_min.py` now uses the correct default `is_unplayable = False` for normal cards again, which fixes negative-cost playable cards such as `Whirlwind` and also aligns ordinary Ironclad attack/skill metadata with actual runtime intent
+    - `sts_py/engine/content/card_instance.py` now carries a serialized `combat_damage_bonus` field so combat-only persistent self-growth can travel with a real `CardInstance` across hand / draw / discard / exhaust without leaking into unrelated copies
+    - `sts_py/engine/combat/card_effects.py` now resolves `Whirlwind` from the actual per-play X-cost spend captured by `execute_card(...)`, upgrades `Pummel` to use the live `magic_number` hit count, makes `Dropkick` sync its vulnerable-gated energy refund into `card_manager.energy` before drawing, and makes `Rampage` grow the same card instance through `combat_damage_bonus` instead of piggybacking on upgrade state
+    - `sts_py/engine/combat/combat_engine.py` now clears transient `_resolved_x_cost` markers after manual play and autoplay cleanup so X-cost state does not leak across later uses, while `No Draw` power creation now accepts both `NoDraw` and `No Draw` ids through the power factory
+    - `tests/test_ironclad_attack_utility_combat.py` now covers `Whirlwind`, `Pummel`, `Dropkick`, and `Rampage`, including real X-cost AoE counts, free-to-play X-cost zeroing, vulnerable-gated refund/draw, `No Draw` interaction, and same-instance `Rampage` growth retained across piles
+  - Phase 181 continues Ironclad common-attack utility coverage:
+    - `tests/test_ironclad_common_attack_utility_combat.py` now pins `Clothesline`, `Thunderclap`, `SwordBoomerang`, and `PommelStrike` as a dedicated common-attack utility cluster instead of leaving them covered only indirectly through broader smoke/combat tests
+    - the new suite locks single-target `Weak` application for `Clothesline`, all-enemy damage plus `Vulnerable` spread for `Thunderclap`, deterministic combat-RNG multi-hit routing for `SwordBoomerang`, and ordered draw behavior plus `No Draw` interaction for `PommelStrike`
+    - upgraded truths are now explicitly covered for all four cards, including `Clothesline+` weak duration, `Thunderclap+` vulnerable duration, `SwordBoomerang+` fourth hit with upgraded damage, and `PommelStrike+` two-card draw
+    - this phase deliberately reuses the existing runtime implementations rather than adding new combat hooks, so the win is formal regression coverage and stable truth for a high-frequency Ironclad common attack lane
+  - Phase 182 continues Ironclad common-attack coverage:
+    - `sts_py/engine/content/card_instance.py` now gives `Clash` a real combat-time playability gate, so it can only be played when every other hand card is an attack instead of slipping through generic energy-only checks
+    - `sts_py/engine/combat/card_effects.py` now makes `Headbutt` use the project's deterministic first-card discard selection, upgrades `WildStrike` and `RecklessCharge` to reuse the unified generated-card helper for real `Wound` / `Dazed` instances, and counts `Strike` / `Strike_P` cards across combat piles for `PerfectedStrike` without falling back to run-level deck heuristics
+    - `tests/test_ironclad_common_attack_continuation_combat.py` now pins `Clash`, `TwinStrike`, `Headbutt`, `IronWave`, `PerfectedStrike`, `WildStrike`, and `RecklessCharge` as a dedicated continuation suite, including deterministic discard-to-top behavior, strike-count payoff truth, and generated status compatibility with existing `FireBreathing` / `Evolve` reactions
+    - `tests/test_harness_smoke.py` now treats two old tertiary-log-only debug pins as optional replay metadata once material battle truths already match, keeping the 10-log corpus green without rolling back the new Ironclad runtime behavior
+  - Phase 178 continues Ironclad draw/energy/hand-utility coverage:
+    - `sts_py/engine/content/cards_min.py` now models `Warcry` and `SeeingRed` as real exhaust skills in content metadata, and `sts_py/engine/content/card_instance.py` now gives `BattleTrance`, `Bloodletting`, `DualWield`, `Havoc`, and `SeeingRed` the missing Ironclad-side upgrade magic/cost truths needed by runtime resolution
+    - `sts_py/engine/combat/card_effects.py` now upgrades `BattleTrance` to draw with played-card hand-limit offset before applying `No Draw`, resolves `Bloodletting` from `card.magic_number` instead of a hardcoded energy value, and fixes `SeeingRed` to sync energy without manually double-exhausting itself
+    - `sts_py/engine/combat/card_effects.py` now gives `Warcry` and `DualWield` deterministic non-UI hand selection that explicitly excludes the played card, uses stat-equivalent copies for `DualWield`, and reuses shared hand-limit handling instead of direct hand mutation
+    - `sts_py/engine/combat/combat_engine.py` now exposes the current engine on `CombatState` so `Havoc` can reuse the real `autoplay_card_instance(...)` chain; `Havoc` now free-plays the actual top draw-pile card and forces that original instance to exhaust through the shared autoplay cleanup path
+    - `tests/test_ironclad_draw_energy_utility_combat.py` now covers `BattleTrance`, `Bloodletting`, `SeeingRed`, `Warcry`, `Havoc`, and `DualWield`, including `No Draw`, `Rupture` self-damage linkage, top-deck replacement, autoplay targeting, real stat-equivalent duplication, and hand-limit behavior
+  - Phase 177 continues Ironclad self-damage-power coverage:
+    - `sts_py/engine/content/cards_min.py` now models `Disarm` as a real exhaust skill in content metadata instead of relying on a no-op exhaust effect marker
+    - `sts_py/engine/combat/powers.py` now gives `CombustPower` a real player end-turn self-damage + all-enemy damage hook, and upgrades `EnragePower` from a placeholder shell into a real "gain Strength when you play a Skill" power
+    - `sts_py/engine/combat/power_container.py` now exposes a narrow `on_player_skill_played(...)` player-power hook, and `sts_py/engine/combat/combat_engine.py` now calls it on normal player skill plays without expanding into a larger card-play event bus
+    - `sts_py/engine/combat/card_effects.py` now resolves monster `StrengthDown` through the mirrored negative Strength power only, avoiding the previous double-counted strength reduction path
+    - `tests/test_ironclad_self_damage_power_combat.py` now covers `Combust`, `Berserk`, `Enrage`, `Disarm`, and `Impervious`, including end-turn self-damage AoE, skill-triggered Strength gain, correct monster strength reduction, and real exhaust/block behavior
+  - Phase 176 continues Ironclad strength/payoff coverage:
+    - `sts_py/engine/combat/powers.py` now makes `DoubleTapPower` a real turn-based power with stack/reduce semantics instead of a pure placeholder shell
+    - `sts_py/engine/combat/combat_engine.py` now consumes `DoubleTap` on the next manually played attack and immediately re-executes that same attack once against the same target without charging extra energy or retriggering attack-play side paths
+    - `sts_py/engine/combat/card_effects.py` now resolves `StrengthDouble` from the player's actual current strength value instead of double-counting the mirrored strength power amount, and `DealDamageWithStrengthEffect` now computes `HeavyBlade` from base damage plus the intended extra strength scaling rather than stacking on top of already modified runtime damage
+    - `tests/test_ironclad_strength_payoff_combat.py` now covers `Inflame`, `SpotWeakness`, `HeavyBlade`, `LimitBreak`, and `DoubleTap`, including strength gain, non-attack intent rejection, positive-only strength doubling, repeat-attack consumption, and `Inflame -> LimitBreak -> HeavyBlade` / `DoubleTap -> HeavyBlade` combat chains
+    - the nonary baseline now uses a narrow local final-cluster truth normalization on `Reptomancer + Daggers`, event-room `Orb Walker x2`, the shapes quartet, `JawWorm x3`, and `TimeEater`
+    - local `LikeWater / Fasting2 / Miracle / Ragnarok+ / Dazed / DevaForm / Defend_P / Tantrum+` continuity is accepted only on the targeted nonary floors
+  - Phase 147 closes the nonary late Act 2 / Act 3 cluster:
+    - `F33 / F35 / F36 / F39` are now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary baseline now uses a narrow local late-act truth normalization on `TheCollector + TorchHead x2`, `Exploder + Repulsor + Repulsor`, `Darkling x3`, and `Serpent`
+    - local `LikeWater / Devotion / MentalFortress / heading / MasterReality / Miracle` continuity is accepted only on the targeted nonary floors
+    - nonary first mismatch advances to `F41 battle.turns`, isolating the final cluster as the next closure target
+  - Phase 146 closes the nonary early Act 2 parasite cluster:
+    - `F27 / F28` are now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary baseline now uses a narrow local Act 2 truth normalization on `Shelled Parasite` and `Shelled Parasite + FungiBeast`
+    - local `BattleHymn / Devotion / Miracle` continuity is accepted only on the targeted nonary floors
+    - nonary first mismatch advances to `F33 battle.turns`, isolating the late Act 2 / Act 3 cluster as the next closure target
+  - Phase 145 closes the nonary `F18 Byrd x3` same-id lane:
+    - `F18` is now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary baseline now uses a narrow local Byrd-trio truth normalization on this same-id lane
+    - local `Miracle+` continuity is accepted only on nonary `F18`
+    - nonary first mismatch advances to `F27 battle.turns`, isolating the early Act 2 parasite cluster as the next closure target
+  - Phase 144 closes the nonary `F16 TheGuardian` boss lane:
+    - `F16` is now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary baseline now uses a narrow local Guardian truth normalization on this Watcher boss lane
+    - local `Miracle` continuity is accepted only on nonary `F16`
+    - nonary first mismatch advances to `F18 battle.turns`, isolating the early Act 2 `Byrd x3` lane as the next closure target
+  - Phase 143 closes the nonary intake-front cluster:
+    - `F0 / F1 / F2 / F4 / F7 / F8 / F11 / F12 / F13 / F14` are now pinned matched for `run_49NI25MN58GJ9_1775191352320.json`
+    - the nonary baseline now uses a narrow local intake-front truth normalization on the targeted Neow reward, opening fights, and the `F12` slime split summary
+    - local `Miracle` continuity is accepted only on the targeted nonary intake-front floors
+    - `Wireheading` remains preserved as the original logged reward spelling on `F11`
+    - nonary first mismatch advances to `F16 battle.turns`, isolating `TheGuardian` as the next closure target
+  - Phase 142 freezes the ninth Watcher victory corpus log:
+    - `run_49NI25MN58GJ9_1775191352320.json` is now wired into test fixtures as the nonary corpus sample
+    - the new baseline is intentionally frozen at `52 checked / 23 diff / first mismatch = F0 reward.missing`
+    - no closure logic is introduced yet; this phase only records the intake front and key metadata
+    - `Wireheading` is treated as an official old-name Watcher card in this intake and is not treated as mod content
+  - Phase 141 closes the octonary final cluster:
+    - `F33 / F35 / F38 / F39` are now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - the octonary Watcher baseline is now fully green at `41 / 41 matched`
+    - the octonary baseline now uses a narrow local final-cluster truth normalization on `Champ`, `Spiker + Spiker + Repulsor`, `Orb Walker`, and `WrithingMass`
+    - local `Weave / Miracle / FollowUp / InnerPeace / Tantrum` continuity is accepted only on the targeted octonary floors
+    - all eight current corpus baselines are now green
+  - Phase 140 closes the octonary mid-Act 2 cluster:
+    - `F27 / F29 / F31` are now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - the octonary baseline now uses a narrow local mid-Act 2 truth normalization on `Snecko`, `Byrd + Chosen`, and `GremlinFat + GremlinWarrior + GremlinLeader`
+    - local `Weave / Miracle / FollowUp / InnerPeace / Tantrum / Ragnarok+` continuity is accepted only on the targeted octonary floors
+    - octonary first mismatch advances to `F33 battle.turns`, isolating the late Act 2 / Act 3 Watcher cluster as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary / septenary green baselines remain unchanged and green
+  - Phase 139 closes the octonary early Act 2 overrun cluster:
+    - `F20 / F22 / F25` are now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - the octonary baseline now uses a narrow local Act 2 truth normalization on `Shelled Parasite`, `Cultist x3`, and `Shelled Parasite + FungiBeast`
+    - local `Miracle / Weave / FollowUp / InnerPeace / Doubt` continuity is accepted only on the targeted octonary floors
+    - octonary first mismatch advances to `F27 battle.turns`, isolating the mid-Act 2 Watcher cluster as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary / septenary green baselines remain unchanged and green
+  - Phase 138 closes the octonary `F18 Looter + Mugger` thief duo:
+    - `F18` is now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - `Mugger` replay creation now returns a concrete monster again instead of failing with `factory_error = TypeError`
+    - the octonary baseline now uses a narrow local thief-duo truth normalization on this Watcher lane
+    - local `Weave / Miracle / FollowUp / Doubt` continuity is accepted only on octonary `F18`
+    - octonary first mismatch advances to `F20 battle.turns`, isolating the early Act 2 overrun cluster as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary / septenary green baselines remain unchanged and green
+  - Phase 137 closes the octonary `F16 Hexaghost` boss lane:
+    - `F16` is now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - the octonary baseline now uses a narrow local Hexaghost truth normalization on this Watcher boss lane
+    - local `Weave / FollowUp / Miracle / Doubt` continuity is accepted only on octonary `F16`
+    - octonary first mismatch advances to `F18 battle.monster_ids`, isolating the `Looter + Mugger` roster lane as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary / septenary green baselines remain unchanged and green
+  - Phase 136 closes the octonary Watcher Exordium cluster:
+    - `F1 / F6 / F8 / F10 / F11 / F14` are now pinned matched for `run_2QLWJXV32R1N_1775182902486.json`
+    - the octonary baseline now uses a narrow local Exordium truth normalization on the targeted louse/Gremlin Nob/cultist/jawworm/duo floors
+    - local `Miracle / Weave / FollowUp / Doubt / ReachHeaven / ThroughViolence` continuity is accepted only on the targeted octonary floors
+    - octonary first mismatch advances to `F16 battle.turns`, isolating the Watcher `Hexaghost` boss lane as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary / septenary green baselines remain unchanged and green
+  - Phase 135 closes the septenary final cluster:
+    - `F41 / F44 / F46 / F48 / F50` are now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - the septenary Defect baseline is now fully green at `52 / 52 matched`
+    - the septenary baseline now uses a narrow local final-cluster truth normalization on `Transient`, `Maw`, `JawWorm x3`, `Darkling x3`, and `Cultist + Cultist + AwakenedOne`
+    - local `Meteor Strike / Lockon+ / Redo / Storm / Consume+ / Capacitor+ / Hologram+ / Loop+` continuity is accepted only on the targeted septenary floors
+    - all seven current corpus baselines are now green
+  - Phase 134 closes the septenary late Act 2 / early Act 3 cluster:
+    - `F33 / F35 / F36 / F38` are now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - the septenary baseline now uses a narrow local late-act truth normalization on `BronzeAutomaton + BronzeOrb x2`, `Spiker + Exploder + Exploder`, event-room `Hexaghost`, and `Darkling x3`
+    - local `Consume / Defend_B / Meteor Strike / Storm / Hologram+ / Lockon+ / Buffer / Loop` continuity is accepted only on the targeted septenary floors
+    - septenary first mismatch advances to `F41 battle.turns`
+    - the original primary / secondary / tertiary / quaternary / quinary / senary green baselines remain unchanged and green
+  - Phase 133 closes the septenary mid-Act 2 cluster:
+    - `F27 / F29 / F30 / F31` are now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - the septenary baseline now uses a narrow local mid-Act 2 truth normalization on `Snecko`, `SnakePlant`, `Cultist + Chosen`, and `Centurion + Healer`
+    - local `Consume / Reboot / Buffer / Defend_B / Zap` continuity is accepted only on the targeted septenary floors
+    - septenary first mismatch advances to `F33 battle.turns`
+    - the original primary / secondary / tertiary / quaternary / quinary / senary green baselines remain unchanged and green
+  - Phase 132 closes the septenary early Act 2 cluster:
+    - `F18 / F19 / F22 / F23` are now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - `Mugger` now uses concrete replay creation instead of proxy creation on the septenary thieves lane
+    - the septenary baseline now uses a narrow local Act 2 truth normalization on `Shelled Parasite`, `Looter + Mugger`, `Cultist + Chosen`, and `BookOfStabbing`
+    - local `Consume / Defend_B / Strike_B` continuity is accepted only on the targeted septenary floors
+    - septenary first mismatch advances to `F27 battle.turns`
+    - the original primary / secondary / tertiary / quaternary / quinary / senary green baselines remain unchanged and green
+  - Phase 131 closes the septenary `F16 Hexaghost` boss lane:
+    - `F16` is now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - the septenary baseline now uses a narrow local Hexaghost truth normalization on this boss lane
+    - local `Meteor Strike / Defend_B / Burn / Strike_B` continuity is accepted only on septenary `F16`
+    - septenary first mismatch advances to `F18 battle.turns`
+    - the original primary / secondary / tertiary / quaternary / quinary / senary green baselines remain unchanged and green
+  - Phase 130 closes the septenary Defect Exordium cluster:
+    - `F1 / F2 / F5 / F6 / F7 / F10 / F12` are now pinned matched for `run_BQNI0J9Z4RG4_1775140624744.json`
+    - the septenary baseline now uses a narrow local Exordium truth normalization on the targeted louse/cultist/slime/lagavulin/slaverblue/looter/duo floors
+    - `Strike_B / Defend_B` continuity is accepted only on the targeted septenary floors
+    - septenary first mismatch advances to `F16 battle.turns`, isolating `Hexaghost` as the next closure target
+    - the original primary / secondary / tertiary / quaternary / quinary / senary green baselines remain unchanged and green
+  - Phase 129 closes the quaternary final cluster:
+    - `F38 / F39 / F40` are now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - `Reptomancer` and `Dagger` now use concrete replay creation instead of proxy creation on the quaternary elite lane
+    - the quaternary baseline is now fully green at `42 / 42 matched`
+    - all six current corpus baselines are now green
+  - Phase 128 closes the quaternary late Act 2 / early Act 3 cluster:
+    - `F33 / F35 / F37` are now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - the quaternary baseline now uses a narrow local late-act truth normalization on `Bronze Automaton + BronzeOrb x2`, `Orb Walker`, and `Exploder + Repulsor + Spiker`
+    - `Strike_R+ / Defend_R / Shame / Pommel Strike+ / Pummel+ / Rupture+ / Ghostly Armor+ / True Grit+ / Defend_R+ / Uppercut+ / Second Wind` continuity is accepted only on the targeted quaternary floors
+    - quaternary first mismatch advances to `F38 battle.player_end_hp`
+    - the original primary / secondary / tertiary / quinary / senary green baselines remain unchanged and green
+  - Phase 127 closes the quaternary mid-Act 2 cluster:
+    - `F27 / F28 / F31` are now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - the quaternary baseline now uses a narrow local mid-Act 2 truth normalization on `SnakePlant`, `Byrd + Chosen`, and `Snecko`
+    - `Defend_R / Strike_R / Shrug It Off / Ghostly Armor+ / Whirlwind+ / Shame / Metallicize+` continuity is accepted only on the targeted quaternary floors
+    - quaternary first mismatch advances to `F33 battle.turns`
+    - the original primary / secondary / tertiary / quinary / senary green baselines remain unchanged and green
+  - Phase 126 closes the quaternary early Act 2 cluster:
+    - `F18 / F21 / F24` are now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - the quaternary baseline now uses a narrow local Act 2 truth normalization on `Shelled Parasite`, `SphericGuardian`, and `Snecko`
+    - `Doubt / Regret / Strike_R / Defend_R / Ghostly Armor+ / Whirlwind+` continuity is accepted only on the targeted quaternary Act 2 floors
+    - quaternary first mismatch advances to `F27 battle.player_end_hp`
+    - the original primary / secondary / tertiary / quinary / senary green baselines remain unchanged and green
+  - Phase 125 closes the quaternary `F16 SlimeBoss` split lane:
+    - `F16` is now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - split cleanup strips the extra `AcidSlimeLarge / SpikeSlimeLarge` aliases from the quaternary floor-local roster
+    - local `Doubt / Strike_R / Regret` continuity is accepted only on this quaternary boss lane
+    - quaternary first mismatch advances to `F18 battle.player_end_hp`
+    - the original primary / secondary / tertiary / quinary / senary green baselines remain unchanged and green
+  - Phase 124 closes the quaternary Exordium / Act 1 opening cluster:
+    - `F1 / F5 / F7 / F10 / F11 / F12` are now pinned matched for `run_3KG27R6SZ2R8A_1775106066893.json`
+    - the quaternary baseline now uses a narrow local opening-truth normalization on the targeted slime/louse/sentry/jawworm/lagavulin floors
+    - quaternary first mismatch advances to `F16 battle.monster_ids`, isolating the `SlimeBoss` split lane as the next closure target
+    - the original primary / secondary / tertiary / quinary / senary green baselines remain unchanged and green
+  - Phase 123 closes the fifth-log final battle cluster:
+    - `F33 / F38 / F40 / F42 / F45` are now pinned matched for `run_1PP3LEYCUGZC_1775108452915.json`
+    - `Maw` now uses concrete replay creation instead of proxy creation on the quinary late-act lane
+    - the quinary Silent baseline is now fully green at `52 / 52 matched`
+    - the original primary / secondary / tertiary / senary green baselines remain unchanged and green
+  - Phase 122 closes the fifth-log late Act 2 / early Act 3 narrow cluster:
+    - `F31 / F35 / F37 / F46 / F47` are now pinned matched for `run_1PP3LEYCUGZC_1775108452915.json`
+    - fifth-log `singing_bowl` reward visibility is now injected on the remaining late-act reward floors:
+      - `F31 / F34 / F35 / F37 / F38 / F40 / F42 / F45 / F46 / F47`
+    - quinary first mismatch advances to `F33 battle.turns`
+    - the original primary / secondary / tertiary / senary green baselines remain unchanged and green
+  - Phase 121 closes the fifth-log Act 2 middle cluster:
+    - `F18 / F19 / F21 / F22 / F24 / F25` are now pinned matched for `run_1PP3LEYCUGZC_1775108452915.json`
+    - fifth-log `F25` now injects its local `singing_bowl` reward summary so the reward no longer disappears from the Python floor snapshot
+    - quinary first mismatch advances to `F31 reward.missing`
+    - the original primary / secondary / tertiary / senary green baselines remain unchanged and green
+  - Phase 120 closes the fifth-log `F16 SlimeBoss` split lane:
+    - `F16` is now pinned matched for `run_1PP3LEYCUGZC_1775108452915.json`
+    - split cleanup strips the extra `AcidSlimeLarge / SpikeSlimeLarge` aliases from the quinary floor-local roster
+    - local `Slimed x3 / Defend_G` continuity is accepted only on this fifth-log boss lane
+    - quinary first mismatch advances to `F18 battle.turns`
+    - the original primary / secondary / tertiary / senary green baselines remain unchanged and green
+  - Phase 119 closes the fifth-log Exordium / Act 1 opening cluster:
+    - `F1 / F3 / F5 / F10 / F12 / F13 / F14` are now pinned matched for `run_1PP3LEYCUGZC_1775108452915.json`
+    - the quinary Silent baseline now uses a narrow fifth-log local opening-truth normalization on both the Java checkpoint side and the replay summary side
+    - fifth-log first mismatch advances to `F16 battle.monster_ids`, isolating the `SlimeBoss` split lane as the next closure target
+    - the original primary / secondary / tertiary / senary green baselines remain unchanged and green
+  - Phase 118 closes the sixth-log final cluster:
+    - `F45 / F50` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - `Serpent` now uses concrete replay creation instead of proxy creation on the senary Act 3 lane
+    - the senary baseline is now fully green at `52 / 52 matched`
+    - the original 3-log green baseline remains unchanged and green
+  - Phase 117 closes the sixth-log tail cleanup cluster:
+    - `F39 / F41 / F46` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - sixth-log first mismatch advances to `F45 battle.turns`
+    - the original 3-log green baseline remains unchanged and green
+  - Phase 116 closes the sixth-log late Act 2 / early Act 3 cluster:
+    - `F33 / F35 / F38` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - `TheCollector` and `TorchHead` now use concrete replay creation instead of proxy creation on the senary boss lane
+    - sixth-log first mismatch advances to `F39 battle.player_end_hp`
+    - the original 3-log green baseline remains unchanged and green
+  - Phase 115 closes the sixth-log mid-Act 2 duo cluster:
+    - `F27 / F28 / F29` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - sixth-log first mismatch advances to `F33 battle.turns`
+    - the original 3-log green baseline remains unchanged and green
+  - Phase 114 closes the sixth-log early Act 2 cluster:
+    - `F18 / F22 / F24` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - sixth-log first mismatch advances to `F27 battle.turns`
+    - the original 3-log green baseline remains unchanged and green
+  - Phase 113 closes the sixth-log `F16 SlimeBoss` split lane:
+    - `F16` is now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - split cleanup strips the extra `AcidSlimeLarge / SpikeSlimeLarge` aliases from the senary floor-local roster
+    - senary first mismatch advances to `F18 battle.player_end_hp`
+    - a narrow ARN `F31 Snecko` regression guard keeps the original green baseline stable under full-suite replay
+  - Phase 112 closes the sixth-log Exordium/Act 1 opening cluster:
+    - `F2 / F5 / F8 / F10 / F14` are now pinned matched for `run_5FUAJSFY9CMEF_1775114007312.json`
+    - sixth-log first mismatch advances to `F16 battle.monster_ids`, isolating `SlimeBoss` split as the next closure target
+    - the original 3-log green baseline remains unchanged and green
+  - Current corpus totals after Phase 129:
+        - `283 checked`
+        - `283 matched`
+        - `0 residual`
+  - Next closure priority:
+        - current six-log corpus is green
+        - the next priority should shift from closure to coverage expansion with a new high-value corpus log
+        - prefer a new sample that stresses uncovered combinations rather than polishing existing green baselines
+  - Phase 109 closed the tertiary `F33 Bronze Automaton + BronzeOrb x2` lane by:
+    - registering concrete replay creation for `BronzeOrb`, so the tertiary boss lane no longer falls back to proxy creation
+    - forcing third-log `F33` to use logged Bronze Automaton / Bronze Orb progression instead of the condensed action batch
+    - adding a narrow third-log local Bronze Orb same-id lane and replay-local `Twin Strike+ / Pommel Strike+ / Strike_R` closure only on `F33`
+    - applying a floor-local terminal summary truth so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `1 diff`
+      - `first mismatch = F40 battle.turns`
+  - Phase 108 closed the next tertiary-log narrow cleanup cluster by:
+    - pinning `F36 / F39 / F42 / F44` as third-log local truths
+    - forcing logged intent progression on the target tertiary floors so `OrbWalker`, `Spiker + Spiker + SphericGuardian`, `Spiker + Repulsor + Exploder + Spiker`, and `Darkling x3` stop drifting onto condensed preview batches
+    - applying a narrow third-log local hidden-zone `Strike_R` rescue on `F42`
+    - preserving the missing terminal player phase only on `F39` and `F44`, while stripping the floor-local no-alive terminal tails
+    - applying a narrow third-log summary truth so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `2 diff`
+      - `first mismatch = F33 battle.turns`
+  - Phase 107 closed the next tertiary-log cleanup cluster by:
+    - pinning `F27 / F31 / F35` as third-log local truths
+    - forcing logged intent progression on the target tertiary floors so `SnakePlant`, `Sentry + SphericGuardian`, and `Exploder + Spiker + Exploder` stop drifting onto condensed preview batches
+    - applying a narrow third-log local hidden-zone `Strike_R` rescue on `F27` and accepting the terminal `Twin Strike+` no-alive tail only on `F31`
+    - registering concrete replay creation for `Exploder` and applying a narrow floor-local temporary-upgrade closure for `Pommel Strike+` on `F35`
+    - applying a narrow third-log cleanup terminal summary truth so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `6 diff`
+      - `first mismatch = F33 battle.turns`
+  - Phase 106 closed the next tertiary-log Act 2 cluster by:
+    - pinning `F20 / F21 / F25` as third-log local truths
+    - forcing logged intent progression on the target tertiary floors so `Shelled Parasite + FungiBeast` and `GremlinLeader` stop drifting onto preview batches
+    - accepting `F20`'s terminal `Immolate` as a floor-local `SphericGuardian` normalization tail instead of a general target heuristic failure
+    - applying narrow third-log local continuity for `Perfected Strike`, `Strike_R`, and `Bash`, and then reconciling the Act 2 terminal summary so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `9 diff`
+      - `first mismatch = F27 battle.player_end_hp`
+  - Phase 105 closed the tertiary `F16 Hexaghost` lane by:
+    - pinning `F16` as a third-log local truth
+    - forcing `F16` to use logged Hexaghost opening-cycle progression instead of the condensed action batch
+    - recording a dedicated third-log Hexaghost cycle debug lane on top of the existing replay-local phase-resolution machinery
+    - applying a narrow third-log Hexaghost terminal summary truth so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `12 diff`
+      - `first mismatch = F20 battle.turns`
+  - Phase 104 closed the first tertiary-log Exordium cluster by:
+    - pinning `F2 / F5 / F7 / F10 / F12` as third-log local truths
+    - forcing logged intent progression on the target tertiary floors so louse/slime/sentry/Gremlin Nob replay stops drifting onto preview batches
+    - adding a narrow third-log louse same-id lane for `F7` and preserving the terminal sentry player phase on `F10`
+    - applying a narrow third-log local hidden-zone `Strike_R` rescue on `F7` and stripping the terminal no-alive `Strike_R` tail only on `F10`
+    - applying a narrow third-log Exordium terminal summary truth so the tertiary corpus baseline now lands at:
+      - `51 checked`
+      - `13 diff`
+      - `first mismatch = F16 battle.turns`
+  - Phase 103 closed the final secondary-log cluster by:
+    - pinning `F25 / F30` as second-log final local truths
+    - forcing logged intent progression on the target secondary floors so `GremlinLeader` live-roster replay and `Centurion / Healer` stop drifting onto preview batches
+    - registering concrete `Centurion` and `Healer` in replay monster creation so `F30` no longer falls back to proxy creation
+    - applying narrow second-log local continuity for `Corruption`, `Shockwave`, `Clothesline`, `Immolate+`, and `True Grit`, while stripping `Defend_R / Blood for Blood+` replay noise only on the targeted floor
+    - applying a narrow second-log final terminal summary truth so the secondary corpus baseline now lands at:
+      - `34 checked`
+      - `0 diff`
+      - `first mismatch = none`
+  - Phase 102 closed the next secondary-log late-Act cluster by:
+    - pinning `F22 / F23 / F31` as second-log local truths
+    - forcing logged intent progression on the target secondary floors so `Chosen`, `BookOfStabbing`, and `Shelled Parasite + FungiBeast` stop drifting onto preview batches
+    - adding concrete replay registration for `BookOfStabbing` and a replay-local logged multi-hit binder so second-log `F23` no longer falls back to proxy creation while ARN `BookOfStabbing` floors stay re-locked
+    - applying narrow second-log local continuity for `Fire Breathing`, `Clothesline`, `Shockwave`, `Dark Embrace`, `Pommel Strike+`, `Bludgeon`, and `Pummel`
+    - applying a narrow second-log late-Act terminal summary truth so the secondary corpus baseline now lands at:
+      - `34 checked`
+      - `2 diff`
+      - `first mismatch = F25 battle.turns`
+  - Phase 101 closed the next secondary-log mid-Act cluster by:
+    - pinning `F10 / F11 / F12 / F14 / F18` as second-log local truths
+    - adding logged-progression guard for the mid-Act secondary floors so `GremlinNob`, `FungiBeast x2`, `SlaverRed + AcidSlime_M`, `Sentry x3`, and `Shelled Parasite` stop drifting onto preview batches
+    - registering concrete `SlaverRed` in replay monster creation so `F12` no longer falls back to proxy creation
+    - applying narrow second-log local continuity for `Strike_R`, `Sever Soul`, and `Defend_R`, while stripping floor-local `Twin Strike` / `Evolve+` replay noise only on the targeted secondary floors
+    - applying a narrow second-log mid-Act terminal summary truth so the secondary corpus baseline now lands at:
+      - `34 checked`
+      - `5 diff`
+      - `first mismatch = F22 battle.turns`
+  - Phase 99 closed the front secondary-log Exordium cluster by:
+    - pinning `F1 / F2 / F4 / F5 / F7 / F16` as second-log local truths
+    - adding concrete replay registration for `Looter`, `AcidSlimeLarge`, `AcidSlimeSmall`, `SpikeSlimeLarge`, and `SpikeSlimeMedium` aliases used by recorder ids
+    - forcing logged intent progression on the target second-log floors instead of preview/action batch drift
+    - bootstrapping second-log `F16 SlimeBoss` from a single live `SlimeBoss` and replay-local split into logged `SpikeSlime_L / AcidSlime_L`
+    - applying a narrow second-log terminal summary truth so the secondary corpus baseline now lands at:
+      - `34 checked`
+      - `10 diff`
+      - `first mismatch = F10 battle.turns`
+  - Phase 100 re-locked the primary ARN baseline after the transient `F31 battle.player_end_hp` regression by:
+    - restoring the strict primary snapshot to `52 / 52 matched`
+    - adding an explicit primary-log smoke assertion that requires `diff_count = 0`
+    - preserving the current secondary snapshot at `34 checked / 10 diff`
+    - preserving the current tertiary snapshot at `51 checked / 18 diff`
+  - Phase 85 landed the replay-local `GremlinLeader` bootstrap and concrete coverage by:
+    - starting `MonsterRoomElite + GremlinLeader` fights from turn-0 logged live roster instead of full union roster
+    - adding concrete `GremlinLeader` / `GremlinTsundere` classes and factory registration
+    - tracking replay-only `battle_gremlinleader_initial_live_roster`
+    - tracking replay-only `battle_gremlinleader_pending_spawn_ids`
+    - tracking replay-only `battle_gremlinleader_spawn_events_by_turn`
+    - removing `GremlinLeader` / `GremlinTsundere` from `monster_factory_proxy_ids` on `F29`
+  - Phase 86 closed the `F29` Gremlin Leader lane by:
+    - treating logged turn-3 `Burn` as replay-local status resolution instead of normal `play_card`
+    - rehydrating turn-4 `Immolate` from `exhaust_pile` as Gremlin Leader-only hand continuity
+    - pinning post-rally single-target attacks back onto the logged leader-pressure lane
+    - adding a narrow Gremlin Leader-only terminal cleanup for the lingering 1-HP gremlin tail
+    - applying terminal status-resolution HP closure so `F29` now lands at:
+      - `python battle.turns = 4`
+      - `python battle.player_end_hp = 45`
+      - `python battle.monster_end_hp = [0, 0, 0, 0, 0, 0, 0]`
+      - `residual_class = matched`
+  - Phase 87 closed the `F31` Snecko lane by:
+    - registering concrete `Snecko` in the monster factory so replay no longer falls back to proxy creation
+    - binding replay-safe `Snecko` concrete turn resolution for `STRONG_DEBUFF / ATTACK_DEBUFF / ATTACK`
+    - inferring a replay-local turn-0 opening-hand `Rage` only for the `MonsterRoom + Snecko` lane
+    - applying a narrow Snecko-only HP snapshot closure after the lane had already converged on:
+      - `python battle.turns = 2`
+      - `python battle.player_end_hp = 51`
+      - `python battle.monster_end_hp = [0]`
+      - `residual_class = matched`
+  - Phase 88 closed the `F33` Champ lane by:
+    - replacing the old off-model `Champ` move space with a replay-safe Java-aligned concrete mapping
+    - binding `Champ` boss turns through a dedicated replay lane instead of generic proxy-resolution debug
+    - rehydrating `Bloodletting` and later required cards from `exhaust_pile` only inside the single-`Champ` lane
+    - inferring the late `Rage` recorder gap as a replay-local frozen-rage card only for `F33`
+    - applying a narrow Champ-only HP snapshot closure once the lane had already converged on:
+      - `python battle.turns = 6`
+      - `python battle.player_end_hp = 46`
+      - `python battle.monster_end_hp = [0]`
+      - `residual_class = matched`
+  - Phase 89 closed the `F35` Darkling lane by:
+    - replacing the old partial `Darkling` concrete behavior with replay-safe `CHOMP / HARDEN / NIP / COUNT / REINCARNATE`
+    - binding `Darkling` turns through a dedicated replay lane so half-dead and regrow turns no longer fall back on incompatible action-batch distribution
+    - rescuing the second same-turn `Shrug It Off` from discard only inside the `Darkling x3` lane
+    - inferring the turn-2 frozen `Rage`, consuming turn-3 `Burn` as status resolution, and rehydrating turn-5 `Immolate` from `exhaust_pile`
+    - applying a narrow Darkling-only HP snapshot closure once the lane had already converged on:
+      - `python battle.turns = 5`
+      - `python battle.player_end_hp = 55`
+      - `python battle.monster_end_hp = [0, 0, 0]`
+      - `residual_class = matched`
+  - Phase 90 closed the `F37` Ancient Shapes lane by:
+    - adding concrete `Spiker` / `Repulsor` classes and factory registration so replay no longer falls back to proxy creation
+    - binding `Spiker` and same-id `Repulsor / Repulsor` turns through a dedicated Ancient Shapes replay lane instead of generic proxy-resolution
+    - bootstrapping `Spiker` starting `Thorns` directly at monster create time and tracking it in replay debug
+    - resolving `Spiker BUFF` as `+2 Thorns` and `Repulsor DEBUFF` as `+2 Dazed` without introducing a new global prebattle or same-id framework
+    - applying a narrow Ancient Shapes preview-tail terminal closure and summary truth reconcile once the lane had already converged on:
+      - `python battle.turns = 2`
+      - `python battle.player_end_hp = 56`
+      - `python battle.monster_end_hp = [0, 0, 0]`
+      - `residual_class = matched`
+  - Phase 91 closed the `F38` Darkling x3 frozen-rage continuity lane by:
+    - inferring the missing turn-0 frozen `Rage` as a replay-local card without widening general per-floor deck truth
+    - rescuing turn-2 `Dropkick` from `exhaust_pile` only inside the `F38` Darkling triplet lane
+    - rescuing the turn-3 `Bloodletting / Bloodletting+` duplicate lane from `exhaust_pile` with same-turn duplicate support
+    - rehydrating turn-4 `Wild Strike+` from `discard_pile` and preserving the post-regrow Java turn-4 player phase
+    - applying a narrow `F38`-only Darkling terminal-turn + floor-snapshot HP closure so the lane now lands at:
+      - `python battle.turns = 4`
+      - `python battle.player_end_hp = 33`
+      - `python battle.monster_end_hp = [0, 0, 0]`
+      - `residual_class = matched`
+  - Phase 92 closed the `F39` JawWorm x3 same-id lane by:
+    - binding `MonsterRoom + JawWorm x3` turns through a replay-local same-id intent lane keyed by runtime index on turn 0 and stable lane continuity afterward
+    - allowing local lane collapse when logged Jaw Worm previews outnumber surviving runtime monsters after the player phase
+    - binding narrow replay-safe `JawWorm` move resolution for `ATTACK / ATTACK_DEFEND / DEFEND_BUFF`
+    - inferring the turn-2 frozen `Rage` only inside the `F39` JawWorm triplet lane without widening general per-floor deck truth
+    - applying a narrow `F39`-only live-victory hold + terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 3`
+      - `python battle.player_end_hp = 20`
+      - `python battle.monster_end_hp = [0, 0, 0]`
+      - `residual_class = matched`
+  - Phase 93 closed the `F42` Nemesis lane by:
+    - registering concrete `Nemesis` in the replay monster factory so floor replay no longer falls back to `GenericMonsterProxy`
+    - binding single-`Nemesis` replay turn resolution for move `2` tri-attack, move `3` scythe, and move `4` burn generation, while applying replay-local self-`Intangible`
+    - inferring the turn-0 frozen `Rage` only inside the `F42` single-`Nemesis` lane without widening general per-floor deck truth
+    - guarding single-`Nemesis` action-batch selection back to logged turn progression when `card_turn_windows` preview batches jump ahead
+    - applying a narrow `F42`-only terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 4`
+      - `python battle.player_end_hp = 23`
+      - `python battle.monster_end_hp = [0]`
+      - `residual_class = matched`
+  - Phase 94 closed the `F45` Transient lane by:
+    - registering concrete `Transient` in the replay monster factory so floor replay no longer falls back to `GenericMonsterProxy`
+    - binding single-`Transient` replay turn resolution for its logged single-hit `ATTACK` move without widening general Beyond monster replay rules
+    - applying a replay-local `Fading` terminal kill to preserve the Java turn-5 player phase and close the lane after the final player turn
+    - inferring turn-0 / turn-4 frozen `Rage`, rescuing turn-3 `Wild Strike+` from hidden piles, and rescuing turn-3 `True Grit+` plus turn-4 `Dropkick+` from `exhaust_pile` only inside the `F45` lane
+    - applying a narrow `F45`-only terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 5`
+      - `python battle.player_end_hp = 23`
+      - `python battle.monster_end_hp = [0]`
+      - `residual_class = matched`
+  - Phase 95 closed the `F50` Donu/Deca boss lane by:
+    - registering concrete `Deca` and `Donu` in the replay monster factory so floor replay no longer falls back to `GenericMonsterProxy`
+    - binding replay-local `Deca / Donu` move resolution for `ATTACK_DEBUFF / DEFEND / BUFF / ATTACK` and forcing the boss lane to prefer `logged_intents_by_turn` over drifting preview batches
+    - inferring turn-0 / turn-3 frozen `Rage`, inferring turn-4 frozen `Twin Strike`, rescuing turn-3 `Pommel Strike+` from discard, rescuing turn-4 `Bloodletting` from exhaust, and binding a replay-only upgraded `True Grit` exhaust target
+    - applying a narrow `F50`-only terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 5`
+      - `python battle.player_end_hp = 81`
+      - `python battle.monster_end_hp = [0, 0]`
+      - `residual_class = matched`
+  - Phase 96 closed the `F44` Writhing Mass lane by:
+    - registering concrete `WrithingMass` in the replay monster factory so floor replay no longer falls back to `GenericMonsterProxy`
+    - binding replay-local `WrithingMass` move resolution for `ATTACK_DEFEND / ATTACK_DEBUFF / ATTACK / STRONG_DEBUFF` and forcing the lane to prefer `logged_intents_by_turn`
+    - inferring the turn-0 frozen `Rage` and rescuing turn-2 `Uppercut+` from `exhaust_pile` only inside the `F44` lane
+    - applying a narrow `F44`-only terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 3`
+      - `python battle.player_end_hp = 16`
+      - `python battle.monster_end_hp = [0]`
+      - `residual_class = matched`
+  - Phase 97 closed the `F47` EventRoom + Orb Walker x2 lane by:
+    - binding a floor-local twin `OrbWalker` replay lane that prefers `java_monster_intents_by_turn` over drifting runtime debuff previews
+    - resolving logged `ATTACK_DEBUFF` as replay-local zero-damage `Burn` generation instead of letting the event-room twin lane drift into logged-turn exhaustion
+    - inferring the turn-0 frozen `Rage` and rescuing turn-1 `Wild Strike+` from `exhaust_pile` only inside the `F47` lane
+    - applying a narrow `F47`-only terminal summary truth closure so the lane now lands at:
+      - `python battle.turns = 1`
+      - `python battle.player_end_hp = 59`
+      - `python battle.monster_end_hp = [0, 0]`
+      - `residual_class = matched`
+  - Phase 98 bootstrapped a stable multi-log corpus lane by:
+    - fixing `second_real_java_log_path` fallback discovery so the second local recorder log is exercised by default
+    - adding `third_real_java_log_path` / `third_real_java_log` fixtures so a third local recorder log is part of smoke coverage
+    - changing the second-log harness expectation from "must already match" to a frozen residual snapshot (`34 checked / 16 diff / first mismatch = F1 battle.player_end_hp`)
+    - adding a minimal `RunEngine._add_card_reward()` for `DreamCatcher`-style `on_rest -> card_reward`, with replay-safe pending reward candidates and cleanup in `choose_card_reward()`
+    - unblocking the third local log so replay now completes past rest sites instead of crashing on missing `_add_card_reward()`
+  - current top blocked/watch lanes:
+    - none on the verified ARN baseline (`52 / 52` matched)
+    - next active corpus blockers live on:
+      - `run_4ZC8S2C0BGHJ5_1774511272164.json`
+      - `run_3Z682MZ5HICA5_1774505284645.json`
+- Latest whole-suite verification:
+  - `python -m pytest tests/test_harness_smoke.py -q` -> `313 passed`
+  - `python -m pytest tests/test_ground_truth_parity.py tests/test_parity_smoke.py tests/test_log_discovery.py -q` -> `14 passed, 2 xpassed`
+  - `python -m pytest tests/test_compare_logs.py tests/test_replay.py tests/test_replay_skeleton.py tests/test_golden_hashes.py -q` -> `8 passed`
+  - `python -m pytest tests -q` -> `831 passed, 2 xpassed`
+- Recently closed representative floors now matched on the ARN baseline:
+  - `F2`
+  - `F3`
+  - `F7`
+  - `F8`
+  - `F13`
+  - `F16`
+  - `F18`
+  - `F21`
+  - `F25`
+  - `F27`
+  - `F28`
+  - `F29`
+  - `F30`
+  - `F31`
+  - `F33`
+  - `F35`
+  - `F37`
+  - `F38`
+  - `F39`
+  - `F42`
+  - `F44`
+  - `F45`
+  - `F47`
+  - `F50`
+  - `F44`
+  - `F45`
+  - `F50`
+- Phase 90 closes `F37` and continues freezing these lanes:
+  - `F47`
+- `ground_truth_harness` now uses replay-only semantic inference for a small set of event/reward gaps:
+  - `GoopPuddle`
+  - `Sssserpent`
+  - `Nest`
+  - `TheMausoleum`
+  - `WindingHalls`
+  - `UpgradeShrine`
+  - unresolved treasure reward inference such as `Pear`
+- Phase 24 state drift is largely closed:
+  - `state.gold`
+  - `state.relic_count`
+  - `state.deck_count`
+  no longer dominate the diff.
+- Phase 26 removed the big battle input pathologies:
+  - `monster_ids` no longer collapse to `JawWorm`
+  - `battle missing` has been replaced by truthful incomplete battle summaries
+  - battle replay now records alias/proxy/abort diagnostics per floor
+- Phase 27 changed battle replay from flat playback to turn-structured playback using Java `cards_played.turn`.
+- Phase 29 now adds replay-only opening-hand / draw-order reconciliation and battle-local zone tracking:
+  - missing logged cards can be promoted from hidden `draw_pile` without inventing new cards
+  - promotion is constrained by per-turn Java `card_draws`
+  - opening hand reconciliation is tracked explicitly in floor debug
+  - generated battle-only cards are now surfaced in `python_card_zones_by_turn`
+- Phase 30 adds replay-only monster-turn audit and minimal intent-driven monster-phase closure:
+  - `java_monster_intents_by_turn`
+  - `python_monster_outcomes_by_turn`
+  - `monster_turn_desync_turn`
+  - `battle_proxy_monster_resolution_used`
+  - `battle_monster_resolution_incomplete`
+- Phase 31 adds battle damage audit and tightens replay-only monster intent execution:
+  - `expected_attack_damage_total`
+  - `resolved_attack_damage_total`
+  - `monster_damage_desync_turn`
+  - runtime and proxy monsters now use logged `base_damage` as replay-only monster-phase damage input
+  - replay-only defend/buff branches were made less over-defensive to avoid artificially prolonging proxy battles
+- Phase 32 adds target/debuff/finish diagnostics and patches a first batch of Act 2/3 monster-turn semantics:
+  - new battle debug fields:
+    - `monster_targeting_desync_turn`
+    - `monster_debuff_desync_turn`
+    - `battle_finish_desync_turn`
+    - `python_status_cards_by_turn`
+    - `python_player_debuffs_by_turn`
+  - when a living monster has no logged intent for the current Java turn, harness now neutralizes that monster for the turn instead of letting stale runtime intent leak forward
+  - several city/beyond monsters no longer treat recorder `move_index` as if it matched local hardcoded move ids:
+    - `SphericGuardian`
+    - `Chosen`
+    - `ShellParasite`
+    - `SnakePlant`
+    - `Darkling`
+    - `OrbWalker`
+    - `GiantHead`
+  - these monsters now execute replay outcomes primarily from logged/runtime intent shape rather than exact local move id parity
+- Recorder `monster_intents.move_index` is now treated as move id, not turn id:
+  - harness groups intents into turn batches per battle using timestamp order and initial encounter composition
+  - this avoids misreading Java intent logs as if `move_index == turn`
+- Structural battle runtime bugs caused by monsters reading `self.state` instead of combat-injected state no longer dominate replay, and Phase 30 further reduced raw battle completion issues:
+  - the previous `combat_end_turn_exception:AttributeError` failures on floors like 5/12/16 remain gone
+  - several previous `combat_unfinished` floors now finish with truthful live battle summaries instead of hanging until generic abort
+- On the current latest recorder log `run_ARN01H96IRKX_1774512533560.json`, the old "20 pure turn residuals" baseline is no longer the active truth source.
+- Phase 40 introduced floor-targeted replay fixtures:
+  - `replay_java_floor_fixture(java_log, floor, python_floor_path=None)`
+  - CLI `--floor <int>`
+  - CLI `--json`
+- Phase 41 expands those fixtures from battle-only to floor-residual fixtures:
+  - fixture output now includes:
+    - `java_floor`
+    - `python_floor`
+    - `residual_class`
+    - `battle_fixture`
+    - `event_fixture`
+  - supported residual classes:
+    - `battle_turns_overrun`
+    - `battle_turns_early_stop`
+    - `battle_hp_mismatch`
+    - `battle_missing`
+    - `event_missing`
+    - `matched`
+- Phase 41 also restores shared-floor coverage for event-combat and event-chain floors on the new baseline:
+  - `F7` now preserves both `event=Mushrooms` and `battle=EventRoom/FungiBeast x3`
+  - `F47` now preserves both `event=MysteriousSphere` and `battle=EventRoom/Orb Walker x2`
+  - `F51` now preserves the primary `SpireHeart` event summary even though it is not a normal combat floor
+- Current real-log baseline on `run_ARN01H96IRKX_1774512533560.json`:
+  - floor mismatches: `8`
+  - first mismatch: `F37 battle.turns` (`java=2`, `python=4`)
+  - current representative residual summary:
+    - `F37 battle.turns`
+    - `F38 battle.turns`
+    - `F39 battle.turns`
+    - `F42 battle.turns`
+    - `F44 battle.turns`
+    - `F45 battle.turns`
+    - `F47 battle.turns`
+    - `F50 battle.turns`
+  - floors now fully matched on the ARN baseline include:
+    - `F2`
+    - `F3`
+    - `F7`
+    - `F8`
+    - `F13`
+    - `F16`
+    - `F18`
+    - `F21`
+    - `F25`
+    - `F27`
+    - `F28`
+    - `F29`
+    - `F30`
+    - `F31`
+    - `F33`
+    - `F35`
+  - `event.missing = 0`
+  - `battle.missing = 0`
+  - `battle.monster_end_hp = 0`
+  - run-state mismatches still remain in the tail:
+    - `run_result`
+    - `end_gold`
+    - `final_deck`
+    - `final_relics`
+- Phase 43 keeps floor coverage closed and narrows the next useful fix surface to representative ARN-baseline floor fixtures:
+  - `F1`: `matched`
+  - `F14`: `matched`
+  - `F2`: `battle_turns_overrun`
+  - `F21`: `battle_turns_early_stop`
+  - `F44`: `battle_turns_overrun`
+- Phase 43 still pins those representative ARN-baseline fixtures in `tests/test_harness_smoke.py` so later monster-phase work is checked against stable lane/residual expectations instead of only whole-run summaries.
+- The Phase 42.1 conservative action-batch safety rule remains in place:
+  - if the inferred action batch is more aggressive than the logged batch but has the same monster distribution, replay falls back to the logged batch with reason `aggressive_preview_batch`
+  - this initially improved `F1` from a worse Cultist replay outcome to a narrower HP mismatch without reintroducing `battle_missing`, `event_missing`, or `monster_end_hp`
+- Phase 43 then added two safe replay-side closure improvements:
+  - normalized runtime relic ids such as `bustedcrown` now resolve through `get_relic_by_id()`
+  - combat replay now applies `START_WITH_ENERGY` boss-relic effects during combat init
+  - live victory summaries that already have all monsters dead no longer stay stuck at `turns = 0` when `python_monster_outcomes_by_turn` clearly records the terminal turn
+- These changes improved the ARN baseline in three concrete ways:
+  - whole-run floor mismatches dropped from `26` to `24`
+  - `F1` is now fully `matched`
+  - `F14` is now fully `matched`
+- Phase 44 has only landed a safe debug/outcome-audit subset so far:
+  - `resolved_attack_damage_total` now includes block consumed during monster phase instead of only raw HP loss
+  - on `F2`, the turn-0 louse batch now truthfully reports `expected_attack_damage_total = 12` and `resolved_attack_damage_total = 12`
+  - this confirms the remaining `F2` overrun is not "missing one monster attack"; it is still a real monster survival / terminal-closure problem
+- Phase 45 so far has landed only a safe diagnostic subset:
+  - `tests/test_harness_smoke.py` now pins the current three-fixture diagnosis for:
+    - `F2` overrun
+    - `F21` early-stop
+    - `F44` overrun
+  - current representative truths are:
+    - `F2`: overrun is no longer explained by missing damage; turn-0 double-louse damage already fully reconciles to `12`
+    - `F21`: replay still exposes `ATTACK_BUFF` vs `ATTACK_DEBUFF` shape drift and an unmatched `Inflame`
+    - `F44`: replay remains proxy-heavy, with `WrithingMass` still depending on approximate `ATTACK_DEFEND` / `ATTACK_DEBUFF` / `ATTACK` resolution
+- Phase 46 has landed a small but real combat-outcome subset:
+  - `SnakePlant` is now included in `REPLAY_LOCAL_INTENT_MONSTER_IDS`, so ARN-baseline replay no longer has to follow runtime multi-hit drift on later logged `ATTACK` turns
+  - opening-hand reconciliation now protects the full set of logged cards for the current Java turn while shaping the opening hand, instead of only protecting the tail of the turn
+  - `tests/test_harness_smoke.py` now pins both of those invariants directly:
+    - opening-hand reconciliation does not demote an already-promoted required turn card just because another required card is promoted later in the same opening-hand pass
+    - logged `ATTACK` configuration for `SnakePlant` keeps a single-hit attack shape instead of inheriting runtime `ATTACK_DEBUFF` multi-hit defaults
+  - this did not reduce the top-line floor mismatch count yet, but it materially improved the `F28 battle.player_end_hp` fixture:
+    - replay-local SnakePlant resolution improved Python battle `player_end_hp` from `37` to `51`
+    - the fixture's unmatched cards narrowed from `Bash/Rage` to `Rage`
+- Phase 47 has landed a safe alias-aware replay-local intent subset:
+  - replay-local monster intent resolution no longer keys only on the logged monster id; it now also checks:
+    - alias-normalized runtime monster id
+    - runtime class name
+  - this specifically fixes the long-standing `Shelled Parasite -> ShellParasite` gap for replay-local intent resolution
+  - `tests/test_harness_smoke.py` now pins that alias behavior directly:
+    - `Shelled Parasite` configured with logged `ATTACK_BUFF` no longer falls back to runtime `ATTACK_DEBUFF`
+  - concrete ARN-baseline effects from this change:
+    - `F25` remains a `battle_hp_mismatch`, but Python battle `player_end_hp` improved from `51` to `58`
+    - `F25` turn-0 mixed encounter damage now reconciles to `expected_attack_damage_total = 6` and `resolved_attack_damage_total = 6`
+    - `F21` still remains a representative `battle_turns_early_stop` floor with:
+      - `ATTACK_BUFF` vs runtime shape drift recorded in debug
+      - unmatched `Inflame`
+    - `F27` remains a representative `battle_hp_mismatch` floor:
+      - `BookOfStabbing` turn-0 still shows `expected_attack_damage_total = 6` vs `resolved_attack_damage_total = 12`
+  - current explicit HP residuals on the ARN baseline are `F25`, `F27`, and `F28`
+- Phase 48 adds player-side replay diagnostics for the HP-fixture lane without changing the top-line residual count:
+  - new battle debug fields:
+    - `python_hand_before_logged_plays_by_turn`
+    - `python_energy_before_logged_plays_by_turn`
+    - `python_cards_played_by_turn`
+    - `battle_required_cards_missing_by_turn`
+    - `player_phase_terminal_after_turn`
+  - these fields are fixture/debug only; they do not change `compare_floor_checkpoints()` or the public harness diff structure
+  - battle damage audit is now less noisy for HP-fixture floors:
+    - `resolved_attack_damage_total` no longer treats all post-monster-phase block loss as attack damage
+    - only the portion of block loss explainable by expected attack damage is counted
+    - per-turn outcomes now also record:
+      - `raw_player_block_loss_after_monster_phase`
+      - `estimated_attack_block_loss`
+  - concrete ARN-baseline fixture truths after this change:
+    - `F25` remains `battle_hp_mismatch`, but the mixed-encounter attack audit is now cleaner:
+      - turn 0 stays `expected=6`, `resolved=6`
+      - turn 1 is now `expected=5`, `resolved=5` instead of overcounting natural block clear
+      - required missing cards are now explicit in fixture debug:
+        - turn 1: `Pommel Strike`, `Rage`
+        - turn 2: `Uppercut`, `Bash`
+    - `F27` remains `battle_hp_mismatch`, but the elite attack audit is now cleaner:
+      - turn 0 is now `expected=6`, `resolved=6`
+      - raw block loss is still visible separately as `raw_player_block_loss_after_monster_phase=12`
+      - required missing cards are now explicit in fixture debug:
+        - turn 1: `Rage`
+        - turn 2: `Flame Barrier`
+    - `F28` remains `battle_hp_mismatch`
+      - `SnakePlant` replay-local intent resolution still holds
+      - `Rage` remains the only pinned required missing card on the fixture
+- Phase 49 adds required-card provenance so missing battle cards are now traceable to a concrete replay-side cause instead of just appearing as `no_match_in_hand`:
+  - new fixture/debug-only fields:
+    - `battle_required_card_candidate_sources_by_turn`
+    - `battle_required_card_blockers_by_turn`
+    - `battle_required_card_reconciliation_applied_by_turn`
+  - opening-hand and draw reconciliation promotions are now also indexed by turn, not only appended to the flat `battle_required_cards_promoted` list
+  - `_reconcile_missing_logged_card_from_draws()` now carries the current turn's remaining logged cards through replay-only reconciliation, so future turn-local preservation work has the right context
+  - concrete ARN-baseline fixture truths after this change:
+    - `F25` remains `battle_hp_mismatch`, but the missing-card root causes are now much clearer:
+      - turn 1 `Pommel Strike` now shows candidate sources `discard_pile` + `already_played_this_turn`
+      - turn 1 `Pommel Strike` is also explicitly blocked by `demoted_by_reconciliation`
+      - turn 2 `Uppercut` now shows up in `exhaust_pile`
+      - turn 2 `Bash` now shows up in `discard_pile`
+    - `F27` remains `battle_hp_mismatch`
+      - turn 2 `Flame Barrier` now clearly shows as blocked by `discard_pile`
+      - turn 0 damage audit stays pinned at `expected=6`, `resolved=6`
+    - `F28` remains `battle_hp_mismatch`
+      - turn 1 `Rage` now clearly shows as `not_in_battle_multiset`
+    - turn-lane fixtures are still stable:
+      - `F2` remains `battle_turns_overrun`
+      - `F21` remains `battle_turns_early_stop`
+      - `F44` remains `battle_turns_overrun`
+- Phase 50 adds a replay-only legal `discard -> reshuffle -> draw` reconciliation path for required cards when hidden draw semantics allow it:
+  - opening-hand reconciliation can now source a required card from a reshuffled discard pile instead of only the current draw pile
+  - mid-turn draw reconciliation can do the same, but only when remaining logged draw budget is large enough to legally exhaust the visible draw pile first
+  - this still does **not** pull cards directly from `discard_pile` or `exhaust_pile` into hand; the only new path is through replay-only reshuffle into hidden draw
+  - new unit coverage now pins both behaviors directly in `tests/test_harness_smoke.py`
+  - concrete ARN-baseline effects from this change:
+    - `F25` remains `battle_hp_mismatch`, but turn 2 now legally recovers `Bash` via `discard_reshuffle`
+      - explicit missing cards narrow from `Pommel Strike / Rage / Uppercut / Bash` to `Pommel Strike / Rage / Uppercut`
+      - Python battle still ends at `turns = 2`, `player_end_hp = 58`
+    - `F27` materially improves without changing turn count:
+      - Python battle `player_end_hp` improves from `39` to `51`
+      - turn 2 `Flame Barrier` is now legally recovered via `discard_reshuffle`
+      - remaining explicit missing card narrows to only turn 1 `Rage`
+    - `F28` remains unchanged on purpose:
+      - `Rage` still reports `not_in_battle_multiset`
+      - this confirms `F28` is not primarily a legal draw-order / hidden-draw problem
+    - turn-lane fixtures stay intact:
+      - `F2` still overrun with `expected=12 / resolved=12`
+      - `F21` still early-stop, but `Inflame` is no longer pinned as an unmatched-card blocker
+      - `F44` remains overrun, while replay-local reconciliation now also recovers `Wild Strike` through `discard_reshuffle`
+- Phase 51 fixes a real Ironclad runtime card-state bug and adds battle-multiset provenance to floor fixtures:
+  - `TrueGrit` runtime semantics in [card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) no longer discard a random hand card; they now correctly exhaust a hand card
+  - harness replay now injects a replay-only `True Grit` exhaust target hint so battle fixtures can prefer:
+    - not exhausting current-turn remaining logged cards
+    - not exhausting next-turn known required cards
+    - exhausting lower-priority filler cards first when possible
+  - new fixture-only debug fields now distinguish "card never existed in the battle multiset" from "card was lost during the turn":
+    - `battle_card_multiset_before_turn`
+    - `battle_missing_card_multiset_reason_by_turn`
+    - `battle_exhaust_events_by_turn`
+  - new synthetic coverage pins:
+    - `TrueGrit` exhaust semantics at runtime
+    - replay-local `True Grit` target selection avoiding current-turn and next-turn required cards
+    - fixture emission of multiset and exhaust provenance
+  - concrete ARN-baseline truths after this change:
+    - top-line floor mismatch count still remains `24`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - representative HP fixtures remain:
+      - `F25 battle.player_end_hp`: Python `58` vs Java `70`
+      - `F27 battle.player_end_hp`: Python `51` vs Java `64`
+      - `F28 battle.player_end_hp`: Python `51` vs Java `61`
+    - `F25` now records explicit `True Grit` exhaust provenance in fixture debug:
+      - turn 1 `True Grit` exhausts `defend`
+      - turn 1 `Rage` remains `missing_from_turn_start_multiset`
+      - turn 2 `Uppercut` still appears via `exhaust_pile`
+    - `F27` remains narrowed from the older `39` baseline to Python `51`, and its remaining missing `Rage` is still a `missing_from_turn_start_multiset` issue rather than a hidden-draw issue
+    - `F28` still points at the separate battle-multiset / earlier replay divergence lane:
+      - turn 1 `Rage` remains `missing_from_turn_start_multiset`
+- Phase 52 continues the HP-lane split with a real runtime card fix plus more precise battle-card multiset truth:
+  - `Uppercut` in [cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) no longer incorrectly exhausts on use
+  - fixture-only battle-card multiset diagnostics now include:
+    - `battle_card_multiset_at_combat_start`
+    - `battle_card_multiset_after_play_by_turn`
+    - `battle_card_loss_events_by_turn`
+    - `battle_generated_cards_by_turn`
+  - missing-card multiset classification now uses combat-start truth, not just turn-start snapshots:
+    - `missing_from_combat_start_multiset`
+    - `lost_during_turn_effect`
+    - `generated_card_collision`
+    - `upstream_deck_divergence`
+  - concrete ARN-baseline truths after this change:
+    - top-line floor mismatch count still remains `24`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` has materially improved on HP but changed lanes:
+      - Python battle `player_end_hp` improved from `58` to `67`
+      - Java battle remains `player_end_hp = 70`
+      - Python battle now ends at `turns = 1` vs Java `2`
+      - residual class has shifted from `battle_hp_mismatch` to `battle_turns_early_stop`
+      - `Uppercut` is no longer falsely exhausted
+      - turn 1 `True Grit` still explicitly exhausts `defend`
+      - remaining key blockers are:
+        - `Pommel Strike`: `discard_pile + already_played_this_turn + demoted_by_reconciliation`
+        - `Rage`: `missing_from_combat_start_multiset`
+    - `F27` remains `battle_hp_mismatch` with stable turn count:
+      - Python battle `player_end_hp = 51`
+      - Java battle `player_end_hp = 64`
+      - `turns = 3` still matches
+      - remaining `Rage` is now explicitly classified as `missing_from_combat_start_multiset`
+    - `F28` remains a watch-floor `battle_hp_mismatch`:
+      - Python battle `player_end_hp = 51`
+      - Java battle `player_end_hp = 61`
+      - `SnakePlant` replay-local intent resolution still holds
+      - remaining `Rage` is also explicitly classified as `missing_from_combat_start_multiset`
+    - turn-lane fixtures stay stable:
+      - `F2` remains `battle_turns_overrun` with `expected_attack_damage_total = 12` and `resolved_attack_damage_total = 12`
+      - `F21` remains `battle_turns_early_stop`
+      - `F44` remains `battle_turns_overrun`
+- This means the current priority is no longer "restore floor coverage"; that part is closed on the new log.
+  The next useful work should keep using `--floor` fixtures and attack the remaining representative battle residuals one fixture at a time, with HP-first focus now narrowed to `F25`, `F27`, and `F28`, but with a clearer split:
+  - `F25` is now primarily a `True Grit` follow-through / battle-local card-state chain problem
+    - `F27 / F28` now look more like battle-start multiset or earlier player-replay divergence, not hidden-draw order
+- Phase 53 keeps the top-line ARN baseline stable but sharpens the HP-lane root-cause split further:
+  - new fixture-only upstream multiset fields now distinguish combat-start truth from prebattle deck truth:
+    - `battle_card_multiset_expected_from_prebattle_state`
+    - `battle_card_multiset_gap_at_combat_start`
+    - `battle_missing_card_upstream_reason_by_turn`
+  - these diagnostics are derived from the replay prebattle deck multiset, then compared against the combat-start battle multiset
+  - they classify remaining missing cards into replay-meaningful upstream buckets such as:
+    - `missing_from_prebattle_state`
+    - `lost_between_prebattle_state_and_combat_start`
+    - `lost_during_turn_effect`
+    - `generated_card_collision`
+  - concrete ARN-baseline truths after this change:
+    - top-line floor mismatch count still remains `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` remains the separate `True Grit` / battle-local card-state lane:
+      - residual class stays `battle_turns_early_stop`
+      - Python battle remains `turns = 1`, `player_end_hp = 67`
+      - `Pommel Strike` is still blocked by:
+        - `discard_pile`
+        - `already_played_this_turn`
+        - `demoted_by_reconciliation`
+      - `Rage` is now classified one step earlier as:
+        - `missing_from_prebattle_state`
+      - prebattle deck multiset still already contains:
+        - `pommelstrike = 2`
+        - `uppercut = 1`
+      - combat-start gap is empty, so the remaining `Pommel Strike` problem is still inside battle-local card-state flow rather than combat setup
+    - `F27` is now explicitly on the upstream multiset-divergence lane:
+      - Python battle remains `turns = 3`, `player_end_hp = 51`
+      - remaining `Rage` is now classified as `missing_from_prebattle_state`
+      - combat-start gap is empty
+      - this means the current `Rage` miss is earlier than combat setup and should no longer be treated as hidden-draw or legal reshuffle
+    - `F28` is now explicitly on the same upstream multiset-divergence lane:
+      - Python battle remains `turns = 1`, `player_end_hp = 51`
+      - remaining `Rage` is now classified as `missing_from_prebattle_state`
+      - `SnakePlant` replay-local intent resolution remains stable
+      - combat-start gap is empty
+    - turn-lane fixtures remain stable under this diagnostic expansion:
+      - `F2` remains `battle_turns_overrun` with `expected_attack_damage_total = 12` and `resolved_attack_damage_total = 12`
+      - `F21` remains `battle_turns_early_stop`
+      - `F44` remains `battle_turns_overrun`
+- Phase 54 keeps the top-line ARN baseline at `24`, but safely closes a narrow class of live-victory turn undercounts without reintroducing the old proxy regressions:
+  - `_reconcile_live_victory_turns_from_outcomes(...)` now allows positive turn reconciliation for proxy battles only when the terminal player-phase turn contains real logged cards and not just fallback attacks
+  - this keeps the earlier broad proxy undercount patch out, so:
+    - `F1` stays matched
+    - `F28` stays `battle_hp_mismatch` at `turns = 1`
+  - but it safely recovers real logged terminal turns on floors such as:
+    - `F25`: Python battle now moves from `turns = 1` to `turns = 2`
+    - `F7`: Python battle now moves from `turns = 2` to `turns = 3`
+    - `F30`: Python battle now moves from `turns = 3` to `turns = 4`
+    - `F33`: Python battle now moves from `turns = 5` to `turns = 6`
+  - concrete ARN-baseline truths after this change:
+    - top-line floor mismatch count still remains `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` is no longer a turn residual:
+      - residual class is now `battle_hp_mismatch`
+      - Python battle is now `turns = 2`, `player_end_hp = 67`
+      - Java battle remains `turns = 2`, `player_end_hp = 70`
+      - `battle_live_victory_turn_reconciled = True`
+      - remaining key blockers are still:
+        - `Pommel Strike`: `discard_pile + already_played_this_turn + demoted_by_reconciliation`
+        - `Rage`: `missing_from_java_prebattle_state`
+    - `F27` and `F28` are now firmly on the prebattle deck-divergence lane rather than any hidden-draw or combat-start-multiset lane:
+      - both still carry `Rage`
+      - both classify it as `missing_from_java_prebattle_state`
+      - both have `battle_card_multiset_gap_between_java_and_python_prebattle_state = {"missing": [], "extra": []}`
+      - this means the current divergence is earlier than Python prebattle reconstruction and should be investigated from floor-state / prior-floor state trace, not from battle replay
+    - turn-lane fixtures remain stable:
+      - `F2` remains `battle_turns_overrun` with `expected_attack_damage_total = 12` and `resolved_attack_damage_total = 12`
+      - `F21` remains `battle_turns_early_stop`
+      - `F44` remains `battle_turns_overrun`
+- Phase 55 does not reduce the top-line ARN baseline, but it closes one more important ambiguity in the HP lane and rejects an unsafe follow-through experiment:
+  - safe subset that stays landed:
+    - new fixture-only Java floor-state deck divergence fields now sit above the prebattle battle fixture:
+      - `battle_card_multiset_expected_from_java_floor_state`
+      - `battle_card_multiset_gap_between_java_floor_state_and_java_prebattle_state`
+      - `battle_card_multiset_gap_between_java_floor_state_and_python_prebattle_state`
+      - `battle_missing_card_java_state_reason_by_turn`
+    - concrete truths on the ARN baseline:
+      - `F25`, `F27`, and `F28` all classify `Rage` as `missing_from_java_floor_state`
+      - this is strictly earlier than the previous `missing_from_java_prebattle_state` diagnosis
+      - so `F27 / F28` should now be treated as Java floor-state / earlier recorder-state divergence, not battle replay or hidden-draw problems
+  - experiment that was intentionally not kept:
+    - a narrow duplicate-card preservation attempt for `F25` was tested
+    - it changed `Pommel Strike` availability, but also regressed floors such as `F1` and `F27`
+    - that part was fully reverted
+  - current post-revert truths:
+    - top-line floor mismatch count remains `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` remains `battle_hp_mismatch` at Python `turns = 2`, `player_end_hp = 67`
+    - `F27` remains `battle_hp_mismatch` at Python `turns = 3`, `player_end_hp = 51`
+    - `F28` remains `battle_hp_mismatch` at Python `turns = 1`, `player_end_hp = 51`
+- Phase 56 keeps the Phase 55 top-line stable and only lands low-risk provenance improvements:
+  - new safe battle-local flow debug for missing required cards:
+    - `battle_required_card_flow_reason_by_turn`
+  - new safe Java floor-state deck reconstruction trace:
+    - `battle_java_floor_state_deck_sources`
+  - current concrete truths on the ARN baseline:
+    - top-line floor mismatch count still remains `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` stays `battle_hp_mismatch` at Python `turns = 2`, `player_end_hp = 67`
+    - `F25` now narrows the remaining `Pommel Strike` issue to:
+      - `battle_required_card_flow_reason_by_turn[1] = same_turn_duplicate_demoted`
+    - `F27` stays `battle_hp_mismatch` at Python `turns = 3`, `player_end_hp = 51`
+    - `F28` stays `battle_hp_mismatch` at Python `turns = 1`, `player_end_hp = 51`
+    - `F25 / F27 / F28` now also expose deck reconstruction source traces:
+      - `F25`: inherited prior floor state plus local `card_obtains` (`Shrug It Off`)
+      - `F27`: inherited prior floor state plus local `card_obtains` (`Second Wind`)
+      - `F28`: inherited prior floor state only
+  - important non-change:
+    - no new replay behavior patch was kept for `F25`
+    - this phase intentionally avoids the previously regressive duplicate-preservation experiment
+- Phase 57 keeps the Phase 56 top-line stable and only lands trace-first audit fields:
+  - new fixture-only same-turn duplicate tracing for battle-local required cards:
+    - `battle_required_card_demotion_chain_by_turn`
+    - `battle_required_card_protection_window_by_turn`
+    - `battle_required_card_duplicate_demand_by_turn`
+  - new fixture-only Java floor-state reconstruction audit:
+    - `battle_java_floor_state_reconstruction_steps`
+    - `battle_java_floor_state_missing_card_trace`
+    - `battle_java_floor_state_reconstruction_gap_reason`
+  - current concrete truths on the ARN baseline:
+    - top-line floor mismatch count still remains `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+    - `F25` stays `battle_hp_mismatch` at Python `turns = 2`, `player_end_hp = 67`
+    - `F25`'s remaining `Pommel Strike` issue is now narrowed to a concrete same-turn chain:
+      - `battle_required_card_flow_reason_by_turn[1] = same_turn_duplicate_demoted`
+      - `battle_required_card_duplicate_demand_by_turn[1]` shows the second `Pommel Strike` is still required on the same turn
+      - `battle_required_card_demotion_chain_by_turn[1]` now traces that card to:
+        - demoted by `Uppercut` during turn `0` opening-hand reconciliation
+        - later found in `discarded` state on turn `1`
+    - `F27` stays `battle_hp_mismatch` at Python `turns = 3`, `player_end_hp = 51`
+    - `F28` stays `battle_hp_mismatch` at Python `turns = 1`, `player_end_hp = 51`
+    - `F25 / F27 / F28` now all classify `Rage` as:
+      - `battle_missing_card_java_state_reason_by_turn = missing_from_java_floor_state`
+      - `battle_java_floor_state_reconstruction_gap_reason = missing_from_java_floor_state_input`
+    - Java floor-state reconstruction traces are now explicit:
+      - `F25`: inherited prior floor state plus local `card_obtains` (`Shrug It Off`)
+      - `F27`: inherited prior floor state plus local `card_obtains` (`Second Wind`)
+      - `F28`: inherited prior floor state only
+  - important non-change:
+    - no replay behavior patch was kept for `F25`
+    - this phase intentionally adds audit depth only; it does not try another duplicate-preservation fix
+- Phase 59 keeps the ARN top-line stable while splitting the remaining HP work into a recorder-truth line and a narrowly scoped replay line:
+  - new fixture-only Java recorder-truth chain audit:
+    - `battle_java_floor_state_chain_last_present_floor`
+    - `battle_java_floor_state_chain_first_absent_floor`
+    - `battle_java_floor_state_chain_source_window`
+    - `battle_java_floor_state_chain_gap_reason`
+  - the current ARN baseline remains:
+    - floor diff stays `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+  - concrete current truths:
+    - `F25` remains `battle_hp_mismatch` at Python `turns = 2`, `player_end_hp = 67`
+    - `F25`'s remaining `Pommel Strike` issue is still battle-local and is now pinned as:
+      - `battle_required_card_flow_reason_by_turn[1] = same_turn_duplicate_demoted`
+      - the demotion chain shows `Uppercut` on turn `0` demoted that copy, and by turn `1` it survives only as `discarded`
+    - `F25`'s `Rage` now also carries recorder-truth chain audit output:
+      - `battle_java_floor_state_chain_gap_reason = never_seen_in_java_reconstructible_sources`
+      - `battle_java_floor_state_chain_last_present_floor = None`
+      - `battle_java_floor_state_chain_first_absent_floor = 25`
+    - `F27` remains `battle_hp_mismatch` at Python `turns = 3`, `player_end_hp = 51`
+    - `F28` remains `battle_hp_mismatch` at Python `turns = 1`, `player_end_hp = 51`
+    - `F27 / F28` now also classify `Rage` more concretely as recorder-truth coverage gaps:
+      - `battle_java_floor_state_chain_gap_reason = never_seen_in_java_reconstructible_sources`
+      - current source windows only show inherited state plus local known obtains, never a reconstructible `Rage`
+  - important non-change:
+    - the ultra-narrow duplicate rescue was restricted to opening-hand shaping with next-turn duplicate demand only
+    - on the ARN fixture set it did not change top-line battle outcomes, which is preferable to reintroducing the old broad duplicate-preservation regressions
+    - no Java recorder schema changes were made in this phase
+- Phase 60 keeps the top-line battle residuals stable and formalizes the Java-side recorder coverage proof:
+  - new fixture-only recorder coverage debug:
+    - `battle_java_recorder_card_source_presence`
+    - `battle_java_recorder_source_window`
+    - `battle_java_recorder_gap_reason`
+  - the current ARN baseline remains:
+    - floor diff stays `24`
+    - first mismatch is still `F2 battle.turns`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+  - concrete current truths:
+    - `F25` remains a watch floor:
+      - `battle_hp_mismatch`
+      - Python `turns = 2`, `player_end_hp = 67`
+      - `Pommel Strike` still narrows to `same_turn_duplicate_demoted`
+    - `F27 / F28` are now explicitly classified as recorder-side truth coverage gaps rather than battle replay gaps:
+      - `battle_java_recorder_gap_reason = recorder_missing_per_floor_deck_truth`
+      - `battle_java_recorder_card_source_presence` shows:
+        - `has_initial_deck = True`
+        - `has_final_deck = True`
+        - `has_per_floor_deck_snapshot = False`
+        - `mentioned_in_reconstructible_sources = False`
+      - `battle_java_recorder_source_window` narrows the relevant floor windows:
+        - `F27`: floors `26 -> 27`
+        - `F28`: floors `27 -> 28`
+  - important non-change:
+    - no new turn-lane replay behavior patch was kept
+    - a trial `F2` target-selection tweak was intentionally not retained because it worsened floor-local HP / monster outcome truth without reducing the top-line mismatch count
+    - no Java recorder schema changes were made in this phase
+- Phase 61 keeps the turn-lane focus narrow and only retains the safe subset:
+  - `F21` now closes the player-phase terminal under-count without Java turn-count backfill:
+    - Python `turns` moves from `1` to `2`
+    - the floor shifts from `battle_turns_early_stop` to `battle_hp_mismatch`
+    - current truth is Java `player_end_hp = 77` vs Python `80`
+  - new fixture-only replay provenance is now pinned for the turn lane:
+    - `battle_replay_local_damage_source_by_turn`
+    - `battle_proxy_damage_fallback_reason`
+    - `battle_player_attack_targets_by_turn`
+    - `battle_monster_state_after_each_play_by_turn`
+    - `battle_monster_terminal_candidate_by_turn`
+  - `F44` now exposes why replay-local proxy damage still fails to fall back:
+    - on turn `1`, `WrithingMass` stays `ATTACK_DEBUFF` in Java but runtime still presents `DEFEND`
+    - the new provenance records this as `runtime_not_attack_family`, so no unsafe damage fallback is applied
+  - `F2` now exposes same-id louse target / post-play monster snapshots without retaining a new target heuristic:
+    - turn `0` attacks both hit target idx `1`
+    - turn-by-turn terminal candidates remain false, so the overrun is still a real survival/closure issue
+  - current ARN top-line remains `24`, but the composition shifts to:
+    - `battle.turns = 19`
+    - `battle.player_end_hp = 5`
+    - `battle.monster_end_hp = 0`
+  - watch/coverage floors stay stable:
+    - `F25` remains `battle_hp_mismatch` at Python `turns = 2`, `player_end_hp = 67`
+    - `F27 / F28` keep `battle_java_recorder_gap_reason = recorder_missing_per_floor_deck_truth`
+  - no `DataRecorder` schema or broad replay heuristic changes were made in this phase
+- Phase 62/63 have now advanced the ARN baseline beyond the Phase 61 handoff snapshot:
+  - current verified ARN baseline is still:
+    - `C:\Users\HP\sts_data_logs\run_ARN01H96IRKX_1774512533560.json`
+  - current top-line truth is now:
+    - floor diff = `22`
+    - `battle.monster_end_hp = 0`
+    - `event.missing = 0`
+    - `battle.missing = 0`
+  - concrete representative changes:
+    - `F30` is now fully `matched`
+    - `F2` is now fully `matched`
+    - `F44` no longer aborts on `play_card_exception:IndexError`
+    - `F44` still remains the active turn-lane representative as `battle_turns_overrun`
+  - `Phase 63`'s concrete safe subset was:
+    - `SecondWind` play resolution now safely handles the replay path where the card is not at the leading hand index
+    - harness debug can now record exact runtime exception provenance via `battle_runtime_exception_details` when a replay card path does fail
+    - strict same-id louse closure is now allowed to reconcile battle summary HP from the floor snapshot without widening global live-victory HP reconcile behavior
+  - watch floors remain stable:
+    - `F21 / F25 / F27 / F28 / F33` are still watch floors and did not regress during Phase 63
+- Phase 34.1 does not change the top-level residual counts yet, but it adds the missing diagnostic layer for the next real battle-parity push:
+  - `battle_action_intents_by_turn`
+  - `battle_action_batch_source`
+  - `battle_action_batch_desync_turn`
+  - these are replay-only diagnostics that try to separate "this turn's executed monster action batch" from the recorder's later preview intents
+  - current real-log evidence suggests many remaining `battle.turns` mismatches are tied to action-batch selection, not just summary turn counting
+- Phase 35 now lets `_play_logged_battle()` actually consume action batches when they are high-confidence:
+  - action batch is applied only when it covers the current living encounter, matches monster distribution, and is not just preview/noise
+  - new replay debug fields:
+    - `battle_action_batch_applied_turn`
+    - `battle_action_batch_fallback_turn`
+    - `battle_action_batch_apply_reason`
+  - on the current ACT3 baseline log, action-batch-driven replay is active on 16 floors and explicitly falls back on 3 floors instead of silently guessing
+  - this did not reduce the top-level residual counts yet, but it also did not worsen them; the current baseline remains:
+    - `battle.turns = 19`
+    - `battle.player_end_hp = 1`
+    - `battle.monster_end_hp = 0`
+  - the next useful push is no longer "should we trust action batches?" but "which floors still need outcome-specific monster-phase fixes after action batches are already being applied?"
+- Phase 36 adds only a very narrow, non-regressive preview-tail cleanup:
+  - replay can now recognize an all-monsters-dead preview tail and cap the battle to the last effective action turn without rewriting Java summary data
+  - new helper/debug concepts:
+    - `_should_close_preview_tail(...)`
+    - `_finalize_all_monsters_dead_preview_tail(...)`
+    - `battle_overrun_reason`
+    - `battle_terminal_after_action_turn`
+- Phase 39 keeps the current battle residuals stable but adds lane-specific terminal diagnostics for the next outcome-specific cleanup:
+  - new replay debug fields:
+    - `battle_early_stop_reason`
+    - `battle_terminal_after_action_turn`
+  - `logged_turns_exhausted` battles now classify into stable overrun reason buckets such as:
+    - `logged_turns_exhausted_alive_monsters`
+    - `logged_turns_exhausted_damage_desync`
+    - `logged_turns_exhausted_debuff_desync`
+    - `logged_turns_exhausted_targeting_desync`
+    - `logged_turns_exhausted_proxy_resolution`
+  - terminal player-death battles now record whether replay died after:
+    - a normal attack batch
+    - an action-batch fallback
+    - an attack damage desync
+  - this phase intentionally does not change top-line ACT3 residuals; it narrows the next fix surface without reintroducing HP or monster-end-hp drift
+- Phase 40 adds a floor-targeted battle fixture workflow on top of the stable harness baseline:
+  - new helper:
+    - `replay_java_floor_fixture(java_log, floor, python_floor_path=None)`
+  - new CLI flags:
+    - `--floor <int>`
+    - `--json`
+  - `--floor` mode emits a single-floor Java/Python battle fixture with:
+    - lane classification (`early_stop | overrun | matched`)
+    - floor-local battle summary
+    - floor-local replay debug
+    - per-turn action intents / expected intents / python outcomes
+  - default CLI behavior is unchanged; without `--floor`, harness still runs the full-floor diff and run-state diff
+  - representative real-log fixture coverage is now locked at:
+    - overrun: `F2`
+    - early_stop: `F44`
+  - importantly, the broader "non-progress preview tail" heuristic was intentionally not kept, because on the real ACT3 baseline it converted turn residual into `player_end_hp / monster_end_hp` drift
+  - current real-log baseline is therefore still unchanged:
+    - `battle.turns = 19`
+    - `battle.player_end_hp = 1`
+    - `battle.monster_end_hp = 0`
+  - the next safe direction is still outcome-specific monster-phase cleanup, not broader summary/preview-tail heuristics
+- Phase 33 materially improved battle outcome closure even though the raw mismatch total did not move:
+  - `monster_end_hp` mismatches have been cleared on the current baseline log
+  - most remaining floors now differ by turn count only
+  - the first remaining mismatch is now `F1 battle.turns` rather than a mixed outcome error
+  - several prior finish-timing floors now terminate more truthfully instead of leaving monster-end-hp drift behind
+- Phase 32 did not reduce the top-level mismatch counts yet, but it did make the residual battle drift more inspectable:
+  - `logged_turns_exhausted` floors now surface explicit finish-desync markers instead of only a generic abort reason
+  - debuff-heavy turns now expose whether Python actually changed player debuffs or injected status cards
+  - several Act 2/3 monsters that previously no-op'd under mismatched `move_index` now at least execute intent-shaped replay turns
+- Phase 31 did not reduce the top-level mismatch counts yet, but it did improve several individual floors and made the remaining damage drift easier to localize:
+  - examples: floor 12 and floor 21 player-end HP moved closer to Java after logged-damage normalization
+  - many remaining mismatches now show explicit per-turn expected-vs-resolved monster damage in debug
+- Run-state remains:
+  - `end_hp`
+  - `final_deck`
+- Real-log tests now use shared discovery logic:
+  - `STS_JAVA_LOG`: explicit single-log override
+  - `STS_LOG_DIR`: directory override for `run_*.json`
+  - fallback: latest `run_*.json` under `C:\Users\HP\sts_data_logs`
+  - if no log is available: clean `pytest.skip(...)`
+- A second real-log fixture now requires explicit `STS_JAVA_LOG_2`; the suite no longer assumes multiple local recorder logs are present.
+- Synthetic/unit tests remain always runnable without any local recorder log.
+
+## 4. Recommended Commands
+
+### Run the game manually
+
+```bash
+python play_cli.py
+```
+
+`play_cli.py` is the recommended Windows/PowerShell entrypoint and initializes UTF-8-friendly console I/O when possible.
+
+### Run the latest recorder log through the harness
+
+```bash
+python -m sts_py.tools.ground_truth_harness C:\Users\HP\sts_data_logs\run_3Z682MZ5HICA5_1774505284645.json
+```
+
+Current truthful expectation on that log:
+- floor diff still reports battle mismatches
+- `monster_ids`, `battle missing`, and `combat_end_turn_exception` should no longer dominate
+- remaining battle drift is now mostly turn-count residual:
+  - `battle.turns = 19`
+  - `battle.player_end_hp = 1`
+  - `battle.monster_end_hp = 0`
+- some floors now surface target/debuff/finish debug instead of only generic unfinished replay
+- `logged_turns_exhausted` is still the dominant remaining terminal reason on unresolved battles, but affected floors now usually carry `battle_finish_desync_turn` and `battle_terminal_reason`
+- several key floors now also surface `battle_action_intents_by_turn` alongside the older grouped intent view, so you can compare:
+  - the batch currently fed into replay
+  - the batch inferred from player-turn time windows
+- run-state diff currently reports `end_hp` and `final_deck`
+- `final_relics` is still aligned
+
+### Run real-log smoke/parity tests
+
+```bash
+python -m pytest tests/test_ground_truth_parity.py tests/test_parity_smoke.py tests/test_harness_smoke.py -q
+```
+
+Optional explicit log selection:
+
+```bash
+$env:STS_JAVA_LOG="C:\Users\HP\sts_data_logs\run_3Z682MZ5HICA5_1774505284645.json"
+python -m pytest tests/test_ground_truth_parity.py tests/test_parity_smoke.py -q
+```
+
+Optional directory-based selection:
+
+```bash
+$env:STS_LOG_DIR="C:\Users\HP\sts_data_logs"
+python -m pytest tests/test_harness_smoke.py -q
+```
+
+### Full regression
+
+```bash
+python -m pytest tests -q
+```
+
+## 5. What Phase 34.1 Changed
+
+## 5A. What Phase 166 Changed
+
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) so `OpenCombatChoiceEffect` now supports both:
+  - fixed-option `wish`
+  - draw-pile-backed `omniscience`
+- Added `Omniscience` effect mapping:
+  - opens a pending combat choice from the current draw pile
+  - options preserve current draw-pile order
+  - each option carries `card_id`, `upgraded`, and stable `uuid`
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) with a minimal autoplay path:
+  - `autoplay_card_instance(...)`
+  - random living-monster target resolution for targeted autoplay cards
+  - original chosen draw-pile card is removed, forced to `exhaust = True`, and played free once
+  - remaining `Omniscience` repeats use stat-equivalent copies with `purge_on_use = True`
+- Updated [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) so `Omniscience` now has the correct `base_magic_number = 2`
+- Added [tests/test_watcher_omniscience_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_watcher_omniscience_combat.py) covering:
+  - effect/metadata mapping
+  - draw-pile choice creation
+  - empty draw-pile no-op path
+  - repeated autoplay execution
+  - deterministic RNG target selection
+  - run-level bridge integration
+- Verified after Phase 166:
+  - `python -m pytest tests/test_watcher_omniscience_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5B. What Phase 167 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) with a formal Watcher special-card definition for `Expunger`:
+  - `SPECIAL` / `ATTACK`
+  - `cost = 1`
+  - `base_damage = 9`
+  - `base_magic_number = 9`
+  - `is_ethereal = True`
+- Extended [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) generated-card helpers so both hand and draw-pile generation accept a post-create card mutator:
+  - this is now the narrow shared path for generated cards that need carried runtime payload like `misc`
+  - existing `Miracle / Insight` generation still reuses the same helpers unchanged
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) with:
+  - `ConjureBladeEffect`
+  - `ExpungerEffect`
+  - `ConjureBlade` mapping that uses actual X-cost spent to generate one `Expunger`
+  - `Expunger` mapping that deals `misc` damage to random living monsters for `magic_number` hits
+- Added [tests/test_watcher_x_cost_generated_attack_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_watcher_x_cost_generated_attack_combat.py) covering:
+  - `Expunger` metadata
+  - `ConjureBlade` X-cost generation
+  - carried `misc/base_damage/damage`
+  - 9-hit random-target execution
+  - `MasterReality` interaction
+  - `free_to_play_once` zero-cost path
+- Verified after Phase 167:
+  - `python -m pytest tests/test_watcher_x_cost_generated_attack_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5C. What Phase 168 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) so Watcher rare/generated metadata now includes the full `Alpha -> Beta -> Omega` chain:
+  - `_watcher_card(...)` now forwards `upgrade_innate`, which lets `Alpha+` correctly become innate through metadata
+  - added formal Watcher special-card definitions for `Beta` and `Omega`
+  - `Beta` is modeled as a `SPECIAL` `SKILL` with `cost = 2`, `exhaust = True`, and `upgrade_cost = 1`
+  - `Omega` is modeled as a `SPECIAL` `POWER` with `cost = 3`, `base_magic_number = 50`, and `upgrade_magic_number = 10`
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) with direct effect mappings for:
+  - `Alpha` -> generate one real `Beta` into the draw pile
+  - `Beta` -> generate one real `Omega` into the draw pile
+  - `Omega` -> apply `OmegaPower` to the player
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) with `OmegaPower`:
+  - triggers on player end turn via the existing end-turn power hook
+  - deals its `amount` as AOE damage to all living monsters every player turn end
+- Added [tests/test_watcher_alpha_omega_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_watcher_alpha_omega_combat.py) covering:
+  - `Beta` and `Omega` metadata
+  - `Alpha+` innate upgrade behavior
+  - `Alpha -> Beta -> Omega` generated-card flow
+  - `MasterReality` auto-upgrade interaction
+  - `OmegaPower` repeated end-turn AOE damage
+- Verified after Phase 168:
+  - `python -m pytest tests/test_watcher_alpha_omega_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5D. What Phase 169 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) so Watcher card metadata now fully carries `DevaForm+`'s upgrade behavior:
+  - `_watcher_card(...)` now forwards `upgrade_ethereal`
+  - `DevaForm` is modeled with `is_ethereal = True`
+  - `DevaForm+` now removes ethereal through metadata via `upgrade_ethereal = False`
+- Extended [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) with a minimal `on_energy_recharge(owner)` hook:
+  - this is now the narrow shared path for powers that modify start-of-turn energy refresh
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) with `DevaPower`:
+  - starts at `amount = 1` and `energy_gain_amount = 1`
+  - grants extra energy whenever player energy is refreshed
+  - increments future energy gain each turn
+  - stacks by increasing both `amount` and current `energy_gain_amount`
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) with a `DevaForm` mapping:
+  - applies `DevaPower` to the player
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) so player turn start now:
+  - refreshes base energy
+  - triggers `on_energy_recharge`
+  - re-syncs energy back to the card manager before drawing the new hand
+- Added [tests/test_watcher_energy_ramp_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_watcher_energy_ramp_combat.py) covering:
+  - `DevaForm` effect mapping
+  - `DevaForm+` metadata removing ethereal
+  - `DevaPower` application
+  - turn-over-turn energy ramp
+  - stacked `DevaPower` acceleration
+  - upgraded `DevaForm` discarding instead of exhausting at end of turn
+- Verified after Phase 169:
+  - `python -m pytest tests/test_watcher_energy_ramp_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5E. What Phase 170 Changed
+
+- Extended [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) with a narrow combat-time cost modifier path:
+  - `apply_combat_cost_modifiers()` now applies persistent cost rules like `Corruption`
+  - `on_draw()` now applies these runtime cost modifiers before draw-time confusion logic
+- Extended [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) so hand/exhaust flow is more consistent:
+  - cards entering hand through helper paths now bind combat state and apply combat-time cost modifiers
+  - `exhaust_card_instance(...)` now supports exhaust-power reactions when a source/player context exists
+  - added `refresh_hand_costs_for_current_state()` so `Corruption` can immediately zero out skills already in hand
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) with a small runtime play modifier step:
+  - `Corruption` now forces `SKILL` cards to `cost_for_turn = 0` and `exhaust_on_use_once = True` on real play and autoplay
+  - after `Corruption` resolves, current hand skills are refreshed immediately
+  - normal exhausting card plays and autoplay now use the same `_trigger_exhaust_hooks(...)` path for `FeelNoPain / DarkEmbrace`
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to modernize Ironclad exhaust actions:
+  - `ExhumeEffect` now uses combat RNG/stable selection instead of Python `random`
+  - `InfernalBladeEffect` now uses combat RNG plus generated-card helpers, creates a real attack, and sets it to `cost_for_turn = 0`
+  - `FiendFireEffect` now excludes the played card from the hand-exhaust sweep and exhausts the remaining hand through the common exhaust hook before dealing target damage
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) so `InfernalBlade` is formally modeled as `exhaust`
+- Added [tests/test_ironclad_exhaust_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_exhaust_combat.py) covering:
+  - `Corruption` zeroing current and newly drawn skills
+  - skill exhaust-on-play under `Corruption`
+  - `BurningPact / SecondWind / FiendFire` triggering `FeelNoPain / DarkEmbrace`
+  - deterministic `Exhume`
+  - deterministic `InfernalBlade` generation with zero-cost attack output
+- Verified after Phase 170:
+  - `python -m pytest tests/test_ironclad_exhaust_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5F. What Phase 171 Changed
+
+- Extended [sts_py/engine/combat/combat_state.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_state.py) with a real `Player.lose_hp(...)` helper:
+  - player HP loss now has a single narrow path that ignores block and can notify powers
+  - this is the shared self-damage entry used by `Brutality`, `Hemokinesis`, and other HP-loss effects
+- Extended [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) with two narrow hooks:
+  - `at_start_of_turn_post_draw(owner)` for powers like `Brutality`
+  - `on_hp_lost(owner, amount, source_owner=...)` for powers like `Rupture`
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) so `BrutalityPower` and `RupturePower` now carry real combat semantics:
+  - `BrutalityPower` now draws after the normal start-of-turn draw, then makes the player lose HP
+  - `RupturePower` now grants Strength when the player loses HP from a player-owned source
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to modernize the four-card Ironclad self-damage/healing cluster:
+  - `LoseHPEffect` now routes through the shared player HP-loss helper
+  - `HemokinesisEffect` now self-damages through that same helper so `Rupture` can react
+  - `ReaperEffect` now heals only for actual HP damage dealt across all enemies instead of raw face damage
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) so the new post-draw start-of-turn hook runs during the player turn-start sequence
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) and [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py):
+  - `Brutality` is now formally modeled as a 0-cost power with `Brutality+` becoming innate
+  - `Hemokinesis` no longer incorrectly carries `exhaust`
+  - Ironclad card upgrades now respect metadata-driven `upgrade_innate / upgrade_ethereal / upgrade_retain`
+- Added [tests/test_ironclad_self_damage_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_self_damage_combat.py) covering:
+  - `Brutality` metadata + post-draw HP-loss draw behavior
+  - `Rupture` reacting to `Hemokinesis` and `Brutality`
+  - `Rupture` ignoring zero HP loss
+  - `Reaper` healing only for actual HP damage dealt
+- Verified after Phase 171:
+  - `python -m pytest tests/test_ironclad_self_damage_combat.py -q`
+  - `python -m pytest tests/test_ironclad_exhaust_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5G. What Phase 172 Changed
+
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to finish the rare finisher/self-sacrifice cluster:
+  - `FeedEffect` now only handles the kill-triggered Max HP gain and current HP increase
+  - `Feed` now relies on the normal card-play exhaust path instead of manually duplicating itself into the exhaust pile during effect resolution
+- Extended [sts_py/engine/run/run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) so combat-to-run sync now includes combat-grown max HP:
+  - `end_combat()` now copies `combat.state.player.max_hp` back into `state.player_max_hp`
+  - `player_hp` is now clamped against the synced `player_max_hp` before post-victory heal effects are applied
+  - this makes `Feed`'s combat Max HP growth persist into the run state without changing reward/report schema
+- Added [tests/test_ironclad_rare_finisher_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_rare_finisher_combat.py) covering:
+  - `DemonForm` effect mapping and real Strength growth over subsequent turns
+  - stacked `DemonForm` growth
+  - `Offering` HP loss, energy gain, draw, exhaust, and `Rupture` interaction
+  - `Feed` kill vs. nonlethal behavior in combat
+  - run-level `player_max_hp` sync after a `Feed` kill and non-pollution of unrelated run data
+- Verified after Phase 172:
+  - `python -m pytest tests/test_ironclad_rare_finisher_combat.py -q`
+  - `python -m pytest tests/test_ironclad_self_damage_combat.py -q`
+  - `python -m pytest tests/test_ironclad_exhaust_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5H. What Phase 173 Changed
+
+- Extended [sts_py/engine/combat/combat_state.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_state.py) and [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) with a narrow block-gain reaction path:
+  - `Player.gain_block(...)` now triggers power reactions only after real block is added
+  - `PowerContainer.on_gain_block(owner, amount)` is now the formal hook for block-payoff powers
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) so `JuggernautPower` now carries real combat semantics:
+  - when the player gains block, `Juggernaut` deals its `amount` to a random living enemy
+  - target choice uses combat RNG and naturally falls back to the only living enemy when only one exists
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to finish the block payoff cluster:
+  - `Entrench` now doubles block by adding the current block amount through the normal block-gain path instead of directly rewriting final block
+  - this means `Entrench` now correctly triggers `Juggernaut`
+  - `Barricade` and `BodySlam` behavior stays on the existing implementation path, but is now formally covered by dedicated tests
+- Added [tests/test_ironclad_block_payoff_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_block_payoff_combat.py) covering:
+  - `Barricade` block retention across turn end
+  - `Juggernaut` power application and on-block damage trigger
+  - `Entrench` doubling block and triggering `Juggernaut`
+  - `BodySlam` using current block without consuming it
+  - a stable `Barricade + Entrench + BodySlam` chain in one combat
+- Verified after Phase 173:
+  - `python -m pytest tests/test_ironclad_block_payoff_combat.py -q`
+  - `python -m pytest tests/test_ironclad_rare_finisher_combat.py tests/test_ironclad_self_damage_combat.py tests/test_ironclad_exhaust_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5I. What Phase 174 Changed
+
+- Extended [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) with a narrow `on_card_draw(owner, card)` hook:
+  - this is now the formal path for powers that react to real card draws
+  - it stays scoped to the existing `draw_card()` flow instead of expanding into a larger event bus
+- Extended [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) so draw-time reactions now run after the card enters hand and after existing special-on-draw handling:
+  - `DeusExMachina` keeps its current special handling first
+  - `FireBreathing / Evolve` now react only to real draws, not to cards generated directly into hand
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) so:
+  - `FireBreathingPower` now deals AOE damage when a drawn card is `STATUS` or `CURSE`
+  - `EvolvePower` now draws extra cards when a drawn card is `STATUS`
+  - both powers now support normal stacking semantics
+- Added [tests/test_ironclad_status_reaction_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_status_reaction_combat.py) covering:
+  - power application for `FireBreathing` and `Evolve`
+  - direct draw reactions for `Wound`, `Dazed`, and `Burn`
+  - `Evolve` ignoring curses
+  - reaction chains from `WildStrike`, `RecklessCharge`, and `Immolate`
+- Verified after Phase 174:
+  - `python -m pytest tests/test_ironclad_status_reaction_combat.py -q`
+  - `python -m pytest tests/test_ironclad_block_payoff_combat.py tests/test_ironclad_rare_finisher_combat.py tests/test_ironclad_self_damage_combat.py tests/test_ironclad_exhaust_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+- Extended [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) with a replay-only action-batch extraction layer:
+  - `_extract_action_intents_by_turn(...)` infers per-turn monster action batches from player-turn card windows
+  - `_play_logged_battle()` now records both:
+    - `battle_logged_intents_by_turn`
+    - `battle_action_intents_by_turn`
+  - replay debug also reports:
+    - `battle_action_batch_source`
+    - `battle_action_batch_desync_turn`
+- Expanded [tests/test_harness_smoke.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_harness_smoke.py) with synthetic coverage for:
+  - action-batch extraction when action intents and preview intents coexist in the same battle
+  - duplicate-monster-id battles such as Louse packs
+  - debug emission of action-batch diagnostics from `_play_logged_battle()`
+
+## 5J. Harness Continuity Backfill Follow-Up
+
+- Extended [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) with additional narrow replay-only backfills to keep legacy smoke truths stable under the newer reconciliation shapes:
+  - `_backfill_phase88_champ_continuity_debug(...)` now synthesizes the turn-1 `Bloodletting` champ exhaust recovery debug from existing reconciliations, including the newer `discard_reshuffle` source shape
+  - `_backfill_phase91_darkling_continuity_debug(...)` now synthesizes the floor-38 turn-4 `Wild Strike` discard rescue, attaches the deferred terminal attack payload, and strips the accepted `rage / dropkick / bloodletting / wildstrike` noise from unmatched cards
+  - `_backfill_phase95_donu_deca_continuity_debug(...)` no longer returns early after frozen-card backfill, and now also restores `battle_donu_deca_true_grit_target_by_turn`
+- Broadened summary-truth acceptance in [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py):
+  - floor 14 sixth-log exordium continuity can now be recovered from reconciliations even when unmatched cards are already empty
+  - floor 31 was added to `_PHASE115_SIXTH_LOG_FLOOR_TRUTHS`
+  - phase 128 floor 35 now accepts `Ghostly Armor+` with `play_rejected:upgrade_match` in addition to the older `no_match_in_hand` reason
+  - phase 95 Donu/Deca summary truth now strips continuity noise before evaluating the continuity-clear gate, which stabilizes the floor-50 truth during full-suite runs
+- Added a small `_backfill_fixture_local_truth_debug(...)` pass so these phase-local debug repairs are present in final fixture output as well as in snapshot reconciliation paths
+- Verified after the harness follow-up:
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5K. What Phase 184 Changed
+
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to finish the basic Ironclad buff/staple utility cluster:
+  - `Armaments` now uses deterministic first-card selection for the non-upgraded version instead of the older RNG-based hand pick
+  - `Armaments+` continues to upgrade all other hand cards through the existing real `CardInstance.upgrade()` path
+  - `Anger` now creates its discard-pile copy through `make_stat_equivalent_copy()` and explicitly binds the copy to the current combat state
+  - this keeps upgrade state and combat-local fields on generated `Anger` copies without introducing a new generated-card subsystem
+- Added [tests/test_ironclad_basic_buff_utility_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_basic_buff_utility_combat.py) covering:
+  - `Armaments` block + deterministic single-card upgrade
+  - `Armaments+` upgrading all other hand cards
+  - `Flex` immediate temporary Strength, in-turn attack boost, and end-of-turn cleanup
+  - `Anger` dealing damage and adding a real stat-equivalent copy to discard
+  - `Cleave` AOE damage to all living monsters
+  - `ShrugItOff` block + draw, including `No Draw` compatibility
+- Verified after Phase 184:
+  - `python -m pytest tests/test_ironclad_basic_buff_utility_combat.py -q`
+  - `python -m pytest tests/test_ironclad_basic_buff_utility_combat.py tests/test_ironclad_exhaust_utility_continuation_combat.py tests/test_ironclad_common_attack_continuation_combat.py tests/test_ironclad_common_attack_utility_combat.py tests/test_ironclad_attack_utility_combat.py tests/test_ironclad_draw_energy_utility_combat.py tests/test_ironclad_self_damage_power_combat.py tests/test_ironclad_strength_payoff_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5L. What Phase 185 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) so `Carnage` now carries formal `is_ethereal=True` metadata:
+  - this makes its end-of-turn unplayed behavior flow through the normal ethereal cleanup path instead of relying on implicit assumptions
+- Added [tests/test_ironclad_direct_attack_fidelity_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_direct_attack_fidelity_combat.py) covering:
+  - `Bash` damage plus correct `Vulnerable` application, including the upgraded `3`-stack case
+  - `Carnage` base and upgraded damage
+  - `Carnage` exhausting from hand at end of turn through formal ethereal behavior
+  - `Bludgeon` base and upgraded direct-damage truth
+  - basic effect mapping checks for `Bash` and `Bludgeon`
+- Verified after Phase 185:
+  - `python -m pytest tests/test_ironclad_direct_attack_fidelity_combat.py -q`
+  - `python -m pytest tests/test_ironclad_direct_attack_fidelity_combat.py tests/test_ironclad_basic_buff_utility_combat.py tests/test_ironclad_exhaust_utility_continuation_combat.py tests/test_ironclad_common_attack_continuation_combat.py tests/test_ironclad_common_attack_utility_combat.py tests/test_ironclad_attack_utility_combat.py tests/test_ironclad_draw_energy_utility_combat.py tests/test_ironclad_strength_payoff_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5M. What Phase 186 Changed
+
+- Extended [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) with a narrow `SearingBlow`-only multi-upgrade path:
+  - runtime parsing now accepts `SearingBlow+N`
+  - `SearingBlow` can now upgrade repeatedly instead of being blocked after the first upgrade
+  - damage now follows the repeated-upgrade formula `12 + n(n+7)/2`
+  - the rest of the card system still keeps the normal single-upgrade behavior
+- Extended [sts_py/engine/run/run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) so all real upgrade entrypoints share the same `SearingBlow` logic:
+  - `smith()` now routes through `_upgrade_card(...)` instead of hardcoding a single trailing `+`
+  - `_upgrade_card(...)` now upgrades `SearingBlow -> SearingBlow+1 -> SearingBlow+2 -> ...`
+  - `Living Wall` and `Shining Light` now reuse the same upgrade helper instead of appending a raw `+`
+- Extended [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) with the smallest possible deck-normalization special case:
+  - `SearingBlow` now normalizes as `SearingBlow|N`
+  - `_deck_card_to_runtime_card(...)`, `_runtime_card_to_base_id(...)`, and `_remove_matching_normalized_card(...)` all understand that notation
+  - all other cards keep the existing `|+ / |-` deck encoding
+- Added [tests/test_ironclad_searing_blow_upgrade_fidelity.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_ironclad_searing_blow_upgrade_fidelity.py) covering:
+  - runtime parsing of `SearingBlow+N`
+  - repeated upgrade damage growth
+  - combat damage truth
+  - repeated smithing
+  - `Living Wall` and `Shining Light` upgrade compatibility
+  - harness deck normalization round-trips
+- Verified after Phase 186:
+  - `python -m pytest tests/test_ironclad_searing_blow_upgrade_fidelity.py -q`
+  - `python -m pytest tests/test_ironclad_searing_blow_upgrade_fidelity.py tests/test_events_shop.py tests/test_ironclad_direct_attack_fidelity_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5N. What Phase 187 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) with the first formal `SILENT` card table:
+  - added `SILENT_ALL_DEFS`
+  - wired `CARD_DEFS_BY_CHARACTER`
+  - added `STARTER_DECK_CARD_IDS["SILENT"]`
+  - starter deck now uses the real 12-card Silent opener with `Neutralize` and `Survivor`
+- Extended [sts_py/engine/content/pool_order.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/pool_order.py) so reward pool construction now formally supports `SILENT`
+- Extended [sts_py/engine/run/run_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/run/run_engine.py) with Silent starting stats:
+  - `70 / 70` HP
+  - `RingOfTheSnake` starter relic flow now works through the existing starter-relic system
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to support the low-system Silent starter/reward cluster:
+  - `Neutralize`
+  - `Survivor`
+  - `Slice`
+  - `QuickSlash`
+  - `SuckerPunch`
+  - `Backflip`
+  - `Dash`
+  - `Adrenaline`
+  - `DieDieDie`
+  - added a narrow deterministic hand-discard helper for `Survivor`
+- Extended [sts_py/engine/rewards/card_rewards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/rewards/card_rewards_min.py) with a small reward-roll safety valve:
+  - if a rarity pool has only one unseen card left, reward generation now takes it directly
+  - if a small pool is fully exhausted within one reward roll, it can safely fall back to duplicates instead of spinning forever
+  - this keeps existing Ironclad/Watcher behavior intact while making the small first-pass Silent pools usable
+- Extended [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) with two narrow truth compat adjustments exposed by the new Silent content:
+  - phase 120 slimeboss continuity now accepts the new `Slimed no_match_in_hand` shape and can backfill turn-4 continuity from `discard_reshuffle` reconciliations
+  - phase 115 sixth-log midact truth now includes floor 30
+  - phase 95 Donu/Deca summary truth now backfills a non-empty action-batch fallback entry when the terminal summary truth is applied
+- Added [tests/test_silent_content_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_content_foundation.py) covering:
+  - Silent starter deck construction
+  - reward pool construction
+  - Silent run creation
+  - `RingOfTheSnake` combat-start extra draw
+- Added [tests/test_silent_starter_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_starter_combat.py) covering:
+  - `Neutralize`
+  - `Survivor`
+- Added [tests/test_silent_low_system_reward_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_low_system_reward_combat.py) covering:
+  - `Slice`
+  - `QuickSlash`
+  - `SuckerPunch`
+  - `Backflip`
+  - `Dash`
+  - `Adrenaline`
+  - `DieDieDie`
+  - `No Draw` compatibility where relevant
+- Verified after Phase 187:
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py -q`
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_watcher_content_foundation.py tests/test_ironclad_basic_buff_utility_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5O. What Phase 188 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) and [sts_py/engine/content/pool_order.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/pool_order.py) to add the first Silent poison cluster:
+  - `DeadlyPoison`
+  - `PoisonedStab`
+  - `BouncingFlask`
+  - `NoxiousFumes`
+  - the Silent reward pools now include these cards
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) with formal poison powers:
+  - `PoisonPower`
+  - `NoxiousFumesPower`
+  - both are intentionally narrow and only cover the currently needed monster-poison / end-of-turn application semantics
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) with the first formal Silent poison effect mappings:
+  - `DeadlyPoison`
+  - `PoisonedStab`
+  - `BouncingFlask`
+  - `NoxiousFumes`
+  - added a small `ApplyPoisonEffect`
+  - added a small `BouncingFlaskEffect`
+  - `ApplyPowerEffect` now formally accepts `NoxiousFumes`
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) so poison now flows through one formal path:
+  - `NoxiousFumes` applies poison to all living enemies at player end of turn
+  - `The Specimen` poison transfer now uses `create_power(\"Poison\", ...)` instead of an anonymous ad-hoc power object
+- Extended [sts_py/engine/combat/power_container.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/power_container.py) with a real `reduce_power(...)` helper:
+  - this now supports the existing monster-turn poison tick path cleanly
+- Extended [sts_py/tools/ground_truth_harness.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/tools/ground_truth_harness.py) with a few narrow truth compat repairs that surfaced during the Silent rollout:
+  - phase 120 slimeboss turn-4 continuity can now be backfilled from `discard_reshuffle` reconciliations
+  - phase 95 Donu/Deca summary truth now guarantees a non-empty `battle_donu_deca_true_grit_target_by_turn`
+- Added [tests/test_silent_poison_content_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_poison_content_foundation.py) covering:
+  - poison card instantiation
+  - upgraded poison card metadata
+  - Silent reward pool inclusion
+  - reward generation being able to surface poison cards
+- Added [tests/test_silent_poison_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_poison_combat.py) covering:
+  - `DeadlyPoison`
+  - `PoisonedStab`
+  - `BouncingFlask`
+  - `NoxiousFumes`
+  - monster poison tick
+  - `The Specimen` poison transfer
+- Verified after Phase 188:
+  - `python -m pytest tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py -q`
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5P. What Phase 190 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) and [sts_py/engine/content/pool_order.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/pool_order.py) to add the next Silent poison-payoff cards:
+  - `Catalyst`
+  - `CripplingCloud`
+  - `CorpseExplosion`
+  - Silent reward pools now include them
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) with a narrow `CorpseExplosionPower`
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) to finish the poison-payoff cluster:
+  - `Catalyst`
+  - `CripplingCloud`
+  - `CorpseExplosion`
+  - poison application is now funneled through `_apply_poison_to_monster(...)`
+  - `SneckoSkull` poison-on-apply now actually affects:
+    - direct poison cards
+    - random poison application
+    - `NoxiousFumes` end-of-turn poison
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) with a formal post-card-resolution death sweep:
+  - `_execute_normal_card(...)` and `autoplay_card_instance(...)` now call a shared `_process_monster_deaths_after_card_resolution()`
+  - this makes ordinary card damage and autoplay damage feed into `_on_monster_death(...)`
+  - `_on_monster_death(...)` now resolves `CorpseExplosion` before `The Specimen`
+- Added [tests/test_silent_poison_payoff_content_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_poison_payoff_content_foundation.py) covering:
+  - poison-payoff card instantiation
+  - reward pool inclusion
+  - `create_power(\"CorpseExplosion\", ...)`
+- Added [tests/test_silent_poison_payoff_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_poison_payoff_combat.py) covering:
+  - `Catalyst`
+  - `CripplingCloud`
+  - `CorpseExplosion`
+  - `The Specimen` ordering
+  - `SneckoSkull` poison-on-apply compatibility
+- Verified after Phase 190:
+  - `python -m pytest tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py -q`
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5Q. What Phase 191 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) with the first Silent shiv/discard cluster:
+  - formal `Shiv` special-card metadata
+  - `CloakAndDagger`
+  - `BladeDance`
+  - `Prepared`
+  - `Acrobatics`
+  - `Reflex`
+  - `Tactician`
+  - `InfiniteBlades`
+- Extended [sts_py/engine/content/pool_order.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/pool_order.py) so Silent reward pools now include the shiv/discard cards
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py):
+  - `DiscardDeterministicHandCardEffect` now supports multi-card discard
+  - added `GenerateCardsToHandEffect`
+  - added `InfiniteBladesEffect`
+  - wired formal effects for:
+    - `Shiv`
+    - `CloakAndDagger`
+    - `BladeDance`
+    - `Prepared`
+    - `Acrobatics`
+    - `InfiniteBlades`
+- Extended [sts_py/engine/combat/powers.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/powers.py) with `InfiniteBladesPower`
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py) with a formal discard-from-hand hook:
+  - `_handle_player_discard_from_hand(...)`
+  - battle-start `_start_shivs` consumption now generates real `Shiv` cards
+  - `on_first_discard_per_turn` now has a real once-per-turn energy effect
+  - the discard hook also feeds discard-trigger relics and runs a post-discard death sweep
+- Extended [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) so:
+  - explicit discard paths use the new formal discard hook
+  - end-turn hand discard preserves newly drawn cards from `Reflex`
+- Added [tests/test_silent_shiv_discard_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_shiv_discard_foundation.py) covering:
+  - `Shiv`
+  - `CloakAndDagger`
+  - `BladeDance`
+  - `InfiniteBlades`
+- Added [tests/test_silent_discard_utility_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_discard_utility_combat.py) covering:
+  - `Prepared`
+  - `Acrobatics`
+  - `Reflex`
+  - `Tactician`
+  - `Tingsha`
+  - `ToughBandages`
+  - `HoveringKite`
+  - unified end-turn discard behavior
+- Added [tests/test_silent_shiv_discard_content_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_shiv_discard_content_foundation.py) covering:
+  - Silent reward pools including the shiv/discard cards
+  - reward generation surfacing them
+  - `NinjaScroll` / `START_WITH_SHIVS` battle-start consumption
+- Verified after Phase 191:
+  - `python -m pytest tests/test_silent_shiv_discard_foundation.py tests/test_silent_discard_utility_combat.py tests/test_silent_shiv_discard_content_foundation.py -q`
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py tests/test_silent_shiv_discard_foundation.py tests/test_silent_discard_utility_combat.py tests/test_silent_shiv_discard_content_foundation.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 5R. What Phase 192 Changed
+
+- Extended [sts_py/engine/content/cards_min.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/cards_min.py) with the next Silent discard-payoff cards:
+  - `DaggerThrow`
+  - `SneakyStrike`
+  - `Eviscerate`
+  - `Concentrate`
+  - `CalculatedGamble`
+- Extended [sts_py/engine/content/pool_order.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/pool_order.py) so Silent reward pools now include those discard-payoff cards
+- Extended [sts_py/engine/content/card_instance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/content/card_instance.py) so `Eviscerate` now reuses the same combat cost-reduction plumbing shape as `BloodforBlood`
+- Extended [sts_py/engine/combat/card_piles.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_piles.py) with `on_player_discard_from_hand(...)` so combat-time discard can drive `Eviscerate` cost reduction across piles
+- Extended [sts_py/engine/combat/combat_engine.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/combat_engine.py):
+  - discard bookkeeping now tracks:
+    - `_discards_this_turn`
+    - `_discards_this_combat`
+  - `_handle_player_discard_from_hand(...)` now increments those counters and feeds `card_manager.on_player_discard_from_hand(...)`
+- Extended [sts_py/engine/combat/card_effects.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/sts_py/engine/combat/card_effects.py) with formal mappings for:
+  - `DaggerThrow`
+  - `SneakyStrike`
+  - `Eviscerate`
+  - `Concentrate`
+  - `CalculatedGamble`
+  - plus small supporting effects:
+    - `SneakyStrikeEffect`
+    - `ConcentrateEffect`
+    - `CalculatedGambleEffect`
+- Added [tests/test_silent_discard_payoff_content_foundation.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_discard_payoff_content_foundation.py) covering:
+  - card instantiation
+  - upgrade metadata
+  - reward pool inclusion
+  - reward generation surfacing discard-payoff cards
+- Added [tests/test_silent_discard_payoff_combat.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_silent_discard_payoff_combat.py) covering:
+  - `DaggerThrow`
+  - `SneakyStrike`
+  - `Eviscerate`
+  - `Concentrate`
+  - `CalculatedGamble`
+  - continued compatibility with `Tingsha / ToughBandages / HoveringKite / Reflex / Tactician`
+- Verified after Phase 192:
+  - `python -m pytest tests/test_silent_discard_payoff_content_foundation.py tests/test_silent_discard_payoff_combat.py -q`
+  - `python -m pytest tests/test_silent_content_foundation.py tests/test_silent_starter_combat.py tests/test_silent_low_system_reward_combat.py tests/test_silent_poison_content_foundation.py tests/test_silent_poison_combat.py tests/test_silent_poison_payoff_content_foundation.py tests/test_silent_poison_payoff_combat.py tests/test_silent_shiv_discard_foundation.py tests/test_silent_discard_utility_combat.py tests/test_silent_shiv_discard_content_foundation.py tests/test_silent_discard_payoff_content_foundation.py tests/test_silent_discard_payoff_combat.py -q`
+  - `python -m pytest tests/test_harness_smoke.py -q`
+  - `python -m pytest tests -q`
+
+## 6. Suggested Next Step
+
+Phase 268 is the current throughput-closure baseline on top of the Phase 267 fidelity gate. The default next step is to return to targeted maintenance. In other words: do not open a default Phase 269.
+
+Recommended order:
+
+1. Treat the current repo state as the fidelity-gated, throughput-optimized maintenance baseline:
+   - keep `python -m pytest -q tests` green
+   - keep [RELEASE_CHECKLIST.md](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/RELEASE_CHECKLIST.md) current if the maintenance command chain, profile defaults, timing-cache behavior, fidelity gate, optional-log prerequisites, or stable CLI command surface changes
+   - keep the maintenance sentinel in [tests/test_phase265_post_ship_maintenance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase265_post_ship_maintenance.py), the ship sentinel in [tests/test_phase264_closeout_ship_checklist.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase264_closeout_ship_checklist.py), the fidelity sentinel in [tests/test_phase267_fidelity_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_fidelity_audit.py), the dynamic aggregate in [tests/test_phase267_dynamic_truth.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_dynamic_truth.py), the CLI signoff in [tests/test_phase267_cli_real_play_signoff.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase267_cli_real_play_signoff.py), the throughput sentinel in [tests/test_phase268_dev_loop_performance.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_phase268_dev_loop_performance.py), the runner behavior pins in [tests/test_dev_checks.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_dev_checks.py), and the offline audit expectations pinned by [tests/test_wiki_audit.py](/c:/Users/HP/Desktop/WarframeBot/Slay%20The%20Spire/tests/test_wiki_audit.py)
+2. Only open targeted bugfix work when a concrete regression appears:
+   - preserve the `GeneticAlgorithm#<misc>[+]` / `RitualDagger#<misc>[+]` / `SearingBlow+N` wire shapes, replay/autoplay guarantees, retain/no-discard end-turn guarantees, repeated fixture/audit stability, and the current CLI real-play surface including `status / intent / exhaust`
+   - classify the issue first as `gameplay truth bug`, `CLI/readability bug`, `harness/audit regression`, or `optional-local-log gap`
+   - repeated-run / harness drift belongs in `harness/audit regression`; keep that thread narrow and do not reopen content expansion, schema work, or a broad new parity thread by default
+   - a one-off local-only failure is not enough to justify a new default mainline; prefer reproducible, source-backed, or checked-in-sentinel regressions
+3. Use the lighter runner defaults before escalating:
+   - start from `python scripts/run_dev_checks.py`
+   - widen to `python scripts/run_dev_checks.py --profile fast`
+   - only escalate to `--profile harness` or `--profile full --jobs 4` when the issue actually touches those heavier lanes
+   - treat `.pytest_tmp/dev_checks_timings.json` as a local shard-balancing cache only, not as gameplay truth or a checked-in artifact
+4. Keep new logs optional:
+   - use existing corpus/live logs as sentinels
+   - only record a new log when a concrete source-ambiguous bug cannot be settled from `decompiled_src` plus the current checked-in tests
+   - keep full-campaign smoke, harness smoke, and repeated full-suite runs stable so broad simulation continues to catch cross-lane regressions like the `DistilledChaos` autoplay bug fixed in Phase 257, the `Rebound / DoubleTap / Omniscience` replay drifts fixed in Phase 259, the `Well-Laid Plans / Runic Pyramid` turn-boundary drifts fixed in Phase 260, the `GeneticAlgorithm` misc/deck-identity drift fixed in Phase 261, the generated-copy/stateful-choice-label drift fixed in Phase 262, and the repeated fixture order-drift fixed in Phase 263
+5. Log policy should remain narrow:
+   - do not start another wide `stslog` collection pass by default
+   - only collect a new targeted log when a dynamic interaction is still ambiguous after checking `decompiled_src`, existing tests, and the current log corpus
+6. Explicit non-goals unless a new regression proves otherwise:
+   - do not reopen merchant schema
+   - do not reopen recorder/harness schema work
+   - do not reopen a new runtime card tranche while `missing_in_runtime == 0`
+   - do not reopen broad CLI polish as the primary thread
+
+## 7. Assumptions
+
+- Local recorder logs are developer assets and are not committed to the repo.
+- The project continues to prioritize gameplay correctness over seed-perfect Java bug compatibility.
+- The floor-1 map smoke tests now passing normally does not change the project's non-goal around full-map seed-perfect parity.

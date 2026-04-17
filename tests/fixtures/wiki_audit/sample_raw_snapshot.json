@@ -1,0 +1,575 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-16T00:00:00Z",
+  "repo_root": "C:/repo",
+  "network_enabled": false,
+  "source_priority": {
+    "mechanics_truth": "decompiled_src",
+    "english_reference": [
+      "en_wikigg",
+      "en_fandom"
+    ],
+    "chinese_reference": [
+      "cn_huiji"
+    ]
+  },
+  "catalog_overrides": {
+    "card": [
+      "Bash",
+      "GhostOnlyCatalog"
+    ],
+    "relic": [
+      "BurningBlood"
+    ],
+    "potion": [
+      "SmokeBomb"
+    ],
+    "monster": [
+      "JawWorm"
+    ],
+    "event": [
+      "Big Fish"
+    ],
+    "ui_term": [
+      "help"
+    ]
+  },
+  "runtime_inventory": {
+    "card": [
+      "Bash",
+      "SearingBlow+2",
+      "Shockwave"
+    ],
+    "relic": [
+      "BurningBlood"
+    ],
+    "potion": [
+      "SmokeBomb"
+    ],
+    "monster": [
+      "JawWorm"
+    ],
+    "event": [
+      "Big Fish"
+    ],
+    "power": [
+      "Artifact"
+    ],
+    "ui_term": [
+      "help"
+    ]
+  },
+  "source_inventory": {
+    "card": [
+      "Bash",
+      "SearingBlow+2",
+      "Shockwave",
+      "PhantomStrike"
+    ],
+    "relic": [
+      "BurningBlood"
+    ],
+    "potion": [
+      "SmokeBomb"
+    ],
+    "monster": [
+      "JawWorm"
+    ],
+    "event": [
+      "Big Fish"
+    ],
+    "power": [
+      "Artifact"
+    ],
+    "ui_term": [
+      "help"
+    ]
+  },
+  "records": [
+    {
+      "entity_type": "card",
+      "entity_id": "Bash",
+      "runtime_name_en": "Bash",
+      "runtime_name_cn": "痛击",
+      "runtime_desc_runtime": "造成 8 点伤害并施加 2 层易伤。",
+      "runtime_facts": {
+        "cost": 2,
+        "type": "ATTACK",
+        "rarity": "BASIC",
+        "target_required": false,
+        "damage": 8,
+        "block": 0,
+        "magic_number": 2,
+        "exhaust": false,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "java_facts": {
+        "cost": 2,
+        "type": "ATTACK",
+        "rarity": "BASIC",
+        "target_required": true,
+        "damage": 8,
+        "block": 0,
+        "magic_number": 2,
+        "exhaust": false,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Bash",
+        "resolved_title": "Bash",
+        "summary": "Deal damage and apply Vulnerable.",
+        "payload": {
+          "facts": {
+            "cost": 2,
+            "type": "ATTACK",
+            "rarity": "BASIC",
+            "target_required": true,
+            "damage": 8,
+            "block": 0,
+            "magic_number": 2,
+            "exhaust": false,
+            "ethereal": false,
+            "retain": false,
+            "innate": false
+          }
+        }
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "痛击",
+        "resolved_title": "痛击",
+        "summary": "造成伤害并施加易伤。"
+      }
+    },
+    {
+      "entity_type": "relic",
+      "entity_id": "BurningBlood",
+      "runtime_name_en": "Burning Blood",
+      "runtime_name_cn": "燃烧之血",
+      "runtime_desc_runtime": "每场战斗结束后，回复 6 点生命。",
+      "runtime_facts": {
+        "tier": "STARTER",
+        "price": 0,
+        "character_class": "IRONCLAD",
+        "effects": [
+          {
+            "type": "on_victory",
+            "value": 6,
+            "target": "self",
+            "extra_type": ""
+          }
+        ]
+      },
+      "java_facts": {
+        "tier": "STARTER",
+        "price": 0,
+        "character_class": "IRONCLAD",
+        "effects": [
+          {
+            "type": "on_victory",
+            "value": 6,
+            "target": "self",
+            "extra_type": ""
+          }
+        ]
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Burning_Blood",
+        "resolved_title": "Burning_Blood",
+        "summary": "Heal after combat."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "燃烧之血",
+        "resolved_title": "燃烧之血",
+        "summary": "战后回血。"
+      }
+    },
+    {
+      "entity_type": "potion",
+      "entity_id": "SmokeBomb",
+      "runtime_name_en": "Smoke Bomb",
+      "runtime_name_cn": "烟雾弹",
+      "runtime_desc_runtime": "从非首领战斗中逃跑。",
+      "runtime_facts": {
+        "rarity": "COMMON",
+        "character_class": "UNIVERSAL",
+        "potency": 1,
+        "sacred_bark_potency": null,
+        "is_thrown": false
+      },
+      "java_facts": {
+        "rarity": "COMMON",
+        "character_class": "UNIVERSAL",
+        "potency": 1,
+        "sacred_bark_potency": null,
+        "is_thrown": false
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Smoke Bomb",
+        "resolved_title": "Smoke Bomb",
+        "summary": "Escape from non-boss combat."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "烟雾弹",
+        "resolved_title": "烟雾弹",
+        "summary": "从非首领战斗中逃跑。"
+      }
+    },
+    {
+      "entity_type": "monster",
+      "entity_id": "JawWorm",
+      "runtime_name_en": "Jaw Worm",
+      "runtime_name_cn": "颚虫",
+      "runtime_desc_runtime": "ATTACK, DEFEND",
+      "runtime_facts": {
+        "act": 1,
+        "elite": false,
+        "boss": false,
+        "sample_intents": [
+          "ATTACK",
+          "DEFEND"
+        ]
+      },
+      "java_facts": {
+        "act": 1,
+        "elite": false,
+        "boss": false,
+        "sample_intents": [
+          "ATTACK",
+          "DEFEND"
+        ]
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Jaw Worm",
+        "resolved_title": "Jaw Worm",
+        "summary": "Act 1 hallway monster."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "大颚虫",
+        "resolved_title": "大颚虫",
+        "summary": "第一阶段普通敌人。"
+      }
+    },
+    {
+      "entity_type": "event",
+      "entity_id": "Big Fish",
+      "runtime_name_en": "Big Fish",
+      "runtime_name_cn": "大鱼",
+      "runtime_desc_runtime": "恢复 1/3 生命 | 获得 5 最大生命 | 获得一张诅咒并获得遗物",
+      "runtime_facts": {
+        "act": 1,
+        "choice_count": 3,
+        "choices": [
+          {
+            "index": 0,
+            "gating": [],
+            "effect_kinds": [
+              "gain_hp"
+            ]
+          },
+          {
+            "index": 1,
+            "gating": [],
+            "effect_kinds": [
+              "gain_max_hp"
+            ]
+          },
+          {
+            "index": 2,
+            "gating": [],
+            "effect_kinds": [
+              "gain_card"
+            ]
+          }
+        ]
+      },
+      "java_facts": {
+        "act": 1,
+        "choice_count": 3,
+        "choices": [
+          {
+            "index": 0,
+            "gating": [],
+            "effect_kinds": [
+              "gain_hp"
+            ]
+          },
+          {
+            "index": 1,
+            "gating": [],
+            "effect_kinds": [
+              "gain_max_hp"
+            ]
+          },
+          {
+            "index": 2,
+            "gating": [],
+            "effect_kinds": [
+              "gain_relic"
+            ]
+          }
+        ]
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Big Fish",
+        "resolved_title": "Big Fish",
+        "summary": "Choose one of three boons.",
+        "payload": {
+          "facts": {
+            "act": 1,
+            "choice_count": 3,
+            "choices": [
+              {
+                "index": 0,
+                "gating": [],
+                "effect_kinds": [
+                  "gain_hp"
+                ]
+              },
+              {
+                "index": 1,
+                "gating": [],
+                "effect_kinds": [
+                  "gain_max_hp"
+                ]
+              },
+              {
+                "index": 2,
+                "gating": [],
+                "effect_kinds": [
+                  "gain_card"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "大鱼事件",
+        "resolved_title": "大鱼事件",
+        "summary": "三选一事件。"
+      }
+    },
+    {
+      "entity_type": "card",
+      "entity_id": "SearingBlow+2",
+      "runtime_name_en": "Searing Blow+2",
+      "runtime_name_cn": "灼热攻击+2",
+      "runtime_desc_runtime": "多次升级后伤害提高。",
+      "runtime_facts": {
+        "cost": 1,
+        "type": "ATTACK",
+        "rarity": "COMMON",
+        "target_required": true,
+        "damage": 21,
+        "block": 0,
+        "magic_number": 0,
+        "exhaust": false,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "java_facts": {
+        "cost": 1,
+        "type": "ATTACK",
+        "rarity": "COMMON",
+        "target_required": true,
+        "damage": 21,
+        "block": 0,
+        "magic_number": 0,
+        "exhaust": false,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Searing Blow+",
+        "resolved_title": "Searing Blow+",
+        "summary": "A card with repeat upgrades."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "灼热攻击+",
+        "resolved_title": "灼热攻击+",
+        "summary": "可重复升级。"
+      }
+    },
+    {
+      "entity_type": "power",
+      "entity_id": "Artifact",
+      "runtime_name_en": "Artifact",
+      "runtime_name_cn": "",
+      "runtime_desc_runtime": "",
+      "runtime_facts": {
+        "power_type": "BUFF",
+        "turn_based": false,
+        "can_go_negative": false
+      },
+      "java_facts": {
+        "power_type": "BUFF",
+        "turn_based": false,
+        "can_go_negative": false
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Artifact",
+        "resolved_title": "Artifact",
+        "summary": "Negates debuffs."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "人工制品",
+        "resolved_title": "人工制品",
+        "summary": "抵消负面状态。"
+      }
+    },
+    {
+      "entity_type": "card",
+      "entity_id": "Shockwave",
+      "runtime_name_en": "Shockwave",
+      "runtime_name_cn": "闇囪崱娉?",
+      "runtime_desc_runtime": "瀵规墍鏈夋晫浜烘柦鍔?3 灞傝櫄寮卞拰 3 灞傛槗浼ゃ€傛秷鑰椼€?",
+      "runtime_facts": {
+        "cost": 2,
+        "type": "SKILL",
+        "rarity": "UNCOMMON",
+        "target_required": false,
+        "damage": 0,
+        "block": 0,
+        "magic_number": 3,
+        "exhaust": true,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "java_facts": {
+        "cost": 2,
+        "type": "SKILL",
+        "rarity": "UNCOMMON",
+        "target_required": false,
+        "damage": 0,
+        "block": 0,
+        "magic_number": 3,
+        "exhaust": true,
+        "ethereal": false,
+        "retain": false,
+        "innate": false
+      },
+      "en_wiki": {
+        "source": "en_fandom",
+        "requested_title": "Shockwave",
+        "resolved_title": "Shockwave",
+        "summary": "Apply Weak and Vulnerable to all enemies."
+      },
+      "cn_wiki": {
+        "source": "cn_huiji",
+        "requested_title": "震荡波",
+        "resolved_title": "震荡波",
+        "summary": "对全体敌人施加虚弱和易伤。"
+      }
+    },
+    {
+      "entity_type": "ui_term",
+      "entity_id": "help",
+      "runtime_name_en": "help",
+      "runtime_name_cn": "帮助",
+      "runtime_desc_runtime": "map, combat",
+      "runtime_facts": {
+        "contexts": [
+          "map",
+          "combat"
+        ]
+      },
+      "java_facts": {
+        "contexts": [
+          "map",
+          "combat"
+        ]
+      },
+      "en_wiki": {
+        "source": null,
+        "requested_title": "",
+        "resolved_title": null,
+        "summary": "",
+        "payload": {}
+      },
+      "cn_wiki": {
+        "source": null,
+        "requested_title": "",
+        "resolved_title": null,
+        "summary": "",
+        "payload": {}
+      }
+    }
+  ],
+  "translation_policy": [
+    {
+      "entity_type": "card",
+      "entity_id": "Bash",
+      "runtime_name_cn": "痛击",
+      "reference_source": "cn_huiji",
+      "alignment_status": "exact_match",
+      "huiji_page_or_title": "痛击",
+      "approved_alias_note": ""
+    },
+    {
+      "entity_type": "relic",
+      "entity_id": "BurningBlood",
+      "runtime_name_cn": "燃烧之血",
+      "reference_source": "cn_huiji",
+      "alignment_status": "exact_match",
+      "huiji_page_or_title": "燃烧之血",
+      "approved_alias_note": ""
+    },
+    {
+      "entity_type": "potion",
+      "entity_id": "SmokeBomb",
+      "runtime_name_cn": "烟雾弹",
+      "reference_source": "cn_huiji",
+      "alignment_status": "exact_match",
+      "huiji_page_or_title": "烟雾弹",
+      "approved_alias_note": ""
+    },
+    {
+      "entity_type": "event",
+      "entity_id": "Big Fish",
+      "runtime_name_cn": "大鱼",
+      "reference_source": "cn_huiji",
+      "alignment_status": "approved_alias",
+      "huiji_page_or_title": "大鱼事件",
+      "approved_alias_note": "CLI omits the event suffix."
+    },
+    {
+      "entity_type": "card",
+      "entity_id": "Shockwave",
+      "runtime_name_cn": "震荡波",
+      "reference_source": "cn_huiji",
+      "alignment_status": "exact_match",
+      "huiji_page_or_title": "震荡波",
+      "approved_alias_note": ""
+    },
+    {
+      "entity_type": "ui_term",
+      "entity_id": "help",
+      "runtime_name_cn": "帮助",
+      "reference_source": "local_terminal",
+      "alignment_status": "wiki_missing",
+      "huiji_page_or_title": "",
+      "approved_alias_note": ""
+    }
+  ]
+}

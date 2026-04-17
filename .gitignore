@@ -1,0 +1,12 @@
+.pytest_cache/
+.pytest_tmp/
+runtime_tmp/
+__pycache__/
+.claude/
+temp_cfr_purple/
+tests/_tmp_workspace/
+tests/_tmp_workspace_manual2/
+tests/_tmp_workspace_probe/
+tests/_tmp_workspace_probe2/
+desktop-1.0.jar
+*.pyc

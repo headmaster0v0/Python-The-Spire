@@ -1,0 +1,11 @@
+{
+  "modid": "DataRecorder",
+  "name": "STS Data Recorder",
+  "author_list": ["STS Python Parity Project"],
+  "description": "Records game state, RNG calls, and player actions for parity testing with Python simulation",
+  "version": "0.1.0",
+  "sts_version": "12-18-2022",
+  "mts_version": "3.30.0",
+  "dependencies": ["basemod", "stslib"],
+  "update_json": ""
+}

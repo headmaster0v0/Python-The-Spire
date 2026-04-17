@@ -1,0 +1,4263 @@
+{
+  "dedicated_tests": {
+    "event:Dead Adventurer": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_dedicated_bespoke_truth",
+    "event:Face Trader": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_dedicated_bespoke_truth",
+    "event:Living Wall": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_dedicated_bespoke_truth",
+    "monster:Collector": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "monster:Darkling": "tests/test_phase267_dynamic_truth.py::test_phase267_monster_state_and_event_branching_family_remains_live",
+    "monster:GremlinLeader": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "monster:Looter": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "monster:Mugger": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "monster:Nemesis": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "monster:SlimeBoss": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_dedicated_bespoke_truth",
+    "potion:DistilledChaos": "tests/test_dynamic_autoplay_replay_truth.py::test_havoc_mayhem_and_distilled_chaos_leave_no_residual_choice_when_no_targets_exist",
+    "potion:EntropicBrew": "tests/test_phase267_dynamic_truth.py::test_phase267_potion_and_relic_callback_family_remains_live",
+    "potion:FairyInABottle": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
+    "potion:GamblersBrew": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
+    "potion:LiquidMemories": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
+    "potion:SmokeBomb": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
+    "power:AfterImage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:Burst": "tests/test_dynamic_autoplay_replay_truth.py::test_burst_plus_consumes_two_skills_without_recursive_replay",
+    "power:EchoForm": "tests/test_dynamic_autoplay_replay_truth.py::test_echo_form_only_duplicates_the_first_original_card_each_turn",
+    "power:Equilibrium": "tests/test_dynamic_turn_boundary_truth.py::test_equilibrium_retains_non_ethereal_without_opening_choice",
+    "power:Nightmare": "tests/test_dynamic_autoplay_replay_truth.py::test_nightmare_preserves_special_runtime_identity_and_respects_hand_limit",
+    "power:Rebound": "tests/test_dynamic_autoplay_replay_truth.py::test_rebound_moves_the_next_non_power_played_card_to_the_top_of_draw_pile",
+    "power:Repair": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
+    "power:Retain Cards": "tests/test_dynamic_turn_boundary_truth.py::test_well_laid_plans_opens_end_turn_retain_choice_and_auto_resumes_after_selection",
+    "power:Rupture": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
+    "power:Rushdown": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
+    "power:StaticDischarge": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
+    "relic:BlackStar": "tests/test_phase267_dynamic_truth.py::test_phase267_reward_mutation_family_keeps_prayer_wheel_and_black_star_live",
+    "relic:MagicFlower": "tests/test_phase267_dynamic_truth.py::test_phase267_potion_and_relic_callback_family_remains_live",
+    "relic:PrayerWheel": "tests/test_phase267_dynamic_truth.py::test_phase267_reward_mutation_family_keeps_prayer_wheel_and_black_star_live",
+    "relic:SacredBark": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
+    "relic:SmilingMask": "tests/test_phase267_dynamic_truth.py::test_phase267_shop_lane_keeps_courier_restock_and_smiling_mask_remove_truth",
+    "relic:TheCourier": "tests/test_phase267_dynamic_truth.py::test_phase267_shop_lane_keeps_courier_restock_and_smiling_mask_remove_truth"
+  },
+  "entities": [
+    {
+      "entity_id": "Addict",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_strength",
+        "event:lose_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Ancient Writing",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_dexterity",
+        "event:gain_strength"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Beggar",
+      "entity_type": "event",
+      "family_ids": [
+        "event:choose_card_to_remove",
+        "event:lose_gold",
+        "event:remove_card"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Big Fish",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card",
+        "event:gain_max_hp",
+        "event:gain_max_hp_percent",
+        "event:gain_random_relic"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Corrupt Heart",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Cursed Tome",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Dead Adventurer",
+      "entity_type": "event",
+      "family_ids": [
+        "event:search"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Face Trader",
+      "entity_type": "event",
+      "family_ids": [
+        "event:trade_faces"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Faceless Trader",
+      "entity_type": "event",
+      "family_ids": [
+        "event:choose_card_to_remove",
+        "event:gain_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Falling",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_strength",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Forgotten Altar",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_random_relic",
+        "event:lose_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Ghost",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card",
+        "event:lose_max_hp_percent"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Golden Shrine",
+      "entity_type": "event",
+      "family_ids": [
+        "event:no_effect_choices"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Joust",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Knowing Skull",
+      "entity_type": "event",
+      "family_ids": [
+        "event:lose_hp",
+        "event:obtain_potion"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Liars Game",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card",
+        "event:gain_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Living Wall",
+      "entity_type": "event",
+      "family_ids": [
+        "event_gating:requires_card_removal",
+        "event_gating:requires_card_transform",
+        "event_gating:requires_card_upgrade"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Mind Bloom",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:gain_hp",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Moai Head",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Mushrooms",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card",
+        "event:gain_max_hp_percent",
+        "event:trigger_combat"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Mysterious Sphere",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "N'loth",
+      "entity_type": "event",
+      "family_ids": [
+        "event:choose_card_to_remove",
+        "event:lose_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Red Mask",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Scrap Ooze",
+      "entity_type": "event",
+      "family_ids": [
+        "event:no_effect_choices"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Secret Portal",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_random_relic",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sensory Stone",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Shining Light",
+      "entity_type": "event",
+      "family_ids": [
+        "event:no_effect_choices"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "The Cleric",
+      "entity_type": "event",
+      "family_ids": [
+        "event:choose_card_to_remove",
+        "event:gain_max_hp_percent",
+        "event_gating:cost"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "The Colosseum",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "The Library",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_hp",
+        "event:gain_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "The Mausoleum",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "The Nest",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Tomb of Lord Red Mask",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Vampires",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_card",
+        "event:lose_max_hp_percent"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Winding",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_max_hp_percent"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Wing Statuette",
+      "entity_type": "event",
+      "family_ids": [
+        "event:lose_hp",
+        "event_gating:requires_attack_card",
+        "event_gating:requires_card_removal"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "World of Goop",
+      "entity_type": "event",
+      "family_ids": [
+        "event:gain_gold",
+        "event:lose_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AcidSlimeLarge",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:split"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AcidSlimeMedium",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AcidSlimeSmall",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Automaton",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AwakenedOne",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BookOfStabbing",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BronzeOrb",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:minion",
+        "monster:spawn_summon"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Byrd",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Centurion",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Champ",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Chosen",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Collector",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:spawn_summon"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "CorruptHeart",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Cultist",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Dagger",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:minion"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Darkling",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:half_dead_revive"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Deca",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Donu",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DonuAndDeca",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Exploder",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FungiBeast",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FuzzyLouseNormal",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GiantHead",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinFat",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinLeader",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:spawn_summon"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "GremlinNob",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinSneaky",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinTsundere",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinWar",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Healer",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Hexaghost",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "JawWorm",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Lagavulin",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Looter",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:escape"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "LouseDefensive",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Maw",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Mugger",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:escape"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Nemesis",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:intangible"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "OrbWalker",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Reptomancer",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:spawn_summon"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Repulsor",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sentry",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Serpent",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ShellParasite",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SlaverBlue",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SlaverBoss",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SlaverRed",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SlimeBoss",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:split"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "SnakePlant",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Snecko",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SphericGuardian",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpikeSlimeLarge",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:split"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpikeSlimeMedium",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpikeSlimeSmall",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Spiker",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpireShield",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpireSpear",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:artifact",
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TheGuardian",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TimeEater",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TorchHead",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents",
+        "monster:minion",
+        "monster:spawn_summon"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Transient",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WrithingMass",
+      "entity_type": "monster",
+      "family_ids": [
+        "monster:basic_intents"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Ambrosia",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:AmbrosiaEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AncientPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:AncientPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AttackPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:AttackPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BlessingOfTheForge",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:BlessingOfTheForgeEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BlockPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:BlockPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BloodPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:BloodPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BottledMiracle",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:BottledMiracleEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ColorlessPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:ColorlessPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CultistPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:CultistPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CunningPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:CunningPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DexterityPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:DexterityPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DistilledChaos",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:DistilledChaosEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "DuplicationPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:DuplicationPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Elixir",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:ElixirEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EnergyPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:EnergyPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EntropicBrew",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:EntropicBrewEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "EssenceOfDarkness",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:EssenceOfDarknessEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EssenceOfSteel",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:EssenceOfSteelEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ExplosivePotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:ExplosivePotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FairyInABottle",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FairyInABottleEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "FearPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FearPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FirePotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FirePotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FlexPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FlexPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FocusPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FocusPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FruitJuice",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:FruitJuiceEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GamblersBrew",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:GamblersBrewEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "GhostInAJar",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:GhostInAJarEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HeartofIron",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:HeartofIronEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LiquidBronze",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:LiquidBronzeEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LiquidMemories",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:LiquidMemoriesEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "PoisonPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:PoisonPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PotionofCapacity",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:PotionofCapacityEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PowerPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:PowerPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RegenPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:RegenPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SkillPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:SkillPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SmokeBomb",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:SmokeBombEffect"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "SneckoOil",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:SneckoOilEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpeedPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:SpeedPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StancePotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:StancePotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StrengthPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:StrengthPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SwiftPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:SwiftPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WeakPotion",
+      "entity_type": "potion",
+      "family_ids": [
+        "potion:WeakPotionEffect"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Accuracy",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AfterImage",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Amplify",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_power_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Anger",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_player_skill_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Angry",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:modify_block",
+        "power:on_attacked"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Artifact",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BackAttack",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BattleHymn",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BeatOfDeath",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Bias",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Blur",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Brutality",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:at_start_of_turn_post_draw",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Buffer",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Burst",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_skill_played"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Choked",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Combust",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:at_end_of_turn",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Confused",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CorpseExplosion",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Corruption",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CreativeAI",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Curl Up",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_attacked"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DarkEmbrace",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DemonForm",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DevaPower",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_energy_recharge"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Devotion",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Dexterity",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Doppelganger",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn_post_draw",
+        "power:on_energy_recharge"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DoubleTap",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Draw Card",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn_post_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Duplication",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EchoForm",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Electro",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EndTurnDeath",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Energized",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_energy_recharge"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EnergizedBlue",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_energy_recharge"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Enrage",
+      "entity_type": "power",
+      "family_ids": [
+        "power:on_player_skill_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Entangled",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Envenom",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_attack_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Equilibrium",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn_pre_end_turn_cards"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Evolve",
+      "entity_type": "power",
+      "family_ids": [
+        "power:on_card_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FeelNoPain",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FireBreathing",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_card_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FlameBarrier",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Flex",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Focus",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Foresight",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Frail",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Heatsinks",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_power_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Hello",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "InfiniteBlades",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Intangible",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Invincible",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Juggernaut",
+      "entity_type": "power",
+      "family_ids": [
+        "power:on_gain_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LikeWater",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn_pre_end_turn_cards"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Lockon",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Loop",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Lose Dexterity",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Lose Strength",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MachineLearning",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn_post_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Magnetism",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Mantra",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MasterReality",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Mayhem",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Metallicize",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Next Turn Block",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Nightmare",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Nirvana",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_scry"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "No Draw",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NoBlock",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_gain_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NoxiousFumes",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OmegaPower",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Painful Stabs",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_inflict_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Panache",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Phantasmal",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Plated Armor",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Poison",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Rage",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Rebound",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Regen",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Repair",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_victory"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Retain Cards",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn_pre_end_turn_cards"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Ritual",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Rupture",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_hp_lost"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Rushdown",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_change_stance"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Sadistic",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_apply_power_to_enemy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sharp Hide",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Speed",
+      "entity_type": "power",
+      "family_ids": [
+        "power:passive_state"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StaticDischarge",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_attacked"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Storm",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_power_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Strength",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_final_give",
+        "power:at_damage_final_receive",
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Study",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Surrounded",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TheBomb",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Thorns",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block",
+        "power:on_player_attacked"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ThousandCuts",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:on_player_card_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Tools Of The Trade",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_start_of_turn_post_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Vulnerable",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Weak",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_damage_give",
+        "power:at_damage_receive",
+        "power:at_end_of_round",
+        "power:modify_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WraithForm",
+      "entity_type": "power",
+      "family_ids": [
+        "power:at_end_of_round",
+        "power:at_end_of_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Akabeko",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:first_attack_combat"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Anchor",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "AncientTeaSet",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_rest"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ArtOfWar",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start_no_attack"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Astrolabe",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BagOfMarbles",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BagOfPreparation",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BirdFacedUrn",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:heal_per_power"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BlackBlood",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_victory",
+        "relic:replace_starter_relic"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BlackStar",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:elite_reward_relics"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "BloodVial",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BloodyIdol",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_gain_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BlueCandle",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:curse_playable"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BottledFlame",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:bottled"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BottledLightning",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:bottled"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BottledTornado",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:bottled"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Brimstone",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BronzeScales",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BurningBlood",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_victory"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "BustedCrown",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_reward_reduce",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Calipers",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CallingBell",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CaptainWheel",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_turns"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Cauldron",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CentennialPuzzle",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_hp_loss"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CeramicFish",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_card_added"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ChampionBelt",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_vulnerable_apply"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CharonsAshes",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_exhaust_damage_all"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ChemicalX",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Circlet",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CloakClasp",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_end_hand_block"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ClockworkSouvenir",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:artifact_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CoffeeDripper",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_heal_disabled",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CrackedCore",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CultistMask",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "CursedKey",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_chest_open",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Damaru",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks_self"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DarkstonePeriapt",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_curse_received"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DataDisk",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DeadBranch",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_exhaust_add_random"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DollysMirror",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_copy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DreamCatcher",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_rest"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "DuVuDoll",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:start_with_strength_per_curse"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Duality",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_attack"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Ectoplasm",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:gold_disabled",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EmotionChip",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EmptyCage",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:remove_cards_from_deck"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Enchiridion",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "EternalFeather",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_rest"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FaceOfCleric",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_victory"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FossilizedHelix",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start_buffer"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FrozenCore",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_end_empty_orb",
+        "relic:replace_starter_relic"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FrozenEgg",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_card_added"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FrozenEye",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "FusionHammer",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_site_forge_disabled",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GamblingChip",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Ginger",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:immune_weak"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Girya",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_site_strength"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GoldPlatedCables",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:orb_passive_multiply"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GoldenEye",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:scry_bonus"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GoldenIdol",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:gold_multiply"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinHorn",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_enemy_death"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "GremlinMask",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HandDrill",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HappyFlower",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_turns_self"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HolyWater",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start",
+        "relic:replace_starter_relic"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HornCleat",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start_delayed"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "HoveringKite",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_first_discard_per_turn"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "IceCream",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:conserve_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "IncenseBurner",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_turns"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "InkBottle",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_cards"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Inserter",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_2_turns"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "JuzuBracelet",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_trap_combat"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Kunai",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Lantern",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LeesWaffle",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LetterOpener",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_skills"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "LizardTail",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_death_save"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MagicFlower",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:heal_multiply"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "Mango",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:gain_max_HP"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MarkOfPain",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MarkOfTheBloom",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:cant_heal"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Matryoshka",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:chest_relics"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MawBank",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_floor_climb"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MealTicket",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_shop_enter"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MeatOnTheBone",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_combat_end"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MedicalKit",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Melange",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:scry_on_shuffle"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MembershipCard",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:shop_price_modifier"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MercuryHourglass",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MoltenEgg",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_card_added"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MummifiedHand",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_power_played"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "MutagenicStrength",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Necronomicon",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:first_attack_twice",
+        "relic:start_with_curse"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NeowsLament",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:first_combat_hp_one"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NilrysCodex",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_choice_three"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NinjaScroll",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:start_with_shivs"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NlothsGift",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:change_rare_chance"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NlothsMask",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_chest_open"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "NuclearBattery",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Nunchaku",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks_self"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OddMushroom",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_vulnerable"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OddlySmoothStone",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OldCoin",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:gain_gold"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Omamori",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:curse_negate_trigger"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OrangePellets",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:debuff_clear"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Orichalcum",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_end"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "OrnamentalFan",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Orrery",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PandoraBox",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Pantograph",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_boss_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PaperCrane",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_weak"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PaperFrog",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_vulnerable"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PeacePipe",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_site_remove"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Pear",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PenNib",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks_self"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PhilosophersStone",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Pocketwatch",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_first_turn_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PotionBelt",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PrayerWheel",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_reward"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "PreservedInsect",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:elite_hp_modifier"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PrismaticShard",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_reward_modifier"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "PureWater",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "QuestionCard",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:extra_card_reward"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RedMask",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RedSkull",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_strength"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RegalPillow",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_heal_bonus"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RingOfTheSerpent",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start",
+        "relic:replace_starter_relic"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RingOfTheSnake",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RunicCapacitor",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RunicCube",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_hp_loss"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RunicDome",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:block_intent",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "RunicPyramid",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_end_no_discard"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SacredBark",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:double_potion_potency"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "SelfFormingClay",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_hp_loss"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Shovel",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:rest_site_dig"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Shuriken",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_attacks"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SingingBowl",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_reward_max_hp"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SlaverCollar",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_boss_elite_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sling",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_boss_elite_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SmilingMask",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_remove_discount"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "SneckoEye",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start",
+        "relic:limit_cards_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SneckoSkull",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_poison_applied"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sozu",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:potion_gain_disabled",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SpiritPoop",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SsserpentHead",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_question_room"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StoneCalendar",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:every_n_turns"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StrangeSpoon",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Strawberry",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "StrikeDummy",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:strike_damage_bonus"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Sundial",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_shuffle"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "SymbioticVirus",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TeardropLocket",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TheAbacus",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_shuffle"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TheBoot",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_min_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TheCourier",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:shop_no_sell_out"
+      ],
+      "notes": "",
+      "proof_kind": "dedicated"
+    },
+    {
+      "entity_id": "TheSpecimen",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_enemy_death_poison_transfer"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ThreadAndNeedle",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Tingsha",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_discard"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TinyChest",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:treasure_room_every_n_question"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TinyHouse",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:card_reward",
+        "relic:gain_gold",
+        "relic:gain_max_HP",
+        "relic:gain_potion",
+        "relic:on_pickup",
+        "relic:upgrade_random"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Toolbox",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Torii",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:modify_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ToughBandages",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_discard"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ToxicEgg",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_card_added"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "ToyOrnithopter",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_potion_use"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TungstenRod",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_hp_loss"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Turnip",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:immune_frail"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "TwistedFunnel",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "UnceasingTop",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:empty_hand_draw"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Vajra",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_battle_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "VelvetChoker",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:limit_cards_play",
+        "relic:start_with_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "VioletLotus",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_exit_calm_energy"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WarPaint",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WarpedTongs",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:at_turn_start"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "Whetstone",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:on_pickup"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WhiteBeastStatue",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:potion_always_drop"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WingedGreaves",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:free_movement"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    },
+    {
+      "entity_id": "WristBlade",
+      "entity_type": "relic",
+      "family_ids": [
+        "relic:zero_cost_attack_bonus_damage"
+      ],
+      "notes": "",
+      "proof_kind": "family"
+    }
+  ],
+  "family_tests": {
+    "event:choose_card_to_remove": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_card": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_dexterity": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_gold": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_hp": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_max_hp": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_max_hp_percent": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_random_relic": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:gain_strength": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:lose_gold": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:lose_hp": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:lose_max_hp": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:lose_max_hp_percent": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:no_effect_choices": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_branching_truth",
+    "event:obtain_potion": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:remove_card": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event:search": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_branching_truth",
+    "event:trade_faces": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_branching_truth",
+    "event:trigger_combat": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_branching_truth",
+    "event_gating:cost": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event_gating:requires_attack_card": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_branching_truth",
+    "event_gating:requires_card_removal": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event_gating:requires_card_transform": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "event_gating:requires_card_upgrade": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
+    "monster:artifact": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:basic_intents": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:escape": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:half_dead_revive": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:intangible": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:minion": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:spawn_summon": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "monster:split": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_monster_state_family_truth",
+    "potion:AmbrosiaEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:AncientPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:AttackPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:BlessingOfTheForgeEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:BlockPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:BloodPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:BottledMiracleEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:ColorlessPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:CultistPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:CunningPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:DexterityPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:DistilledChaosEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:DuplicationPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:ElixirEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:EnergyPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:EntropicBrewEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:EssenceOfDarknessEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:EssenceOfSteelEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:ExplosivePotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:FairyInABottleEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:FearPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:FirePotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:FlexPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:FocusPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:FruitJuiceEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:GamblersBrewEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:GhostInAJarEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:HeartofIronEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:LiquidBronzeEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:LiquidMemoriesEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:PoisonPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:PotionofCapacityEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:PowerPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:RegenPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:SkillPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:SmokeBombEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:SneckoOilEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:SpeedPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:StancePotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_card_and_special_truth",
+    "potion:StrengthPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:SwiftPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "potion:WeakPotionEffect": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_potion_family_resource_and_power_truth",
+    "power:at_damage_final_give": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_damage_final_receive": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_damage_give": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_damage_receive": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_end_of_round": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_end_of_turn": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_end_of_turn_pre_end_turn_cards": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_start_of_turn": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:at_start_of_turn_post_draw": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:modify_block": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:on_attacked": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_card_draw": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_change_stance": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_death": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_energy_recharge": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "power:on_gain_block": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_hp_lost": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_inflict_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_apply_power_to_enemy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_attack_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_attacked": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_card_played": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_power_played": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_player_skill_played": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_scry": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_steal_gold": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:on_victory": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_play_and_reaction_truth",
+    "power:passive_state": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_callback_family_turn_and_damage_truth",
+    "relic:apply_weak_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:artifact_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_battle_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_battle_start_buffer": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_battle_start_energy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_boss_elite_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_boss_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_first_turn_draw": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_end": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_end_empty_orb": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_end_hand_block": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_end_no_discard": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_start": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_start_delayed": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:at_turn_start_no_attack": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:avoid_enemies": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:block_intent": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:bottled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:cant_heal": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:card_choice_three": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:card_copy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:card_remove_discount": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:card_reward": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:card_reward_max_hp": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:card_reward_modifier": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:card_reward_reduce": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:chance_for_free_attack": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:chance_for_free_skill": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:change_rare_chance": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:change_uncommon_chance": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:chest_relics": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:conserve_energy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:curse_negate_trigger": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:curse_playable": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:debuff_clear": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:deck_transform": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:deck_transform_and_upgrade": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:double_potion_potency": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:elite_hp_modifier": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:elite_reward_relics": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:empty_hand_draw": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:every_2_turns": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:every_n_attacks": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:every_n_attacks_self": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:every_n_cards": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:every_n_skills": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:every_n_turns": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:every_n_turns_self": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:extra_card_reward": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:first_attack_combat": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:first_attack_twice": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:first_combat_hp_one": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:free_movement": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:gain_gold": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:gain_intangible": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:gain_max_HP": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:gain_potion": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:gold_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:gold_multiply": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:heal_multiply": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:heal_per_power": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:immune_frail": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:immune_weak": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:limit_cards_draw": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:limit_cards_play": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:mana_gain_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:miracle": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_min_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_strength": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_strike": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_vulnerable": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:modify_weak": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_attack": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_card_added": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_card_played": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_chest_open": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_combat_end": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_curse_received": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_death_save": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_discard": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_enemy_death": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_enemy_death_poison_transfer": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_exhaust_add_random": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_exhaust_damage_all": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_exit_calm": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_exit_calm_energy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_first_discard_per_turn": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_floor_climb": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_gain_gold": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:on_heal": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:on_hp_loss": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:on_pickup": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_poison_applied": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_potion_use": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:on_power_played": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_question_room": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_rest": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_rest_add_card": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_shop_enter": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_shuffle": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:on_trap_combat": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:on_victory": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:on_vulnerable_apply": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:orb_passive_multiply": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:potion_always_drop": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:potion_gain_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:remove_cards_from_deck": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:replace_starter_relic": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_heal_bonus": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_heal_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_dig": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_forge_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_remove": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_strength": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_transform": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:rest_site_upgrade": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:scry_bonus": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:scry_on_shuffle": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:shop_no_sell_out": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:shop_price_modifier": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:start_with_block": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:start_with_curse": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:start_with_energy": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:start_with_shivs": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
+    "relic:start_with_strength_per_curse": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:strike_damage_bonus": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:treasure_room_every_n_question": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:upgrade_random": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
+    "relic:zero_cost_attack_bonus_damage": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth"
+  },
+  "schema_version": 1,
+  "summary": {
+    "dedicated_entity_count": 33,
+    "entity_counts": {
+      "event": 37,
+      "monster": 62,
+      "potion": 42,
+      "power": 99,
+      "relic": 179
+    },
+    "family_count": 213,
+    "family_entity_count": 386
+  }
+}

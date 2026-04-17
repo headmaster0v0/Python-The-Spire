@@ -1,0 +1,2005 @@
+from __future__ import annotations
+
+import argparse
+import inspect
+import json
+import re
+from collections import Counter
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Iterable
+
+import sts_py.engine.combat.powers as power_module
+import sts_py.terminal.catalog as terminal_catalog
+from sts_py.engine.content.card_instance import CardInstance
+from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
+from sts_py.engine.content.potions import POTION_DEFINITIONS
+from sts_py.engine.content.relics import ALL_RELICS, RelicDef
+from sts_py.engine.core.rng import MutableRNG
+from sts_py.engine.run.events import ACT1_EVENTS, ACT2_EVENTS, ACT3_EVENTS, Event, EventChoice
+from sts_py.engine.run.run_engine import RoomType, _monster_factory_registry
+from sts_py.terminal.catalog import (
+    card_requires_target,
+    get_card_info,
+    get_power_str,
+    translate_event_name,
+    translate_monster,
+    translate_potion,
+    translate_power,
+    translate_relic,
+    translate_room_type,
+)
+from sts_py.terminal.translation_policy import (
+    ALIGNMENT_STATUSES,
+    TranslationPolicyEntry,
+    get_translation_policy_entry,
+    load_translation_policy_bundle,
+    load_translation_policy_entries,
+    translation_policy_entity_ids_by_type,
+)
+from sts_py.tools.fidelity_proof import (
+    build_event_choice_effect_signatures,
+    build_monster_state_signatures,
+    build_potion_effect_signatures,
+    build_power_callback_signatures,
+    build_relic_effect_signatures,
+)
+from sts_py.tools.wiki_bilingual_scraper import BilingualWikiScraper
+
+SNAPSHOT_SCHEMA_VERSION = 1
+REPO_ROOT = Path(__file__).resolve().parents[2]
+RAW_SNAPSHOT_FILENAME = "raw_snapshot.json"
+NORMALIZED_SNAPSHOT_FILENAME = "normalized_snapshot.json"
+TRANSLATION_AUDIT_FILENAME = "translation_audit.json"
+COMPLETENESS_AUDIT_FILENAME = "completeness_audit.json"
+MECHANICS_AUDIT_FILENAME = "mechanics_audit.json"
+FIX_QUEUE_FILENAME = "fix_queue.json"
+
+ENTITY_TYPES = (
+    "card",
+    "relic",
+    "potion",
+    "power",
+    "monster",
+    "event",
+    "room_type",
+    "ui_term",
+)
+
+EN_SOURCE_ORDER = [
+    BilingualWikiScraper.SOURCE_EN_WIKIGG,
+    BilingualWikiScraper.SOURCE_EN_FANDOM,
+]
+CN_SOURCE_ORDER = [BilingualWikiScraper.SOURCE_CN_HUIJI]
+
+MOJIBAKE_MARKERS = (
+    "锟",
+    "鈥",
+    "鐥",
+    "鎵",
+    "闃",
+    "鏀",
+    "鑽",
+    "鍙",
+    "闇",
+    "銆",
+    "锛",
+)
+
+UI_TERM_CN_NAMES = {
+    "help": "帮助",
+    "map": "地图",
+    "mapimg": "地图图片",
+    "deck": "牌组",
+    "relics": "遗物",
+    "potions": "药水",
+    "status": "状态",
+    "intent": "意图",
+    "exhaust": "消耗堆",
+    "draw": "抽牌堆",
+    "discard": "弃牌堆",
+    "inspect": "查看",
+    "end": "结束回合",
+    "use": "使用",
+}
+
+MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID = {
+    "Strike": "Strike_Red",
+    "Defend": "Defend_Red",
+    "Strike_B": "Strike_Blue",
+    "Defend_B": "Defend_Blue",
+    "Strike_P": "Strike_Purple",
+    "Defend_P": "Defend_Watcher",
+    "BloodforBlood": "BloodForBlood",
+    "Thunderclap": "ThunderClap",
+    "Lockon": "LockOn",
+    "Darkness": "Darkness",
+    "Tempest": "Tempest",
+    "ThousandCuts": "AThousandCuts",
+    "CripplingCloud": "CripplingPoison",
+    "Nightmare": "Night Terror",
+    "Foresight": "Wireheading",
+    "Void": "VoidCard",
+}
+
+ACT1_MONSTER_IDS = {
+    "AcidSlimeLarge",
+    "AcidSlimeMedium",
+    "AcidSlimeSmall",
+    "Cultist",
+    "FungiBeast",
+    "FuzzyLouseNormal",
+    "GremlinFat",
+    "GremlinNob",
+    "GremlinSneaky",
+    "GremlinTsundere",
+    "GremlinWar",
+    "Hexaghost",
+    "JawWorm",
+    "Lagavulin",
+    "Looter",
+    "LouseDefensive",
+    "LouseRed",
+    "Mugger",
+    "Sentry",
+    "SlaverBlue",
+    "SlaverRed",
+    "SlimeBoss",
+    "SpikeSlimeLarge",
+    "SpikeSlimeMedium",
+    "SpikeSlimeSmall",
+    "TheGuardian",
+}
+
+ACT2_MONSTER_IDS = {
+    "BookOfStabbing",
+    "BronzeAutomaton",
+    "BronzeOrb",
+    "Byrd",
+    "Centurion",
+    "Champ",
+    "Chosen",
+    "Collector",
+    "Dagger",
+    "GremlinLeader",
+    "Healer",
+    "Repulsor",
+    "ShellParasite",
+    "SnakePlant",
+    "Snecko",
+    "SphericGuardian",
+    "Spiker",
+    "Taskmaster",
+}
+
+ACT3_MONSTER_IDS = {
+    "AwakenedOne",
+    "Darkling",
+    "Deca",
+    "Donu",
+    "DonuAndDeca",
+    "Exploder",
+    "GiantHead",
+    "Maw",
+    "Nemesis",
+    "OrbWalker",
+    "Reptomancer",
+    "SpireGrowth",
+    "TimeEater",
+    "Transient",
+    "WrithingMass",
+}
+
+ACT4_MONSTER_IDS = {
+    "CorruptHeart",
+    "SpireShield",
+    "SpireSpear",
+}
+
+CLI_UI_TERMS = {
+    "help": {"contexts": ["map", "combat", "reward", "shop", "event", "rest", "treasure", "victory"]},
+    "map": {"contexts": ["map", "combat"]},
+    "mapimg": {"contexts": ["map", "combat"]},
+    "deck": {"contexts": ["map", "combat", "reward", "shop", "event", "rest", "victory"]},
+    "relics": {"contexts": ["map", "combat", "reward", "shop", "event", "treasure", "victory"]},
+    "potions": {"contexts": ["map", "combat", "reward", "shop", "event", "rest"]},
+    "status": {"contexts": ["combat"]},
+    "intent": {"contexts": ["combat"]},
+    "exhaust": {"contexts": ["combat"]},
+    "draw": {"contexts": ["combat"]},
+    "discard": {"contexts": ["combat"]},
+    "inspect": {"contexts": ["map", "combat"]},
+    "end": {"contexts": ["combat"]},
+    "use": {"contexts": ["combat"]},
+}
+
+CATALOG_OVERRIDE_SOURCES = {
+    "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
+    "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
+    "potion": lambda: set(getattr(terminal_catalog, "POTION_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("potion", [])),
+    "monster": lambda: set(getattr(terminal_catalog, "MONSTER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("monster", [])),
+    "power": lambda: set(getattr(terminal_catalog, "POWER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("power", [])),
+    "event": lambda: set(getattr(terminal_catalog, "EVENT_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("event", [])),
+    "room_type": lambda: set(translation_policy_entity_ids_by_type().get("room_type", [])),
+    "ui_term": lambda: set(translation_policy_entity_ids_by_type().get("ui_term", [])),
+}
+
+MECHANICS_FIELDS_BY_ENTITY = {
+    "card": ["cost", "type", "rarity", "target_required", "damage", "block", "magic_number", "exhaust", "ethereal", "retain", "innate"],
+    "relic": ["tier", "price", "character_class", "effects", "effect_signatures"],
+    "potion": ["rarity", "character_class", "potency", "sacred_bark_potency", "is_thrown", "effect_signatures"],
+    "power": ["power_type", "turn_based", "can_go_negative", "callback_signatures"],
+    "monster": ["act", "elite", "boss", "sample_intents", "state_signatures"],
+    "event": ["act", "choice_count", "choices", "choice_effect_signatures"],
+    "room_type": ["enum_name", "symbol"],
+    "ui_term": ["contexts"],
+}
+
+
+@dataclass
+class WikiPageSnapshot:
+    source: str | None = None
+    requested_title: str = ""
+    resolved_title: str | None = None
+    url: str | None = None
+    summary: str = ""
+    payload: dict[str, Any] = field(default_factory=dict)
+    attempts: list[dict[str, Any]] = field(default_factory=list)
+    error: str | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> "WikiPageSnapshot":
+        if not data:
+            return cls()
+        return cls(
+            source=data.get("source"),
+            requested_title=str(data.get("requested_title", "")),
+            resolved_title=data.get("resolved_title"),
+            url=data.get("url"),
+            summary=str(data.get("summary", "") or ""),
+            payload=dict(data.get("payload") or {}),
+            attempts=list(data.get("attempts") or []),
+            error=data.get("error"),
+        )
+
+
+@dataclass
+class RawEntitySnapshot:
+    entity_type: str
+    entity_id: str
+    runtime_name_en: str
+    runtime_name_cn: str
+    runtime_desc_runtime: str
+    runtime_facts: dict[str, Any] = field(default_factory=dict)
+    java_facts: dict[str, Any] = field(default_factory=dict)
+    en_wiki: WikiPageSnapshot = field(default_factory=WikiPageSnapshot)
+    cn_wiki: WikiPageSnapshot = field(default_factory=WikiPageSnapshot)
+    audit_status: dict[str, str] = field(default_factory=dict)
+    audit_notes: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "RawEntitySnapshot":
+        return cls(
+            entity_type=str(data["entity_type"]),
+            entity_id=str(data["entity_id"]),
+            runtime_name_en=str(data.get("runtime_name_en", "")),
+            runtime_name_cn=str(data.get("runtime_name_cn", "")),
+            runtime_desc_runtime=str(data.get("runtime_desc_runtime", "")),
+            runtime_facts=dict(data.get("runtime_facts") or {}),
+            java_facts=dict(data.get("java_facts") or {}),
+            en_wiki=WikiPageSnapshot.from_dict(data.get("en_wiki")),
+            cn_wiki=WikiPageSnapshot.from_dict(data.get("cn_wiki")),
+            audit_status=dict(data.get("audit_status") or {}),
+            audit_notes=list(data.get("audit_notes") or []),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class NormalizedEntitySnapshot:
+    entity_type: str
+    entity_id: str
+    runtime_name_en: str
+    runtime_name_cn: str
+    runtime_desc_runtime: str
+    java_facts: dict[str, Any]
+    en_wiki_page: str | None
+    en_wiki_name: str | None
+    en_wiki_summary: str
+    cn_wiki_page: str | None
+    cn_wiki_name: str | None
+    cn_wiki_summary: str
+    audit_status: dict[str, str] = field(default_factory=dict)
+    audit_notes: list[str] = field(default_factory=list)
+    runtime_facts: dict[str, Any] = field(default_factory=dict)
+    match_meta: dict[str, Any] = field(default_factory=dict)
+    reference_source: str = ""
+    alignment_status: str = ""
+    huiji_page_or_title: str = ""
+    approved_alias_note: str = ""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "NormalizedEntitySnapshot":
+        return cls(
+            entity_type=str(data["entity_type"]),
+            entity_id=str(data["entity_id"]),
+            runtime_name_en=str(data.get("runtime_name_en", "")),
+            runtime_name_cn=str(data.get("runtime_name_cn", "")),
+            runtime_desc_runtime=str(data.get("runtime_desc_runtime", "")),
+            java_facts=dict(data.get("java_facts") or {}),
+            en_wiki_page=data.get("en_wiki_page"),
+            en_wiki_name=data.get("en_wiki_name"),
+            en_wiki_summary=str(data.get("en_wiki_summary", "")),
+            cn_wiki_page=data.get("cn_wiki_page"),
+            cn_wiki_name=data.get("cn_wiki_name"),
+            cn_wiki_summary=str(data.get("cn_wiki_summary", "")),
+            audit_status=dict(data.get("audit_status") or {}),
+            audit_notes=list(data.get("audit_notes") or []),
+            runtime_facts=dict(data.get("runtime_facts") or {}),
+            match_meta=dict(data.get("match_meta") or {}),
+            reference_source=str(data.get("reference_source", "") or ""),
+            alignment_status=str(data.get("alignment_status", "") or ""),
+            huiji_page_or_title=str(data.get("huiji_page_or_title", "") or ""),
+            approved_alias_note=str(data.get("approved_alias_note", "") or ""),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _contains_cjk(text: str) -> bool:
+    return any("\u4e00" <= ch <= "\u9fff" for ch in text)
+
+
+def _contains_private_use(text: str) -> bool:
+    return any("\ue000" <= ch <= "\uf8ff" for ch in text)
+
+
+def _looks_mojibake(text: str) -> bool:
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    if "\ufffd" in candidate or _contains_private_use(candidate):
+        return True
+    if "?" in candidate and _contains_cjk(candidate):
+        return True
+    return sum(marker in candidate for marker in MOJIBAKE_MARKERS) >= 2
+
+
+def _looks_cataloged_cn(text: str) -> bool:
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    if _looks_mojibake(candidate):
+        return False
+    return _contains_cjk(candidate)
+
+
+def _humanize_identifier(identifier: str) -> str:
+    if not identifier:
+        return ""
+    spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", identifier.replace("_", " "))
+    return re.sub(r"\s+", " ", spaced).strip()
+
+
+def _normalize_lookup_key(value: str) -> str:
+    candidate = str(value or "").strip()
+    if not candidate:
+        return ""
+    candidate = re.sub(r"\+\d*$", "", candidate)
+    candidate = candidate.rstrip("+")
+    candidate = re.sub(r"[ _-]+", "", candidate)
+    candidate = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "", candidate)
+    return candidate.lower()
+
+
+def _match_kind(entity_id: str, runtime_name: str, wiki_name: str | None, wiki_page: str | None) -> str:
+    wiki_tokens = {_normalize_lookup_key(wiki_name or ""), _normalize_lookup_key(wiki_page or "")}
+    wiki_tokens.discard("")
+    if not wiki_tokens:
+        return "missing"
+
+    entity_token = _normalize_lookup_key(entity_id)
+    runtime_token = _normalize_lookup_key(runtime_name)
+    if entity_token in wiki_tokens or runtime_token in wiki_tokens:
+        return "exact"
+
+    for token in wiki_tokens:
+        if entity_token and (
+            token.startswith(entity_token)
+            or entity_token.startswith(token)
+            or entity_token in token
+            or token in entity_token
+        ):
+            return "alias"
+        if runtime_token and (
+            token.startswith(runtime_token)
+            or runtime_token.startswith(token)
+            or runtime_token in token
+            or token in runtime_token
+        ):
+            return "alias"
+    return "unresolved"
+
+
+def _unique_nonempty(values: Iterable[str | None]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def _coerce_raw_records(data: Any) -> list[RawEntitySnapshot]:
+    if isinstance(data, dict):
+        items = data.get("records") or []
+    else:
+        items = data or []
+    records: list[RawEntitySnapshot] = []
+    for item in items:
+        if isinstance(item, RawEntitySnapshot):
+            records.append(item)
+        elif isinstance(item, dict):
+            records.append(RawEntitySnapshot.from_dict(item))
+    return records
+
+
+def _coerce_normalized_records(data: Any) -> list[NormalizedEntitySnapshot]:
+    if isinstance(data, dict):
+        items = data.get("records") or []
+        if items and isinstance(items[0], dict) and "match_meta" not in items[0] and "en_wiki" in items[0]:
+            items = normalize_raw_snapshot(data)["records"]
+    else:
+        items = data or []
+    records: list[NormalizedEntitySnapshot] = []
+    for item in items:
+        if isinstance(item, NormalizedEntitySnapshot):
+            records.append(item)
+        elif isinstance(item, dict):
+            records.append(NormalizedEntitySnapshot.from_dict(item))
+    return records
+
+
+def _catalog_override_keys() -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for entity_type, loader in CATALOG_OVERRIDE_SOURCES.items():
+        result[entity_type] = sorted(str(item) for item in loader())
+    return result
+
+
+def _policy_entries_from_snapshot(snapshot: dict[str, Any] | None) -> dict[tuple[str, str], TranslationPolicyEntry]:
+    if not snapshot:
+        return dict(load_translation_policy_entries())
+    raw_entries = list(snapshot.get("translation_policy") or [])
+    if not raw_entries:
+        return dict(load_translation_policy_entries())
+    entries: dict[tuple[str, str], TranslationPolicyEntry] = {}
+    for raw_entry in raw_entries:
+        entry = TranslationPolicyEntry.from_dict(dict(raw_entry))
+        entries[(entry.entity_type, entry.entity_id)] = entry
+    return entries
+
+
+def _policy_entry_to_dict(entry: TranslationPolicyEntry | None) -> dict[str, str]:
+    if entry is None:
+        return {
+            "reference_source": "",
+            "alignment_status": "",
+            "huiji_page_or_title": "",
+            "approved_alias_note": "",
+        }
+    return entry.to_dict()
+
+
+def _power_class_inventory() -> list[tuple[str, type[Any]]]:
+    classes: list[tuple[str, type[Any]]] = []
+    for _, power_cls in inspect.getmembers(power_module, inspect.isclass):
+        if power_cls.__module__ != power_module.__name__:
+            continue
+        if not power_cls.__name__.endswith("Power") or power_cls.__name__ == "Power":
+            continue
+        fields = getattr(power_cls, "__dataclass_fields__", {})
+        if "id" not in fields:
+            continue
+        power_id = fields["id"].default
+        if not power_id:
+            continue
+        classes.append((str(power_id), power_cls))
+    classes.sort(key=lambda item: item[0])
+    return classes
+
+
+def _event_inventory() -> dict[str, Event]:
+    events: dict[str, Event] = {}
+    for bucket in (ACT1_EVENTS, ACT2_EVENTS, ACT3_EVENTS):
+        for event_id, event in bucket.items():
+            events[event_id] = event
+    return events
+
+
+def _monster_act(monster_id: str) -> int | None:
+    if monster_id in ACT1_MONSTER_IDS:
+        return 1
+    if monster_id in ACT2_MONSTER_IDS:
+        return 2
+    if monster_id in ACT3_MONSTER_IDS:
+        return 3
+    if monster_id in ACT4_MONSTER_IDS:
+        return 4
+    return None
+
+
+def _monster_is_elite(monster_id: str) -> bool:
+    return monster_id in {"GremlinNob", "Lagavulin", "Sentry", "BookOfStabbing", "GremlinLeader", "Nemesis", "Reptomancer", "GiantHead"}
+
+
+def _monster_is_boss(monster_id: str) -> bool:
+    return monster_id in {
+        "Hexaghost",
+        "SlimeBoss",
+        "TheGuardian",
+        "Champ",
+        "Collector",
+        "Automaton",
+        "BronzeAutomaton",
+        "AwakenedOne",
+        "TimeEater",
+        "DonuAndDeca",
+        "Donu",
+        "Deca",
+        "CorruptHeart",
+    }
+
+
+def _monster_inventory() -> dict[str, type[Any]]:
+    inventory: dict[str, type[Any]] = {}
+    rng = MutableRNG.from_seed(1, rng_type="monsterHpRng")
+    for registry_id, monster_cls in sorted(_monster_factory_registry().items()):
+        if registry_id == "genericmonsterproxy":
+            continue
+        try:
+            monster = monster_cls.create(rng, 0)
+            monster_id = str(getattr(monster, "id", "") or "")
+        except Exception:
+            monster_id = ""
+        if not monster_id:
+            monster_id = _humanize_identifier(registry_id).replace(" ", "")
+        inventory[monster_id] = monster_cls
+    return inventory
+
+
+def _resolve_java_card_class_name(card_id: str) -> str:
+    if card_id in MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID:
+        return MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID[card_id]
+    return card_id
+
+
+def _java_card_file(repo_root: Path, card_id: str) -> Path | None:
+    java_name = _resolve_java_card_class_name(card_id)
+    for relative_dir in (
+        "decompiled_src/com/megacrit/cardcrawl/cards/red",
+        "decompiled_src/com/megacrit/cardcrawl/cards/green",
+        "decompiled_src/com/megacrit/cardcrawl/cards/blue",
+        "decompiled_src/com/megacrit/cardcrawl/cards/purple",
+        "decompiled_src/com/megacrit/cardcrawl/cards/colorless",
+        "decompiled_src/com/megacrit/cardcrawl/cards/curses",
+        "decompiled_src/com/megacrit/cardcrawl/cards/status",
+        "decompiled_src/com/megacrit/cardcrawl/cards/tempCards",
+    ):
+        candidate = repo_root / relative_dir / f"{java_name}.java"
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _decompiled_card_runtime_inventory(repo_root: Path) -> set[str]:
+    inverse_manual = {value: key for key, value in MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID.items()}
+    inventory: set[str] = set()
+    for relative_dir in (
+        "decompiled_src/com/megacrit/cardcrawl/cards/red",
+        "decompiled_src/com/megacrit/cardcrawl/cards/green",
+        "decompiled_src/com/megacrit/cardcrawl/cards/blue",
+        "decompiled_src/com/megacrit/cardcrawl/cards/purple",
+        "decompiled_src/com/megacrit/cardcrawl/cards/colorless",
+        "decompiled_src/com/megacrit/cardcrawl/cards/curses",
+        "decompiled_src/com/megacrit/cardcrawl/cards/status",
+        "decompiled_src/com/megacrit/cardcrawl/cards/tempCards",
+    ):
+        folder = repo_root / relative_dir
+        if not folder.exists():
+            continue
+        for java_file in folder.glob("*.java"):
+            class_name = java_file.stem
+            runtime_id = inverse_manual.get(class_name) or CARD_ID_ALIASES.get(class_name) or class_name
+            inventory.add(str(runtime_id))
+    return inventory
+
+
+def _extract_super_call_args(text: str) -> list[str]:
+    marker = "super("
+    start = text.find(marker)
+    if start < 0:
+        return []
+    idx = start + len(marker)
+    depth = 1
+    current: list[str] = []
+    args: list[str] = []
+    string_delim: str | None = None
+
+    while idx < len(text):
+        ch = text[idx]
+        if string_delim is not None:
+            current.append(ch)
+            if ch == string_delim and text[idx - 1] != "\\":
+                string_delim = None
+            idx += 1
+            continue
+        if ch in {'"', "'"}:
+            string_delim = ch
+            current.append(ch)
+            idx += 1
+            continue
+        if ch == "(":
+            depth += 1
+            current.append(ch)
+            idx += 1
+            continue
+        if ch == ")":
+            depth -= 1
+            if depth == 0:
+                args.append("".join(current).strip())
+                break
+            current.append(ch)
+            idx += 1
+            continue
+        if ch == "," and depth == 1:
+            args.append("".join(current).strip())
+            current = []
+            idx += 1
+            continue
+        current.append(ch)
+        idx += 1
+    return [arg for arg in args if arg]
+
+
+def _extract_java_card_super_fields(text: str) -> dict[str, Any]:
+    args = _extract_super_call_args(text)
+    if len(args) < 9:
+        return {}
+    cost_match = re.search(r"-?\d+", args[3])
+    type_match = re.search(r"CardType\.(\w+)", args[5])
+    rarity_match = re.search(r"CardRarity\.(\w+)", args[7])
+    target_match = re.search(r"CardTarget\.(\w+)", args[8] if len(args) > 8 else "")
+    if cost_match is None or type_match is None or rarity_match is None or target_match is None:
+        return {}
+    target = target_match.group(1)
+    return {
+        "cost": int(cost_match.group(0)),
+        "type": type_match.group(1),
+        "rarity": rarity_match.group(1),
+        "target": target,
+        "target_required": target in {"ENEMY", "SELF_AND_ENEMY"},
+    }
+
+
+def _first_int(pattern: str, text: str) -> int | None:
+    match = re.search(pattern, text)
+    return int(match.group(1)) if match else None
+
+
+_JAVA_CARD_FACT_OVERRIDES: dict[str, dict[str, Any]] = {
+    "Adrenaline": {"magic_number": 1},
+    "AfterImage": {"magic_number": 1, "innate": False},
+    "Backflip": {"magic_number": 2},
+    "Eviscerate": {"magic_number": 3},
+    "GeneticAlgorithm": {"block": 1},
+    "Outmaneuver": {"magic_number": 2},
+    "Predator": {"magic_number": 2},
+    "RitualDagger": {"damage": 15},
+    "Shiv": {"damage": 4},
+    "Terror": {"magic_number": 99},
+    "ToolsOfTheTrade": {"magic_number": 1},
+}
+
+
+def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
+    java_file = _java_card_file(repo_root, card_id)
+    if java_file is None:
+        return {"source_kind": "decompiled_java_card", "missing": True}
+    text = java_file.read_text(encoding="utf-8", errors="ignore")
+    super_fields = _extract_java_card_super_fields(text)
+    path_text = str(java_file).replace("\\", "/")
+    normalized_rarity = super_fields.get("rarity")
+    if "/cards/curses/" in path_text:
+        normalized_rarity = "CURSE"
+    elif "/cards/status/" in path_text:
+        normalized_rarity = "SPECIAL"
+    facts = {
+        "source_kind": "decompiled_java_card",
+        "java_class": java_file.stem,
+        "java_path": str(java_file),
+        **super_fields,
+        "rarity": normalized_rarity,
+        "damage": _first_int(r"baseDamage\s*=\s*(\d+)", text) or 0,
+        "block": _first_int(r"baseBlock\s*=\s*(\d+)", text) or 0,
+        "magic_number": _first_int(r"baseMagicNumber\s*=\s*(\d+)", text)
+        or _first_int(r"magicNumber\s*=\s*this\.baseMagicNumber\s*=\s*(\d+)", text)
+        or 0,
+        "exhaust": "this.exhaust = true;" in text,
+        "ethereal": "this.isEthereal = true;" in text,
+        "retain": "this.selfRetain = true;" in text or "this.retain = true;" in text,
+        "innate": "this.isInnate = true;" in text,
+    }
+    facts.update(_JAVA_CARD_FACT_OVERRIDES.get(card_id, {}))
+    return facts
+
+
+def build_card_runtime_facts(card_id: str) -> dict[str, Any]:
+    card = CardInstance(card_id)
+    return {
+        "source_kind": "runtime_card_def",
+        "cost": int(card.cost),
+        "type": card.card_type.value,
+        "rarity": card.rarity.value,
+        "target_required": card_requires_target(card_id),
+        "damage": max(0, int(card.base_damage)),
+        "block": max(0, int(card.base_block)),
+        "magic_number": max(0, int(card.base_magic_number)),
+        "exhaust": bool(card.exhaust),
+        "ethereal": bool(card.is_ethereal),
+        "retain": bool(card.retain or card.self_retain),
+        "innate": bool(card.is_innate),
+    }
+
+
+def build_relic_source_facts(relic_def: RelicDef) -> dict[str, Any]:
+    return {
+        "source_kind": "python_content_source",
+        "tier": relic_def.tier.value if hasattr(relic_def.tier, "value") else str(relic_def.tier),
+        "display_name": relic_def.name or relic_def.id,
+        "display_name_en": getattr(relic_def, "name_en", "") or _humanize_identifier(relic_def.id),
+        "price": relic_def.get_price(),
+        "character_class": relic_def.character_class,
+        "effect_signatures": build_relic_effect_signatures(relic_def),
+        "effects": [
+            {
+                "type": effect.effect_type.value,
+                "value": int(effect.value),
+                "target": str(effect.target),
+                "extra_type": str(effect.extra.get("type", "")),
+            }
+            for effect in relic_def.effects
+        ],
+    }
+
+
+def build_potion_source_facts(potion_id: str) -> dict[str, Any]:
+    potion_data = POTION_DEFINITIONS[potion_id]
+    potion = potion_data.create_potion()
+    return {
+        "source_kind": "python_content_source",
+        "display_name": getattr(potion_data, "NAME", potion.name),
+        "rarity": getattr(getattr(potion_data, "RARITY", None), "name", ""),
+        "character_class": getattr(getattr(potion_data, "CHAR_CLASS", None), "name", ""),
+        "potency": int(getattr(potion, "potency", 0) or 0),
+        "sacred_bark_potency": getattr(potion, "sacred_bark_potency", None),
+        "is_thrown": bool(getattr(potion, "is_Thrown", False)),
+        "effect_signatures": build_potion_effect_signatures(potion_id),
+    }
+
+
+def build_power_source_facts(power_id: str, power_cls: type[Any]) -> dict[str, Any]:
+    instance = power_cls()
+    return {
+        "source_kind": "python_combat_source",
+        "display_name": str(getattr(instance, "name", power_id)),
+        "power_type": str(getattr(getattr(instance, "power_type", None), "name", "")),
+        "turn_based": bool(getattr(instance, "is_turn_based", False)),
+        "can_go_negative": bool(getattr(instance, "can_go_negative", False)),
+        "callback_signatures": build_power_callback_signatures(power_cls),
+    }
+
+
+def build_monster_source_facts(monster_id: str, monster_cls: type[Any]) -> dict[str, Any]:
+    rng = MutableRNG.from_seed(1, rng_type="monsterHpRng")
+    monster = monster_cls.create(rng, 0)
+    source_file = inspect.getsourcefile(monster_cls)
+    sample_intents: list[str] = []
+    if source_file:
+        source_text = Path(source_file).read_text(encoding="utf-8", errors="ignore")
+        sample_intents = sorted(set(re.findall(r"MonsterIntent\.([A-Z_]+)", source_text)))
+    return {
+        "source_kind": "python_monster_source",
+        "display_name": str(getattr(monster, "name", monster_id)),
+        "act": _monster_act(monster_id),
+        "elite": _monster_is_elite(monster_id),
+        "boss": _monster_is_boss(monster_id),
+        "sample_intents": sample_intents,
+        "state_signatures": build_monster_state_signatures(monster_id, monster_cls),
+        "source_path": source_file,
+    }
+
+
+def _event_choice_gating(choice: EventChoice) -> list[str]:
+    gates: list[str] = []
+    if choice.requires_card_removal:
+        gates.append("requires_card_removal")
+    if choice.requires_card_transform:
+        gates.append("requires_card_transform")
+    if choice.requires_card_upgrade:
+        gates.append("requires_card_upgrade")
+    if choice.requires_attack_card:
+        gates.append("requires_attack_card")
+    if choice.requires_upgrade_any:
+        gates.append("requires_upgrade_any")
+    if choice.cost:
+        gates.append("cost")
+    if choice.trigger_combat:
+        gates.append("trigger_combat")
+    if choice.search_level:
+        gates.append("search")
+    return gates
+
+
+def _event_choice_effect_kinds(choice: EventChoice) -> list[str]:
+    kinds: list[str] = [effect.effect_type.value for effect in choice.effects]
+    if choice.trigger_combat:
+        kinds.append("trigger_combat")
+    if choice.search_level:
+        kinds.append("search")
+    if choice.trade_faces:
+        kinds.append("trade_faces")
+    return sorted(set(kinds))
+
+
+def build_event_source_facts(event: Event) -> dict[str, Any]:
+    return {
+        "source_kind": "python_run_source",
+        "act": int(event.act),
+        "choice_count": len(event.choices),
+        "choice_effect_signatures": build_event_choice_effect_signatures(event),
+        "choices": [
+            {
+                "index": idx,
+                "gating": _event_choice_gating(choice),
+                "effect_kinds": _event_choice_effect_kinds(choice),
+            }
+            for idx, choice in enumerate(event.choices)
+        ],
+    }
+
+
+def build_room_type_source_facts(room_type: RoomType) -> dict[str, Any]:
+    return {
+        "source_kind": "python_run_source",
+        "enum_name": room_type.name,
+        "symbol": room_type.value,
+    }
+
+
+def build_ui_term_source_facts(command: str) -> dict[str, Any]:
+    return {
+        "source_kind": "terminal_command_surface",
+        "contexts": list(CLI_UI_TERMS.get(command, {}).get("contexts", [])),
+    }
+
+
+def _card_page_candidates(card_id: str) -> list[str]:
+    java_name = _resolve_java_card_class_name(card_id)
+    return _unique_nonempty([_humanize_identifier(java_name), _humanize_identifier(card_id)])
+
+
+def _generic_en_page_candidates(entity_type: str, entity_id: str, runtime_name_en: str) -> list[str]:
+    if entity_type == "card":
+        return _card_page_candidates(entity_id)
+    return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
+
+
+def _generic_cn_page_candidates(runtime_name_cn: str, runtime_name_en: str) -> list[str]:
+    candidates = []
+    if _looks_cataloged_cn(runtime_name_cn):
+        candidates.append(runtime_name_cn)
+    if _contains_cjk(runtime_name_en):
+        candidates.append(runtime_name_en)
+    return _unique_nonempty(candidates)
+
+
+def _fetch_entity_wiki_pages(
+    scraper: BilingualWikiScraper,
+    *,
+    entity_type: str,
+    entity_id: str,
+    runtime_name_en: str,
+    runtime_name_cn: str,
+    enable_network: bool,
+) -> tuple[WikiPageSnapshot, WikiPageSnapshot]:
+    if not enable_network or entity_type in {"room_type", "ui_term"}:
+        return WikiPageSnapshot(), WikiPageSnapshot()
+
+    en_candidates = _generic_en_page_candidates(entity_type, entity_id, runtime_name_en)
+    cn_candidates = _generic_cn_page_candidates(runtime_name_cn, runtime_name_en)
+
+    en_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(EN_SOURCE_ORDER, en_candidates))
+    cn_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(CN_SOURCE_ORDER, cn_candidates))
+    return en_page, cn_page
+
+
+def _first_nonempty(*values: Any) -> str | None:
+    for value in values:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return None
+
+
+def _event_runtime_description(event: Event) -> str:
+    snippets = []
+    for choice in event.choices[:3]:
+        text = str(choice.description_cn or choice.description or "").strip()
+        if text:
+            snippets.append(text)
+    return " | ".join(snippets)
+
+
+def _source_inventory_from_repo(repo_root: Path) -> dict[str, list[str]]:
+    return {
+        "card": sorted(_decompiled_card_runtime_inventory(repo_root)),
+        "relic": sorted(ALL_RELICS.keys()),
+        "potion": sorted(POTION_DEFINITIONS.keys()),
+        "power": sorted(power_id for power_id, _ in _power_class_inventory()),
+        "monster": sorted(_monster_inventory().keys()),
+        "event": sorted(_event_inventory().keys()),
+        "room_type": sorted(room_type.name for room_type in RoomType),
+        "ui_term": sorted(CLI_UI_TERMS.keys()),
+    }
+
+
+def build_cli_raw_snapshot(
+    repo_root: Path,
+    *,
+    enable_network: bool = False,
+    scraper: BilingualWikiScraper | None = None,
+) -> dict[str, Any]:
+    repo_root = Path(repo_root)
+    if enable_network and scraper is None:
+        scraper = BilingualWikiScraper(use_cache=True)
+
+    records: list[RawEntitySnapshot] = []
+
+    for card_id in sorted(ALL_CARD_DEFS):
+        runtime_name_cn, runtime_desc = get_card_info(card_id)
+        runtime_name_en = _humanize_identifier(_resolve_java_card_class_name(card_id))
+        runtime_facts = build_card_runtime_facts(card_id)
+        java_facts = build_card_java_facts(repo_root, card_id)
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="card",
+                entity_id=card_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="card",
+                entity_id=card_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=runtime_desc,
+                runtime_facts=runtime_facts,
+                java_facts=java_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for relic_id, relic_def in sorted(ALL_RELICS.items()):
+        source_facts = build_relic_source_facts(relic_def)
+        runtime_name_en = str(source_facts.get("display_name_en") or _humanize_identifier(relic_id))
+        runtime_name_cn = translate_relic(relic_id)
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="relic",
+                entity_id=relic_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="relic",
+                entity_id=relic_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=str(getattr(relic_def, "description", "") or ""),
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for potion_id in sorted(POTION_DEFINITIONS):
+        source_facts = build_potion_source_facts(potion_id)
+        potion_data = POTION_DEFINITIONS[potion_id]
+        runtime_name_en = _humanize_identifier(potion_id)
+        runtime_name_cn = translate_potion(potion_id)
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="potion",
+                entity_id=potion_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="potion",
+                entity_id=potion_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=str(getattr(potion_data, "DESCRIPTION", "") or ""),
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for power_id, power_cls in _power_class_inventory():
+        source_facts = build_power_source_facts(power_id, power_cls)
+        runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(power_id))
+        runtime_name_cn = translate_power(power_id)
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="power",
+                entity_id=power_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="power",
+                entity_id=power_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=get_power_str(power_id, 0),
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for monster_id, monster_cls in sorted(_monster_inventory().items()):
+        source_facts = build_monster_source_facts(monster_id, monster_cls)
+        runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(monster_id))
+        runtime_name_cn = translate_monster(monster_id)
+        runtime_desc = ", ".join(source_facts.get("sample_intents") or [])
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="monster",
+                entity_id=monster_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="monster",
+                entity_id=monster_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=runtime_desc,
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for event_id, event in sorted(_event_inventory().items()):
+        source_facts = build_event_source_facts(event)
+        runtime_name_en = str(getattr(event, "id", event_id))
+        runtime_name_cn = translate_event_name(event)
+        en_wiki, cn_wiki = (
+            _fetch_entity_wiki_pages(
+                scraper,
+                entity_type="event",
+                entity_id=event_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                enable_network=enable_network,
+            )
+            if scraper is not None
+            else (WikiPageSnapshot(), WikiPageSnapshot())
+        )
+        records.append(
+            RawEntitySnapshot(
+                entity_type="event",
+                entity_id=event_id,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=_event_runtime_description(event),
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+                en_wiki=en_wiki,
+                cn_wiki=cn_wiki,
+            )
+        )
+
+    for room_type in RoomType:
+        runtime_name_en = _humanize_identifier(room_type.name.title())
+        runtime_name_cn = translate_room_type(room_type)
+        source_facts = build_room_type_source_facts(room_type)
+        records.append(
+            RawEntitySnapshot(
+                entity_type="room_type",
+                entity_id=room_type.name,
+                runtime_name_en=runtime_name_en,
+                runtime_name_cn=runtime_name_cn,
+                runtime_desc_runtime=room_type.value,
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+            )
+        )
+
+    for command in sorted(CLI_UI_TERMS):
+        source_facts = build_ui_term_source_facts(command)
+        records.append(
+            RawEntitySnapshot(
+                entity_type="ui_term",
+                entity_id=command,
+                runtime_name_en=command,
+                runtime_name_cn=UI_TERM_CN_NAMES.get(command, command),
+                runtime_desc_runtime=", ".join(source_facts["contexts"]),
+                runtime_facts=source_facts,
+                java_facts=source_facts,
+            )
+        )
+
+    runtime_inventory: dict[str, list[str]] = {entity_type: [] for entity_type in ENTITY_TYPES}
+    for record in records:
+        runtime_inventory.setdefault(record.entity_type, []).append(record.entity_id)
+    runtime_inventory = {entity_type: sorted(set(values)) for entity_type, values in runtime_inventory.items() if values}
+
+    return {
+        "schema_version": SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": _utc_now(),
+        "repo_root": str(repo_root),
+        "network_enabled": bool(enable_network),
+        "source_priority": {
+            "mechanics_truth": "decompiled_src",
+            "english_reference": EN_SOURCE_ORDER,
+            "chinese_reference": CN_SOURCE_ORDER,
+        },
+        "catalog_overrides": _catalog_override_keys(),
+        "translation_policy": list(load_translation_policy_bundle().get("records") or []),
+        "runtime_inventory": runtime_inventory,
+        "source_inventory": _source_inventory_from_repo(repo_root),
+        "records": [record.to_dict() for record in records],
+    }
+
+
+def normalize_raw_snapshot(raw_snapshot: dict[str, Any]) -> dict[str, Any]:
+    records = _coerce_raw_records(raw_snapshot)
+    policy_entries = _policy_entries_from_snapshot(raw_snapshot)
+    normalized_records: list[NormalizedEntitySnapshot] = []
+
+    for record in records:
+        policy_entry = policy_entries.get((record.entity_type, record.entity_id))
+        policy = _policy_entry_to_dict(policy_entry)
+        en_page = _first_nonempty(record.en_wiki.resolved_title, record.en_wiki.requested_title)
+        cn_page = _first_nonempty(
+            record.cn_wiki.resolved_title,
+            record.cn_wiki.requested_title,
+            policy["huiji_page_or_title"],
+        )
+        en_name = _first_nonempty(record.en_wiki.payload.get("name"), record.en_wiki.payload.get("title"), en_page)
+        cn_name = _first_nonempty(
+            record.cn_wiki.payload.get("name"),
+            record.cn_wiki.payload.get("title"),
+            cn_page,
+            policy["huiji_page_or_title"],
+        )
+        en_match = _match_kind(record.entity_id, record.runtime_name_en, en_name, en_page)
+        cn_match = _match_kind(record.entity_id, record.runtime_name_cn or record.runtime_name_en, cn_name, cn_page)
+
+        audit_status = dict(record.audit_status)
+        audit_status.setdefault("en_wiki_match", en_match)
+        audit_status.setdefault("cn_wiki_match", cn_match)
+        audit_status.setdefault("translation_reference_source", policy["reference_source"])
+        audit_status.setdefault("translation_alignment_status", policy["alignment_status"])
+
+        normalized_records.append(
+            NormalizedEntitySnapshot(
+                entity_type=record.entity_type,
+                entity_id=record.entity_id,
+                runtime_name_en=record.runtime_name_en,
+                runtime_name_cn=record.runtime_name_cn,
+                runtime_desc_runtime=record.runtime_desc_runtime,
+                java_facts=record.java_facts,
+                en_wiki_page=en_page,
+                en_wiki_name=en_name,
+                en_wiki_summary=record.en_wiki.summary,
+                cn_wiki_page=cn_page,
+                cn_wiki_name=cn_name,
+                cn_wiki_summary=record.cn_wiki.summary,
+                audit_status=audit_status,
+                audit_notes=list(record.audit_notes),
+                runtime_facts=record.runtime_facts,
+                match_meta={
+                    "en_match": en_match,
+                    "cn_match": cn_match,
+                    "en_source": record.en_wiki.source,
+                    "cn_source": record.cn_wiki.source,
+                },
+                reference_source=policy["reference_source"],
+                alignment_status=policy["alignment_status"],
+                huiji_page_or_title=policy["huiji_page_or_title"],
+                approved_alias_note=policy["approved_alias_note"],
+            )
+        )
+
+    return {
+        "schema_version": SNAPSHOT_SCHEMA_VERSION,
+        "generated_at": raw_snapshot.get("generated_at"),
+        "normalized_at": _utc_now(),
+        "repo_root": raw_snapshot.get("repo_root"),
+        "network_enabled": bool(raw_snapshot.get("network_enabled")),
+        "source_priority": dict(raw_snapshot.get("source_priority") or {}),
+        "catalog_overrides": dict(raw_snapshot.get("catalog_overrides") or {}),
+        "translation_policy": list(raw_snapshot.get("translation_policy") or load_translation_policy_bundle().get("records") or []),
+        "runtime_inventory": dict(raw_snapshot.get("runtime_inventory") or {}),
+        "source_inventory": dict(raw_snapshot.get("source_inventory") or {}),
+        "record_count": len(normalized_records),
+        "records": [record.to_dict() for record in normalized_records],
+    }
+
+
+def _description_status(record: NormalizedEntitySnapshot) -> str:
+    description = str(record.runtime_desc_runtime or "").strip()
+    if not description:
+        return "missing_runtime_desc"
+    if _looks_mojibake(description):
+        return "mojibake_runtime_desc"
+    return "ok"
+
+
+def build_translation_audit(records: Any) -> dict[str, Any]:
+    normalized_records = _coerce_normalized_records(records)
+    findings: list[dict[str, Any]] = []
+    status_counts: Counter[str] = Counter()
+    description_counts: Counter[str] = Counter()
+
+    for record in normalized_records:
+        if _looks_mojibake(record.runtime_name_cn):
+            status = "mojibake_or_corrupt"
+            note = "runtime/CLI 中文名存在明显乱码或编码污染"
+        elif not _looks_cataloged_cn(record.runtime_name_cn):
+            status = "missing_cn"
+            note = "runtime/CLI 中文名缺失或未本地化"
+        elif record.cn_wiki_name or record.cn_wiki_page:
+            cn_match = str(record.match_meta.get("cn_match", "missing"))
+            if cn_match == "exact":
+                status = "exact_match"
+                note = "runtime/CLI 中文名与 Huiji 常用标题一致"
+            elif cn_match == "alias":
+                status = "accepted_alias"
+                note = "runtime/CLI 中文名与 Huiji 标题存在可接受别名差异"
+            else:
+                status = "likely_wrong_translation"
+                note = "runtime/CLI 中文名与 Huiji 标题冲突"
+        else:
+            status = "accepted_alias"
+            note = "缺少 Huiji 页面对照，保留 runtime/CLI 中文名"
+
+        desc_status = _description_status(record)
+        status_counts[status] += 1
+        description_counts[desc_status] += 1
+        findings.append(
+            {
+                "entity_type": record.entity_type,
+                "entity_id": record.entity_id,
+                "status": status,
+                "runtime_name_cn": record.runtime_name_cn,
+                "cn_wiki_name": record.cn_wiki_name,
+                "cn_wiki_page": record.cn_wiki_page,
+                "runtime_desc_runtime": record.runtime_desc_runtime,
+                "description_status": desc_status,
+                "note": note,
+            }
+        )
+
+    return {
+        "summary": {
+            "total": len(findings),
+            "by_status": dict(status_counts),
+            "description_status": dict(description_counts),
+        },
+        "findings": findings,
+    }
+
+
+def _runtime_name_issue(record: NormalizedEntitySnapshot) -> str:
+    runtime_name_cn = str(record.runtime_name_cn or "").strip()
+    if _looks_mojibake(runtime_name_cn):
+        return "mojibake_or_corrupt"
+    if not _looks_cataloged_cn(runtime_name_cn):
+        return "missing_cn"
+    return "ok"
+
+
+def _translation_status_note(status: str) -> str:
+    if status == "exact_match":
+        return "CLI 中文名与 Huiji 参考标题一致。"
+    if status == "approved_alias":
+        return "CLI 中文名使用了已在策略表中登记的批准别名。"
+    if status == "wiki_missing":
+        return "Huiji 缺少可用词条，当前名称只能依赖本地 catalog 或英文 fallback。"
+    if status == "needs_review":
+        return "CLI 中文名接近 Huiji 标题，但未在批准别名表中登记。"
+    if status == "likely_wrong_translation":
+        return "CLI 中文名与 Huiji 参考明显不一致，疑似误译。"
+    return ""
+
+
+def _resolve_translation_status(record: NormalizedEntitySnapshot) -> tuple[str, str]:
+    policy_status = str(record.alignment_status or "").strip()
+    if policy_status in ALIGNMENT_STATUSES:
+        return policy_status, _translation_status_note(policy_status)
+
+    has_huiji_reference = bool(
+        _first_nonempty(
+            record.huiji_page_or_title,
+            record.cn_wiki_page,
+            record.cn_wiki_name,
+        )
+    )
+    if not has_huiji_reference:
+        return "wiki_missing", _translation_status_note("wiki_missing")
+
+    cn_match = str(record.match_meta.get("cn_match", "missing") or "missing")
+    if cn_match == "exact":
+        return "exact_match", _translation_status_note("exact_match")
+    if cn_match == "alias":
+        return "needs_review", _translation_status_note("needs_review")
+    return "likely_wrong_translation", _translation_status_note("likely_wrong_translation")
+
+
+def build_translation_audit(records: Any) -> dict[str, Any]:
+    normalized_records = _coerce_normalized_records(records)
+    findings: list[dict[str, Any]] = []
+    status_counts: Counter[str] = Counter()
+    runtime_name_issue_counts: Counter[str] = Counter()
+    description_counts: Counter[str] = Counter()
+
+    for record in normalized_records:
+        status, note = _resolve_translation_status(record)
+        runtime_name_issue = _runtime_name_issue(record)
+        desc_status = _description_status(record)
+        status_counts[status] += 1
+        runtime_name_issue_counts[runtime_name_issue] += 1
+        description_counts[desc_status] += 1
+
+        reference_source = str(record.reference_source or "").strip()
+        huiji_page_or_title = _first_nonempty(record.huiji_page_or_title, record.cn_wiki_page, record.cn_wiki_name) or ""
+        if not reference_source and huiji_page_or_title:
+            reference_source = BilingualWikiScraper.SOURCE_CN_HUIJI
+
+        findings.append(
+            {
+                "entity_type": record.entity_type,
+                "entity_id": record.entity_id,
+                "status": status,
+                "alignment_status": status,
+                "runtime_name_cn": record.runtime_name_cn,
+                "cn_wiki_name": record.cn_wiki_name,
+                "cn_wiki_page": record.cn_wiki_page,
+                "runtime_desc_runtime": record.runtime_desc_runtime,
+                "runtime_name_issue": runtime_name_issue,
+                "description_status": desc_status,
+                "reference_source": reference_source,
+                "huiji_page_or_title": huiji_page_or_title,
+                "approved_alias_note": record.approved_alias_note,
+                "note": note,
+            }
+        )
+
+    return {
+        "summary": {
+            "total": len(findings),
+            "by_status": dict(status_counts),
+            "runtime_name_issue": dict(runtime_name_issue_counts),
+            "description_status": dict(description_counts),
+        },
+        "findings": findings,
+    }
+
+
+def _snapshot_inventory(snapshot: dict[str, Any] | None, key: str) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    if not snapshot:
+        return result
+    payload = snapshot.get(key) or {}
+    for entity_type, values in payload.items():
+        result[str(entity_type)] = {str(value) for value in values}
+    return result
+
+
+def _records_inventory(normalized_records: list[NormalizedEntitySnapshot]) -> dict[str, set[str]]:
+    inventory: dict[str, set[str]] = {}
+    for record in normalized_records:
+        inventory.setdefault(record.entity_type, set()).add(record.entity_id)
+    return inventory
+
+
+def _catalog_only_without_source_mapping(snapshot: dict[str, Any] | None = None, *, repo_root: Path | None = None) -> list[dict[str, Any]]:
+    source_inventory = _snapshot_inventory(snapshot, "source_inventory")
+    if not source_inventory:
+        source_inventory = {entity_type: set(values) for entity_type, values in _source_inventory_from_repo(repo_root or REPO_ROOT).items()}
+
+    catalog_overrides = dict(snapshot.get("catalog_overrides") or {}) if snapshot else {}
+    if not catalog_overrides:
+        catalog_overrides = _catalog_override_keys()
+
+    findings: list[dict[str, Any]] = []
+    for entity_type, override_keys in sorted(catalog_overrides.items()):
+        source_ids = source_inventory.get(entity_type, set())
+        for entity_id in sorted(str(item) for item in override_keys):
+            if entity_id not in source_ids:
+                findings.append(
+                    {
+                        "entity_type": entity_type,
+                        "entity_id": entity_id,
+                        "reason": "catalog_override_without_source_mapping",
+                    }
+                )
+    return findings
+
+
+def _compute_card_missing_in_runtime(
+    repo_root: Path,
+    *,
+    source_inventory: set[str] | None = None,
+    runtime_inventory: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    expected_cards = source_inventory or _decompiled_card_runtime_inventory(repo_root)
+    runtime_cards = runtime_inventory or set(ALL_CARD_DEFS.keys())
+    return [
+        {
+            "entity_type": "card",
+            "entity_id": card_id,
+            "reason": "decompiled_card_missing_in_runtime",
+        }
+        for card_id in sorted(expected_cards - runtime_cards)
+    ]
+
+
+def build_completeness_audit(records: Any, *, repo_root: Path | None = None) -> dict[str, Any]:
+    snapshot = records if isinstance(records, dict) and "records" in records else None
+    normalized_records = _coerce_normalized_records(records)
+    runtime_inventory = _snapshot_inventory(snapshot, "runtime_inventory") or _records_inventory(normalized_records)
+    source_inventory = _snapshot_inventory(snapshot, "source_inventory")
+    if not source_inventory:
+        source_inventory = {entity_type: set(values) for entity_type, values in _source_inventory_from_repo(repo_root or REPO_ROOT).items()}
+
+    missing_in_runtime: list[dict[str, Any]] = []
+    missing_in_runtime.extend(
+        _compute_card_missing_in_runtime(
+            repo_root or REPO_ROOT,
+            source_inventory=source_inventory.get("card"),
+            runtime_inventory=runtime_inventory.get("card"),
+        )
+    )
+
+    for entity_type, source_ids in sorted(source_inventory.items()):
+        if entity_type == "card":
+            continue
+        for entity_id in sorted(source_ids - runtime_inventory.get(entity_type, set())):
+            missing_in_runtime.append(
+                {
+                    "entity_type": entity_type,
+                    "entity_id": entity_id,
+                    "reason": "source_entity_missing_in_runtime_surface",
+                }
+            )
+
+    present_but_not_cataloged: list[dict[str, Any]] = []
+    for record in normalized_records:
+        if not _looks_cataloged_cn(record.runtime_name_cn):
+            present_but_not_cataloged.append(
+                {
+                    "entity_type": record.entity_type,
+                    "entity_id": record.entity_id,
+                    "runtime_name_cn": record.runtime_name_cn,
+                    "reason": "runtime_surface_missing_or_corrupt_cn_catalog",
+                }
+            )
+
+    catalog_only_without_source_mapping = _catalog_only_without_source_mapping(snapshot, repo_root=repo_root or REPO_ROOT)
+
+    return {
+        "summary": {
+            "missing_in_runtime": len(missing_in_runtime),
+            "present_but_not_cataloged": len(present_but_not_cataloged),
+            "catalog_only_without_source_mapping": len(catalog_only_without_source_mapping),
+        },
+        "missing_in_runtime": missing_in_runtime,
+        "present_but_not_cataloged": present_but_not_cataloged,
+        "catalog_only_without_source_mapping": catalog_only_without_source_mapping,
+    }
+
+
+def _flatten_event_effect_signatures(runtime_facts: dict[str, Any]) -> list[dict[str, Any]]:
+    signatures: list[dict[str, Any]] = []
+    for choice in runtime_facts.get("choices") or []:
+        signatures.append(
+            {
+                "index": int(choice.get("index", 0)),
+                "gating": sorted(str(item) for item in choice.get("gating") or []),
+                "effect_kinds": sorted(str(item) for item in choice.get("effect_kinds") or []),
+            }
+        )
+    signatures.sort(key=lambda item: item["index"])
+    return signatures
+
+
+def _normalize_mechanics_value(entity_type: str, field_name: str, value: Any) -> Any:
+    if field_name == "choices":
+        return _flatten_event_effect_signatures({"choices": value or []})
+    if field_name == "effects":
+        normalized = []
+        for effect in value or []:
+            normalized.append(
+                {
+                    "type": str(effect.get("type", "")),
+                    "value": int(effect.get("value", 0)),
+                    "target": str(effect.get("target", "")),
+                    "extra_type": str(effect.get("extra_type", "")),
+                }
+            )
+        normalized.sort(key=lambda item: (item["type"], item["value"], item["target"], item["extra_type"]))
+        return normalized
+    if isinstance(value, list):
+        return sorted(value)
+    return value
+
+
+def build_mechanics_audit(records: Any) -> dict[str, Any]:
+    raw_records = _coerce_raw_records(records)
+    runtime_source_mismatches: list[dict[str, Any]] = []
+    wiki_conflicts: list[dict[str, Any]] = []
+
+    for record in raw_records:
+        fields = MECHANICS_FIELDS_BY_ENTITY.get(record.entity_type, [])
+        en_wiki_facts = dict(record.en_wiki.payload.get("facts") or {})
+        cn_wiki_facts = dict(record.cn_wiki.payload.get("facts") or {})
+        for field_name in fields:
+            source_has_field = field_name in record.java_facts
+            runtime_has_field = field_name in record.runtime_facts
+            if source_has_field and runtime_has_field:
+                source_value = _normalize_mechanics_value(record.entity_type, field_name, record.java_facts.get(field_name))
+                runtime_value = _normalize_mechanics_value(record.entity_type, field_name, record.runtime_facts.get(field_name))
+                if source_value != runtime_value:
+                    runtime_source_mismatches.append(
+                        {
+                            "entity_type": record.entity_type,
+                            "entity_id": record.entity_id,
+                            "field": field_name,
+                            "source_value": source_value,
+                            "runtime_value": runtime_value,
+                        }
+                    )
+
+            if source_has_field and field_name in en_wiki_facts:
+                source_value = _normalize_mechanics_value(record.entity_type, field_name, record.java_facts.get(field_name))
+                en_wiki_value = _normalize_mechanics_value(record.entity_type, field_name, en_wiki_facts.get(field_name))
+                if source_value != en_wiki_value:
+                    wiki_conflicts.append(
+                        {
+                            "entity_type": record.entity_type,
+                            "entity_id": record.entity_id,
+                            "field": field_name,
+                            "wiki_source": "en_wiki",
+                            "source_value": source_value,
+                            "wiki_value": en_wiki_value,
+                        }
+                    )
+
+            if source_has_field and field_name in cn_wiki_facts:
+                source_value = _normalize_mechanics_value(record.entity_type, field_name, record.java_facts.get(field_name))
+                cn_wiki_value = _normalize_mechanics_value(record.entity_type, field_name, cn_wiki_facts.get(field_name))
+                if source_value != cn_wiki_value:
+                    wiki_conflicts.append(
+                        {
+                            "entity_type": record.entity_type,
+                            "entity_id": record.entity_id,
+                            "field": field_name,
+                            "wiki_source": "cn_wiki",
+                            "source_value": source_value,
+                            "wiki_value": cn_wiki_value,
+                        }
+                    )
+
+    return {
+        "summary": {
+            "runtime_source_mismatches": len(runtime_source_mismatches),
+            "wiki_conflicts": len(wiki_conflicts),
+        },
+        "runtime_source_mismatches": runtime_source_mismatches,
+        "wiki_conflicts": wiki_conflicts,
+    }
+
+
+def build_fix_queue(
+    records: Any,
+    translation_audit: dict[str, Any],
+    completeness_audit: dict[str, Any],
+    mechanics_audit: dict[str, Any],
+) -> dict[str, Any]:
+    normalized_records = _coerce_normalized_records(records)
+    record_map = {(record.entity_type, record.entity_id): record for record in normalized_records}
+    items: list[dict[str, Any]] = []
+    seen: set[tuple[Any, ...]] = set()
+
+    def add_item(priority: int, category: str, entity_type: str, entity_id: str, reason: str, note: str, **extra: Any) -> None:
+        key = (priority, category, entity_type, entity_id, reason)
+        if key in seen:
+            return
+        seen.add(key)
+        items.append(
+            {
+                "priority": priority,
+                "category": category,
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "reason": reason,
+                "note": note,
+                **extra,
+            }
+        )
+
+    for finding in translation_audit.get("findings", []):
+        status = finding.get("status")
+        entity_type = str(finding.get("entity_type"))
+        entity_id = str(finding.get("entity_id"))
+        record = record_map.get((entity_type, entity_id))
+        if status == "mojibake_or_corrupt":
+            add_item(1, "translation", entity_type, entity_id, status, "CLI 直接显示乱码或损坏中文名", runtime_name_cn=finding.get("runtime_name_cn"))
+        elif status == "likely_wrong_translation":
+            add_item(1, "translation", entity_type, entity_id, status, "CLI 中文名与 Huiji 常用名冲突", runtime_name_cn=finding.get("runtime_name_cn"), cn_wiki_name=finding.get("cn_wiki_name"))
+        elif status == "missing_cn":
+            add_item(3, "translation", entity_type, entity_id, status, "CLI 可见实体缺少可用中文名", runtime_name_en=record.runtime_name_en if record else None)
+        if finding.get("description_status") == "mojibake_runtime_desc":
+            add_item(1, "translation", entity_type, entity_id, "description_mojibake", "CLI 直接显示损坏的中文说明", runtime_desc_runtime=finding.get("runtime_desc_runtime"))
+
+    for finding in completeness_audit.get("missing_in_runtime", []):
+        add_item(
+            2,
+            "completeness",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            str(finding.get("reason")),
+            "源码存在但 runtime/CLI 面缺失",
+        )
+
+    for finding in completeness_audit.get("present_but_not_cataloged", []):
+        add_item(
+            3,
+            "completeness",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            str(finding.get("reason")),
+            "实体已可见但缺少稳定可用的中文 catalog 表面",
+            runtime_name_cn=finding.get("runtime_name_cn"),
+        )
+
+    for finding in mechanics_audit.get("runtime_source_mismatches", []):
+        field_name = str(finding.get("field"))
+        priority = 2 if field_name in {"target_required", "cost", "type", "rarity", "choices", "choice_count", "effects", "potency"} else 4
+        add_item(
+            priority,
+            "mechanics",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            f"runtime_source_mismatch:{field_name}",
+            "runtime 机制事实与源码抽取不一致",
+            field=field_name,
+            source_value=finding.get("source_value"),
+            runtime_value=finding.get("runtime_value"),
+        )
+
+    items.sort(key=lambda item: (item["priority"], item["category"], item["entity_type"], item["entity_id"], item["reason"]))
+    priority_counts = Counter(str(item["priority"]) for item in items)
+    return {
+        "summary": {
+            "total": len(items),
+            "by_priority": dict(priority_counts),
+        },
+        "items": items,
+    }
+
+
+def build_fix_queue(
+    records: Any,
+    translation_audit: dict[str, Any],
+    completeness_audit: dict[str, Any],
+    mechanics_audit: dict[str, Any],
+) -> dict[str, Any]:
+    normalized_records = _coerce_normalized_records(records)
+    record_map = {(record.entity_type, record.entity_id): record for record in normalized_records}
+    items: list[dict[str, Any]] = []
+    seen: set[tuple[Any, ...]] = set()
+
+    def add_item(priority: int, category: str, entity_type: str, entity_id: str, reason: str, note: str, **extra: Any) -> None:
+        key = (priority, category, entity_type, entity_id, reason)
+        if key in seen:
+            return
+        seen.add(key)
+        items.append(
+            {
+                "priority": priority,
+                "category": category,
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "reason": reason,
+                "note": note,
+                **extra,
+            }
+        )
+
+    for finding in translation_audit.get("findings", []):
+        status = str(finding.get("status"))
+        runtime_name_issue = str(finding.get("runtime_name_issue"))
+        entity_type = str(finding.get("entity_type"))
+        entity_id = str(finding.get("entity_id"))
+        record = record_map.get((entity_type, entity_id))
+
+        if runtime_name_issue == "mojibake_or_corrupt":
+            add_item(
+                1,
+                "translation",
+                entity_type,
+                entity_id,
+                "runtime_name_mojibake",
+                "CLI 直接显示乱码或损坏的中文名。",
+                runtime_name_cn=finding.get("runtime_name_cn"),
+                reference_source=finding.get("reference_source"),
+            )
+        elif runtime_name_issue == "missing_cn":
+            add_item(
+                3 if status == "wiki_missing" else 2,
+                "translation",
+                entity_type,
+                entity_id,
+                "runtime_name_missing_cn",
+                "CLI 可见实体缺少稳定可用的中文名。",
+                runtime_name_en=record.runtime_name_en if record else None,
+                reference_source=finding.get("reference_source"),
+            )
+
+        if status == "likely_wrong_translation":
+            add_item(
+                1,
+                "translation",
+                entity_type,
+                entity_id,
+                status,
+                "当前中文名与 Huiji 参考明显冲突，应优先校正。",
+                runtime_name_cn=finding.get("runtime_name_cn"),
+                cn_wiki_name=finding.get("cn_wiki_name"),
+                huiji_page_or_title=finding.get("huiji_page_or_title"),
+            )
+        elif status == "needs_review":
+            add_item(
+                2,
+                "translation",
+                entity_type,
+                entity_id,
+                status,
+                "当前中文名接近 Huiji，但未被策略表显式批准为别名。",
+                runtime_name_cn=finding.get("runtime_name_cn"),
+                cn_wiki_name=finding.get("cn_wiki_name"),
+                huiji_page_or_title=finding.get("huiji_page_or_title"),
+            )
+        elif status == "wiki_missing":
+            add_item(
+                3,
+                "translation",
+                entity_type,
+                entity_id,
+                status,
+                "Huiji 缺页，当前中文名只能依赖本地策略或英文 fallback。",
+                runtime_name_cn=finding.get("runtime_name_cn"),
+                reference_source=finding.get("reference_source"),
+            )
+
+        if finding.get("description_status") == "mojibake_runtime_desc":
+            add_item(
+                1,
+                "translation",
+                entity_type,
+                entity_id,
+                "description_mojibake",
+                "CLI 直接显示了损坏的中文说明。",
+                runtime_desc_runtime=finding.get("runtime_desc_runtime"),
+            )
+
+    for finding in completeness_audit.get("missing_in_runtime", []):
+        add_item(
+            2,
+            "completeness",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            str(finding.get("reason")),
+            "源码中存在该实体，但 runtime/CLI 表面尚未覆盖。",
+        )
+
+    for finding in completeness_audit.get("present_but_not_cataloged", []):
+        add_item(
+            3,
+            "completeness",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            str(finding.get("reason")),
+            "实体已可见，但缺少稳定可用的中文 catalog 覆盖。",
+            runtime_name_cn=finding.get("runtime_name_cn"),
+        )
+
+    for finding in mechanics_audit.get("runtime_source_mismatches", []):
+        field_name = str(finding.get("field"))
+        priority = 2 if field_name in {"target_required", "cost", "type", "rarity", "choices", "choice_count", "effects", "potency"} else 4
+        add_item(
+            priority,
+            "mechanics",
+            str(finding.get("entity_type")),
+            str(finding.get("entity_id")),
+            f"runtime_source_mismatch:{field_name}",
+            "runtime 结构化机制事实与源码抽取不一致。",
+            field=field_name,
+            source_value=finding.get("source_value"),
+            runtime_value=finding.get("runtime_value"),
+        )
+
+    items.sort(key=lambda item: (item["priority"], item["category"], item["entity_type"], item["entity_id"], item["reason"]))
+    priority_counts = Counter(str(item["priority"]) for item in items)
+    return {
+        "summary": {
+            "total": len(items),
+            "by_priority": dict(priority_counts),
+        },
+        "items": items,
+    }
+
+
+def load_raw_snapshot(path: str | Path) -> dict[str, Any]:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def save_json(path: str | Path, payload: Any) -> None:
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def run_audit_from_raw_snapshot(raw_snapshot: dict[str, Any], *, repo_root: Path | None = None) -> dict[str, Any]:
+    normalized_snapshot = normalize_raw_snapshot(raw_snapshot)
+    translation_audit = build_translation_audit(normalized_snapshot)
+    completeness_audit = build_completeness_audit(raw_snapshot, repo_root=repo_root)
+    mechanics_audit = build_mechanics_audit(raw_snapshot)
+    fix_queue = build_fix_queue(normalized_snapshot, translation_audit, completeness_audit, mechanics_audit)
+    return {
+        "normalized_snapshot": normalized_snapshot,
+        "translation_audit": translation_audit,
+        "completeness_audit": completeness_audit,
+        "mechanics_audit": mechanics_audit,
+        "fix_queue": fix_queue,
+    }
+
+
+def write_audit_outputs(output_dir: str | Path, raw_snapshot: dict[str, Any], audit_bundle: dict[str, Any]) -> dict[str, str]:
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    targets = {
+        RAW_SNAPSHOT_FILENAME: raw_snapshot,
+        NORMALIZED_SNAPSHOT_FILENAME: audit_bundle["normalized_snapshot"],
+        TRANSLATION_AUDIT_FILENAME: audit_bundle["translation_audit"],
+        COMPLETENESS_AUDIT_FILENAME: audit_bundle["completeness_audit"],
+        MECHANICS_AUDIT_FILENAME: audit_bundle["mechanics_audit"],
+        FIX_QUEUE_FILENAME: audit_bundle["fix_queue"],
+    }
+    written: dict[str, str] = {}
+    for filename, payload in targets.items():
+        path = output_path / filename
+        save_json(path, payload)
+        written[filename] = str(path)
+    return written
+
+
+def _default_output_dir(repo_root: Path) -> Path:
+    return repo_root / "wiki_audit_output"
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Offline wiki/source audit pipeline for CLI-visible STS entities.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    refresh_parser = subparsers.add_parser("refresh", help="Refresh a checked-in raw snapshot by hitting configured wiki sources.")
+    refresh_parser.add_argument("--repo-root", default=str(REPO_ROOT))
+    refresh_parser.add_argument("--output-dir", default=None)
+    refresh_parser.add_argument("--offline", action="store_true", help="Build a raw snapshot without network fetches.")
+
+    audit_parser = subparsers.add_parser("audit", help="Generate normalized snapshot and audit reports from an existing raw snapshot.")
+    audit_parser.add_argument("--repo-root", default=str(REPO_ROOT))
+    audit_parser.add_argument("--raw-snapshot", required=True)
+    audit_parser.add_argument("--output-dir", default=None)
+
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    repo_root = Path(args.repo_root).resolve()
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else _default_output_dir(repo_root)
+
+    if args.command == "refresh":
+        raw_snapshot = build_cli_raw_snapshot(repo_root, enable_network=not args.offline)
+    elif args.command == "audit":
+        raw_snapshot = load_raw_snapshot(args.raw_snapshot)
+    else:
+        raise ValueError(f"unsupported command: {args.command}")
+
+    audit_bundle = run_audit_from_raw_snapshot(raw_snapshot, repo_root=repo_root)
+    written = write_audit_outputs(output_dir, raw_snapshot, audit_bundle)
+    print(
+        json.dumps(
+            {
+                "output_dir": str(output_dir),
+                "files": written,
+                "translation_findings": audit_bundle["translation_audit"]["summary"],
+                "completeness_findings": audit_bundle["completeness_audit"]["summary"],
+                "mechanics_findings": audit_bundle["mechanics_audit"]["summary"],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,6606 @@
+{
+  "generated_at": "2026-03-23T21:17:20.830516",
+  "stats": {
+    "total": 179,
+    "enriched_name_en": 172,
+    "enriched_flavor": 43,
+    "enriched_rarity": 37,
+    "enriched_wiki_url": 178,
+    "enriched_related_links": 117
+  },
+  "relics": {
+    "Akabeko": {
+      "id": "Akabeko",
+      "name_cn": "赤牛",
+      "name_en": "Akabeko",
+      "description": "Your first attack each combat deals 8 *Vigor|additional damage*.",
+      "flavor": "Muuu~",
+      "rarity": "Relics#Common Relics",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Akabeko",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%B5%A4%E7%89%9B",
+      "related_links": [
+        {
+          "page": "Relics#Common Relics",
+          "display": "Common"
+        },
+        {
+          "page": "Relics#Common Relics",
+          "display": "common relic"
+        },
+        {
+          "page": "Louses",
+          "display": "Louses"
+        },
+        {
+          "page": "Nemesis",
+          "display": "Nemesis"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Vigor",
+          "display": "additional damage"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Vulnerable",
+          "display": "Vulnerable"
+        },
+        {
+          "type": "keyword",
+          "page": "Wrath",
+          "display": "Wrath"
+        },
+        {
+          "type": "keyword",
+          "page": "Divinity",
+          "display": "Divinity"
+        },
+        {
+          "type": "keyword",
+          "page": "Stance",
+          "display": "Stances"
+        },
+        {
+          "type": "keyword",
+          "page": "Stance",
+          "display": "Stances"
+        },
+        {
+          "type": "keyword",
+          "page": "Innate",
+          "display": "Innate"
+        },
+        {
+          "type": "keyword",
+          "page": "Innate",
+          "display": "Innate"
+        },
+        {
+          "type": "keyword",
+          "page": "Intangible",
+          "display": "Intangible"
+        },
+        {
+          "type": "keyword",
+          "page": "Weak",
+          "display": "Weakened"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Marbles",
+          "display": "Bag of Marbles"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Marbles",
+          "display": "Bag of Marbles"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Preparation",
+          "display": "Bag of Preparation"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Serpent",
+          "display": "Ring of the Serpent"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Flame",
+          "display": "Bottled Flame"
+        },
+        {
+          "type": "relic",
+          "page": "Gambling Chip",
+          "display": "Gambling Chip"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Tornado",
+          "display": "Bottled Tornado"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Lightning",
+          "display": "Bottled Lightning"
+        },
+        {
+          "type": "card",
+          "page": "Pummel",
+          "display": "Pummel"
+        },
+        {
+          "type": "card",
+          "page": "Ragnarok",
+          "display": "Ragnarok"
+        },
+        {
+          "type": "card",
+          "page": "Riddle with Holes",
+          "display": "Riddle with Holes"
+        },
+        {
+          "type": "card",
+          "page": "Wreath of Flame",
+          "display": "Wreath of Flame"
+        },
+        {
+          "type": "card",
+          "page": "Dramatic Entrance",
+          "display": "Dramatic Entrance"
+        },
+        {
+          "type": "card",
+          "page": "Reaper",
+          "display": "Reaper"
+        },
+        {
+          "type": "card",
+          "page": "Reaper",
+          "display": "Reaper"
+        },
+        {
+          "type": "card",
+          "page": "Flash of Steel",
+          "display": "Flash of Steel"
+        },
+        {
+          "type": "card",
+          "page": "Riddle with Holes",
+          "display": "Riddle with Holes"
+        },
+        {
+          "type": "potion",
+          "page": "Gambler's Brew",
+          "display": "Gambler's Brew"
+        },
+        {
+          "page": "愤怒（姿态）",
+          "display": "愤怒"
+        },
+        {
+          "page": "神格",
+          "display": "神格"
+        },
+        {
+          "page": "虱虫",
+          "display": "虱虫"
+        },
+        {
+          "page": "蜷身",
+          "display": "蜷身"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装火焰",
+          "display": "瓶装火焰"
+        },
+        {
+          "type": "relic",
+          "page": "弹珠袋",
+          "display": "弹珠袋"
+        },
+        {
+          "type": "relic",
+          "page": "蛇之戒指",
+          "display": "蛇之戒指"
+        },
+        {
+          "type": "relic",
+          "page": "准备背包",
+          "display": "准备背包"
+        },
+        {
+          "type": "card",
+          "page": "连续拳",
+          "display": "连续拳"
+        },
+        {
+          "type": "card",
+          "page": "死亡收割",
+          "display": "死亡收割"
+        }
+      ]
+    },
+    "Anchor": {
+      "id": "Anchor",
+      "name_cn": "铁锚",
+      "name_en": "Anchor",
+      "description": "Start each combat with 10 *Block*.",
+      "flavor": "Holding this miniature trinket, you feel heavier and more stable.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Anchor",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%94%9A",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Power",
+          "display": "Power cards"
+        },
+        {
+          "page": "Power",
+          "display": "Power"
+        },
+        {
+          "page": "Taskmaster",
+          "display": "Taskmaster"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "type": "keyword",
+          "page": "Innate",
+          "display": "Innate"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Retain",
+          "display": "Retained"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Preparation",
+          "display": "Bag of Preparation"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Flame",
+          "display": "Bottled Flame"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Tornado",
+          "display": "Bottled Tornado"
+        },
+        {
+          "type": "relic",
+          "page": "Calipers",
+          "display": "Calipers"
+        },
+        {
+          "type": "relic",
+          "page": "Runic Pyramid",
+          "display": "Runic Pyramid"
+        },
+        {
+          "type": "relic",
+          "page": "Bottled Lightning",
+          "display": "Bottled Lightning"
+        },
+        {
+          "type": "relic",
+          "page": "Orichalcum",
+          "display": "Orichalcum"
+        },
+        {
+          "type": "card",
+          "page": "Body Slam",
+          "display": "Body Slam"
+        },
+        {
+          "type": "card",
+          "page": "Barricade",
+          "display": "Barricade"
+        },
+        {
+          "type": "card",
+          "page": "Blur",
+          "display": "Blur"
+        },
+        {
+          "type": "card",
+          "page": "Well-Laid Plans",
+          "display": "Well-Laid Plans"
+        },
+        {
+          "type": "card",
+          "page": "Equilibrium",
+          "display": "Equilibrium"
+        },
+        {
+          "type": "card",
+          "page": "Boot Sequence",
+          "display": "Boot Sequence"
+        },
+        {
+          "type": "relic",
+          "page": "锚",
+          "display": "锚"
+        },
+        {
+          "type": "relic",
+          "page": "船夹板",
+          "display": "船夹板"
+        },
+        {
+          "type": "relic",
+          "page": "舵盘",
+          "display": "舵盘"
+        }
+      ]
+    },
+    "AncientTeaSet": {
+      "id": "AncientTeaSet",
+      "name_cn": "古茶具",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8F%A4%E8%8C%B6%E5%85%B7%E5%A5%97%E8%A3%85",
+      "related_links": [
+        {
+          "page": "休息处",
+          "display": "休息处"
+        },
+        {
+          "page": "能量",
+          "display": "能量"
+        },
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        },
+        {
+          "page": "每周更新52:发售日确认+价格提升",
+          "display": "每周更新52:发售日确认+价格提升"
+        },
+        {
+          "page": "每周更新8:哦！闪亮！",
+          "display": "每周更新8:哦！闪亮！"
+        },
+        {
+          "page": "每周更新4:全速前进",
+          "display": "每周更新4:全速前进"
+        },
+        {
+          "page": "每周更新3:均衡 均衡 均衡",
+          "display": "每周更新3:均衡 均衡 均衡"
+        },
+        {
+          "type": "card",
+          "page": "战斗专注",
+          "display": "战斗专注"
+        },
+        {
+          "type": "card",
+          "page": "旋风斩",
+          "display": "旋风斩"
+        }
+      ]
+    },
+    "ArtOfWar": {
+      "id": "ArtOfWar",
+      "name_cn": "孙子兵法",
+      "name_en": "Art of War",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%AD%99%E5%AD%90%E5%85%B5%E6%B3%95",
+      "related_links": [
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "故障机器人",
+          "display": "故障机器人"
+        },
+        {
+          "page": "铁甲战士",
+          "display": "铁甲战士"
+        },
+        {
+          "page": "每周更新3:均衡 均衡 均衡",
+          "display": "每周更新3:均衡 均衡 均衡"
+        },
+        {
+          "type": "relic",
+          "page": "怀表",
+          "display": "怀表"
+        },
+        {
+          "type": "card",
+          "page": "双发",
+          "display": "双发"
+        }
+      ]
+    },
+    "Astrolabe": {
+      "id": "Astrolabe",
+      "name_cn": "星盘",
+      "name_en": "Astrolabe",
+      "description": "Upon pickup, choose and Transform 3 cards, then Upgrade them.",
+      "flavor": "A tool to glean invaluable knowledge from the stars.",
+      "rarity": "Relics#Boss",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Astrolabe",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%98%9F%E7%9B%98",
+      "related_links": [
+        {
+          "page": "Transform",
+          "display": "Transform"
+        },
+        {
+          "page": "Upgrade",
+          "display": "Upgrade"
+        },
+        {
+          "page": "Relics#Boss",
+          "display": "Boss"
+        },
+        {
+          "page": "Transform",
+          "display": "Transform"
+        },
+        {
+          "page": "Upgrade",
+          "display": "Upgrade"
+        },
+        {
+          "page": "Boss Relic",
+          "display": "Boss Relic"
+        },
+        {
+          "page": "Curse",
+          "display": "Curses"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Boss Relic",
+          "display": "Category:Boss Relic"
+        },
+        {
+          "page": "存档与读档",
+          "display": "存档与读档"
+        },
+        {
+          "page": "存档与读档",
+          "display": "存档与读档"
+        },
+        {
+          "type": "relic",
+          "page": "空鸟笼",
+          "display": "空鸟笼"
+        }
+      ]
+    },
+    "BagOfMarbles": {
+      "id": "BagOfMarbles",
+      "name_cn": "弹珠袋",
+      "name_en": "Bag of Marbles",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%B9%E7%8F%A0%E8%A2%8B",
+      "related_links": [
+        {
+          "page": "易伤",
+          "display": "易伤"
+        },
+        {
+          "page": "人工制品",
+          "display": "人工制品"
+        },
+        {
+          "page": "人工制品",
+          "display": "人工制品"
+        },
+        {
+          "page": "易伤",
+          "display": "易伤"
+        },
+        {
+          "page": "虚弱",
+          "display": "虚弱"
+        },
+        {
+          "page": "中毒",
+          "display": "中毒"
+        },
+        {
+          "type": "relic",
+          "page": "冠军腰带",
+          "display": "冠军腰带"
+        },
+        {
+          "type": "relic",
+          "page": "锚",
+          "display": "锚"
+        },
+        {
+          "type": "relic",
+          "page": "灯笼",
+          "display": "灯笼"
+        },
+        {
+          "type": "relic",
+          "page": "古茶具套装",
+          "display": "古茶具套装"
+        },
+        {
+          "type": "relic",
+          "page": "弹珠袋",
+          "display": "弹珠袋"
+        },
+        {
+          "type": "relic",
+          "page": "红面具",
+          "display": "红面具"
+        },
+        {
+          "type": "relic",
+          "page": "扭曲漏斗",
+          "display": "扭曲漏斗"
+        }
+      ]
+    },
+    "BagOfPreparation": {
+      "id": "BagOfPreparation",
+      "name_cn": "准备背包",
+      "name_en": "Bag of Preparation",
+      "description": "该遗物允许玩家在首回合额外抽两张牌。\n尽管它仅仅是个普通遗物，但效果仍然非常强大。其提供的额外抽牌可以与众多遗物和卡牌起到不错甚至强大的协同作用，并且额外的抽牌可以为玩家提供更多的选择与更强的应对能力。\n但是，若玩家抽到了许多关键牌却无法将它们全部打出，则此遗物反而起到副作用。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%87%86%E5%A4%87%E8%83%8C%E5%8C%85",
+      "related_links": [
+        {
+          "page": "遗物",
+          "display": "遗物"
+        },
+        {
+          "page": "卡牌",
+          "display": "卡牌"
+        },
+        {
+          "page": "更新补丁V1.1:发牌员",
+          "display": "更新补丁V1.1:发牌员"
+        },
+        {
+          "page": "混乱",
+          "display": "混乱"
+        },
+        {
+          "page": "每周更新51:递归",
+          "display": "每周更新51:递归"
+        },
+        {
+          "type": "relic",
+          "page": "斗篷扣",
+          "display": "斗篷扣"
+        },
+        {
+          "type": "relic",
+          "page": "赌博筹码",
+          "display": "赌博筹码"
+        },
+        {
+          "type": "relic",
+          "page": "忍术卷轴",
+          "display": "忍术卷轴"
+        },
+        {
+          "type": "relic",
+          "page": "圣水",
+          "display": "圣水"
+        },
+        {
+          "type": "card",
+          "page": "精神护盾",
+          "display": "精神护盾"
+        },
+        {
+          "type": "card",
+          "page": "早有准备",
+          "display": "早有准备"
+        }
+      ]
+    },
+    "BirdFacedUrn": {
+      "id": "BirdFacedUrn",
+      "name_cn": "鸟面瓮",
+      "name_en": "Bird-Faced Urn",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%B8%9F%E9%9D%A2%E7%93%AE",
+      "related_links": [
+        {
+          "page": "邪教徒",
+          "display": "邪教徒"
+        },
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        }
+      ]
+    },
+    "BlackBlood": {
+      "id": "BlackBlood",
+      "name_cn": "黑暗之血",
+      "name_en": "Black Blood",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%BB%91%E6%9A%97%E4%B9%8B%E8%A1%80",
+      "related_links": []
+    },
+    "BlackStar": {
+      "id": "BlackStar",
+      "name_cn": "黑星",
+      "name_en": "Black Star",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%BB%91%E6%98%9F",
+      "related_links": [
+        {
+          "page": "遗物序列",
+          "display": "遗物序列"
+        },
+        {
+          "page": "精英",
+          "display": "精英"
+        },
+        {
+          "type": "relic",
+          "page": "白兽雕像",
+          "display": "白兽雕像"
+        }
+      ]
+    },
+    "BloodVial": {
+      "id": "BloodVial",
+      "name_cn": "小血瓶",
+      "name_en": "Blood Vial",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B0%8F%E8%A1%80%E7%93%B6",
+      "related_links": [
+        {
+          "page": "吸血鬼（？）",
+          "display": "吸血鬼（？）"
+        },
+        {
+          "page": "吸血鬼（？）",
+          "display": "吸血鬼（？）"
+        },
+        {
+          "page": "每周更新54:循环",
+          "display": "每周更新54:循环"
+        },
+        {
+          "type": "relic",
+          "page": "燃烧之血",
+          "display": "燃烧之血"
+        },
+        {
+          "type": "relic",
+          "page": "黑暗之血",
+          "display": "黑暗之血"
+        },
+        {
+          "type": "card",
+          "page": "噬咬",
+          "display": "噬咬"
+        },
+        {
+          "type": "card",
+          "page": "噬咬",
+          "display": "噬咬"
+        }
+      ]
+    },
+    "BloodyIdol": {
+      "id": "BloodyIdol",
+      "name_cn": "鲜血神像",
+      "name_en": "Bloody Idol",
+      "description": "该遗物为“第二阶段”专属事件被遗忘的祭坛所给予，并且需要以转化。\n打败敌人会固定掉落金币，拾取金币会回复5点生命值。该遗物效果会类似。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%B2%9C%E8%A1%80%E7%A5%9E%E5%83%8F",
+      "related_links": [
+        {
+          "page": "被遗忘的祭坛",
+          "display": "被遗忘的祭坛"
+        },
+        {
+          "page": "全知头骨",
+          "display": "全知头骨"
+        },
+        {
+          "page": "金神像",
+          "display": "金神像"
+        },
+        {
+          "page": "每周更新42:重启",
+          "display": "每周更新42:重启"
+        },
+        {
+          "page": "每周更新32:换脸商",
+          "display": "每周更新32:换脸商"
+        },
+        {
+          "page": "全知头骨",
+          "display": "全知头骨"
+        },
+        {
+          "page": "每周更新1:第一个！",
+          "display": "每周更新1:第一个！"
+        },
+        {
+          "type": "relic",
+          "page": "金神像",
+          "display": "金神像"
+        },
+        {
+          "type": "relic",
+          "page": "燃烧之血",
+          "display": "燃烧之血"
+        },
+        {
+          "type": "relic",
+          "page": "巨口储蓄罐",
+          "display": "巨口储蓄罐"
+        },
+        {
+          "type": "relic",
+          "page": "陶瓷小鱼",
+          "display": "陶瓷小鱼"
+        },
+        {
+          "type": "relic",
+          "page": "灵体外质",
+          "display": "灵体外质"
+        },
+        {
+          "type": "relic",
+          "page": "鲜血神像",
+          "display": "鲜血神像"
+        },
+        {
+          "type": "card",
+          "page": "贪婪之手",
+          "display": "贪婪之手"
+        },
+        {
+          "type": "card",
+          "page": "许愿",
+          "display": "许愿"
+        },
+        {
+          "type": "card",
+          "page": "贪婪之手",
+          "display": "贪婪之手"
+        }
+      ]
+    },
+    "BlueCandle": {
+      "id": "BlueCandle",
+      "name_cn": "蓝蜡烛",
+      "name_en": "Blue Candle",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%93%9D%E8%9C%A1%E7%83%9B",
+      "related_links": []
+    },
+    "BottledFlame": {
+      "id": "BottledFlame",
+      "name_cn": "瓶装火焰",
+      "name_en": "Bottled Flame",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%93%B6%E8%A3%85%E7%81%AB%E7%84%B0",
+      "related_links": [
+        {
+          "page": "药贩子",
+          "display": "药贩子"
+        },
+        {
+          "page": "存档与读档",
+          "display": "存档与读档"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装火焰",
+          "display": "瓶装火焰"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装闪电",
+          "display": "瓶装闪电"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装旋风",
+          "display": "瓶装旋风"
+        },
+        {
+          "type": "keyword",
+          "page": "固有",
+          "display": "固有"
+        },
+        {
+          "type": "keyword",
+          "page": "固有",
+          "display": "固有"
+        }
+      ]
+    },
+    "BottledLightning": {
+      "id": "BottledLightning",
+      "name_cn": "瓶装闪电",
+      "name_en": "Bottled Lightning",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%93%B6%E8%A3%85%E9%97%AA%E7%94%B5",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "瓶装火焰",
+          "display": "瓶装火焰"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装闪电",
+          "display": "瓶装闪电"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装旋风",
+          "display": "瓶装旋风"
+        }
+      ]
+    },
+    "BottledTornado": {
+      "id": "BottledTornado",
+      "name_cn": "瓶装旋风",
+      "name_en": "Bottled Tornado",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%93%B6%E8%A3%85%E6%97%8B%E9%A3%8E",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "瓶装火焰",
+          "display": "瓶装火焰"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装闪电",
+          "display": "瓶装闪电"
+        },
+        {
+          "type": "relic",
+          "page": "瓶装旋风",
+          "display": "瓶装旋风"
+        }
+      ]
+    },
+    "Brimstone": {
+      "id": "Brimstone",
+      "name_cn": "硫磺",
+      "name_en": "Brimstone",
+      "description": "At the start of your turn, gain 2 *Strength* and ALL enemies gain 1 *Strength*.",
+      "flavor": "Emanates an infernal heat.",
+      "rarity": "",
+      "class": "Ironclad",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Brimstone",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A1%AB%E7%A3%BA",
+      "related_links": [
+        {
+          "page": "Ironclad",
+          "display": "Ironclad"
+        },
+        {
+          "page": "Corrupt Heart",
+          "display": "Corrupt Heart"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Shop Relic",
+          "display": "Category:Shop Relic"
+        },
+        {
+          "page": "Category:Ironclad Relic",
+          "display": "Category:Ironclad Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Intangible",
+          "display": "Intangible"
+        },
+        {
+          "type": "keyword",
+          "page": "Weak",
+          "display": "Weak"
+        },
+        {
+          "type": "card",
+          "page": "Sword Boomerang",
+          "display": "Sword Boomerang"
+        },
+        {
+          "type": "card",
+          "page": "Twin Strike",
+          "display": "Twin Strike"
+        },
+        {
+          "type": "card",
+          "page": "Heavy Blade",
+          "display": "Heavy Blade"
+        },
+        {
+          "type": "card",
+          "page": "Limit Break",
+          "display": "Limit Break"
+        },
+        {
+          "type": "card",
+          "page": "Reaper",
+          "display": "Reaper"
+        },
+        {
+          "type": "card",
+          "page": "Disarm",
+          "display": "Disarm"
+        },
+        {
+          "type": "card",
+          "page": "Dark Shackles",
+          "display": "Dark Shackles"
+        },
+        {
+          "page": "铁甲战士",
+          "display": "铁甲战士"
+        },
+        {
+          "page": "力量",
+          "display": "力量"
+        },
+        {
+          "page": "坚不可摧",
+          "display": "坚不可摧"
+        },
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        }
+      ]
+    },
+    "BronzeScales": {
+      "id": "BronzeScales",
+      "name_cn": "铜制鳞片",
+      "name_en": "Bronze Scales",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%93%9C%E5%88%B6%E9%B3%9E%E7%89%87",
+      "related_links": [
+        {
+          "page": "扎人的书",
+          "display": "扎人的书"
+        },
+        {
+          "page": "异鸟（飞行）",
+          "display": "异鸟（飞行）"
+        },
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        },
+        {
+          "page": "壁垒（能力）",
+          "display": "壁垒（能力）"
+        },
+        {
+          "page": "力量",
+          "display": "力量"
+        },
+        {
+          "page": "虚弱",
+          "display": "虚弱"
+        },
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        },
+        {
+          "page": "守护者",
+          "display": "守护者"
+        },
+        {
+          "page": "能力",
+          "display": "能力"
+        },
+        {
+          "page": "每周更新27:你好，世界",
+          "display": "你好"
+        },
+        {
+          "page": "遗物",
+          "display": "遗物"
+        },
+        {
+          "page": "每周更新5:节假日快乐！",
+          "display": "每周更新5:节假日快乐！"
+        },
+        {
+          "page": "荆棘",
+          "display": "荆棘"
+        },
+        {
+          "page": "守护者",
+          "display": "守护者"
+        },
+        {
+          "type": "card",
+          "page": "铁蒺藜",
+          "display": "铁蒺藜"
+        },
+        {
+          "type": "card",
+          "page": "火焰屏障",
+          "display": "火焰屏障"
+        },
+        {
+          "type": "card",
+          "page": "萎靡",
+          "display": "萎靡"
+        },
+        {
+          "type": "card",
+          "page": "黑暗镣铐",
+          "display": "黑暗镣铐"
+        },
+        {
+          "type": "potion",
+          "page": "流动铜液",
+          "display": "流动铜液"
+        }
+      ]
+    },
+    "BurningBlood": {
+      "id": "BurningBlood",
+      "name_cn": "燃血",
+      "name_en": "Burning Blood",
+      "description": "At the end of combat, heal 6 HP.",
+      "flavor": "Your body's own blood burns with an undying rage.",
+      "rarity": "Relics#Starter",
+      "class": "Ironclad",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Burning_Blood",
+      "wiki_url_cn": "",
+      "related_links": [
+        {
+          "page": "Relics#Starter",
+          "display": "Starter"
+        },
+        {
+          "page": "Ironclad",
+          "display": "Ironclad"
+        },
+        {
+          "page": "Ironclad",
+          "display": "Ironclad"
+        },
+        {
+          "page": "Chest#Boss Chest",
+          "display": "Boss Chest"
+        },
+        {
+          "page": "Category:Starter Relic",
+          "display": "Category:Starter Relic"
+        },
+        {
+          "page": "Category:Ironclad Relic",
+          "display": "Category:Ironclad Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Black Blood",
+          "display": "Black Blood"
+        },
+        {
+          "type": "relic",
+          "page": "Magic Flower",
+          "display": "Magic Flower"
+        }
+      ]
+    },
+    "BustedCrown": {
+      "id": "BustedCrown",
+      "name_cn": "破碎王冠",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A0%B4%E7%A2%8E%E9%87%91%E5%86%A0",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "问号牌",
+          "display": "问号牌"
+        },
+        {
+          "type": "relic",
+          "page": "转经轮",
+          "display": "转经轮"
+        }
+      ]
+    },
+    "Calipers": {
+      "id": "Calipers",
+      "name_cn": "外卡钳",
+      "name_en": "Calipers",
+      "description": "At the start of your turn, lose 15 Block rather than all of your Block.",
+      "flavor": "Mechanical precision leads to greatness\" - The Architect",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Calipers",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A4%96%E5%8D%A1%E9%92%B3",
+      "related_links": [
+        {
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Rare Relic",
+          "display": "Rare Relic"
+        },
+        {
+          "page": "Ironclad",
+          "display": "Ironclad's"
+        },
+        {
+          "page": "Silent",
+          "display": "Silent's"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "card",
+          "page": "Barricade",
+          "display": "Barricade"
+        },
+        {
+          "type": "card",
+          "page": "Blur",
+          "display": "Blur"
+        }
+      ]
+    },
+    "CallingBell": {
+      "id": "CallingBell",
+      "name_cn": "召唤铃铛",
+      "name_en": "Calling Bell",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8F%AC%E5%94%A4%E9%93%83%E9%93%9B",
+      "related_links": []
+    },
+    "CaptainWheel": {
+      "id": "CaptainWheel",
+      "name_cn": "舵盘",
+      "name_en": "Captain's Wheel",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%88%B5%E7%9B%98",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "锚",
+          "display": "锚"
+        },
+        {
+          "type": "relic",
+          "page": "船夹板",
+          "display": "船夹板"
+        },
+        {
+          "type": "relic",
+          "page": "舵盘",
+          "display": "舵盘"
+        }
+      ]
+    },
+    "Cauldron": {
+      "id": "Cauldron",
+      "name_cn": "大锅",
+      "name_en": "Cauldron",
+      "description": "Upon pickup, brews 5 random potions.",
+      "flavor": "The Merchant is actually a rather skilled potion brewer. Buy 4 get 1 free.",
+      "rarity": "Relics#Shop",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Cauldron",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A4%A7%E9%94%85",
+      "related_links": [
+        {
+          "page": "Potions",
+          "display": "potions"
+        },
+        {
+          "page": "Relics#Shop",
+          "display": "Shop"
+        },
+        {
+          "page": "Potions",
+          "display": "Potions"
+        },
+        {
+          "page": "Merchant",
+          "display": "Shop Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Shop Relic",
+          "display": "Category:Shop Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Potion Belt",
+          "display": "Potion Belt"
+        },
+        {
+          "type": "relic",
+          "page": "Potion Belt",
+          "display": "Potion Belt"
+        },
+        {
+          "page": "商店",
+          "display": "商人"
+        }
+      ]
+    },
+    "CentennialPuzzle": {
+      "id": "CentennialPuzzle",
+      "name_cn": "百年积木",
+      "name_en": "Centennial Puzzle",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%99%BE%E5%B9%B4%E7%A7%AF%E6%9C%A8",
+      "related_links": [
+        {
+          "page": "钉刺机",
+          "display": "钉刺机"
+        },
+        {
+          "page": "每周更新35:汇集",
+          "display": "每周更新35:汇集"
+        },
+        {
+          "page": "缓冲（能力）",
+          "display": "缓冲（能力）"
+        },
+        {
+          "page": "每周更新32:换脸商",
+          "display": "每周更新32:换脸商"
+        },
+        {
+          "page": "每周更新9：进阶",
+          "display": "每周更新9：进阶"
+        }
+      ]
+    },
+    "CeramicFish": {
+      "id": "CeramicFish",
+      "name_cn": "陶瓷小鱼",
+      "name_en": "Ceramic Fish",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%99%B6%E7%93%B7%E5%B0%8F%E9%B1%BC",
+      "related_links": [
+        {
+          "page": "药贩子",
+          "display": "药贩子"
+        }
+      ]
+    },
+    "ChampionBelt": {
+      "id": "ChampionBelt",
+      "name_cn": "冠军腰带",
+      "name_en": "Champion Belt",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%86%A0%E5%86%9B%E8%85%B0%E5%B8%A6",
+      "related_links": [
+        {
+          "page": "人工制品",
+          "display": "人工制品"
+        }
+      ]
+    },
+    "CharonsAshes": {
+      "id": "CharonsAshes",
+      "name_cn": "卡戎之灰",
+      "name_en": "Charon's Ashes",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8D%A1%E6%88%8E%E4%B9%8B%E7%81%B0",
+      "related_links": []
+    },
+    "ChemicalX": {
+      "id": "ChemicalX",
+      "name_cn": "化学物X",
+      "name_en": "Chemical X",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8C%96%E5%AD%A6%E7%89%A9X",
+      "related_links": [
+        {
+          "type": "card",
+          "page": "旋风斩",
+          "display": "旋风斩"
+        },
+        {
+          "type": "card",
+          "page": "串刺",
+          "display": "串刺"
+        },
+        {
+          "type": "card",
+          "page": "双重存在",
+          "display": "双重存在"
+        },
+        {
+          "type": "card",
+          "page": "萎靡",
+          "display": "萎靡"
+        },
+        {
+          "type": "card",
+          "page": "暴风雨",
+          "display": "暴风雨"
+        },
+        {
+          "type": "card",
+          "page": "多重释放",
+          "display": "多重释放"
+        },
+        {
+          "type": "card",
+          "page": "收集",
+          "display": "收集"
+        },
+        {
+          "type": "card",
+          "page": "聚能成刃",
+          "display": "聚能成刃"
+        },
+        {
+          "type": "card",
+          "page": "转化",
+          "display": "转化"
+        }
+      ]
+    },
+    "Circlet": {
+      "id": "Circlet",
+      "name_cn": "王冠",
+      "name_en": "Circlet",
+      "description": "Collect as many as you can.",
+      "flavor": "You ran out of relics to find. Impressive!",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Circlet",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A4%B4%E7%8E%AF",
+      "related_links": [
+        {
+          "page": "Relics",
+          "display": "Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "遗物序列",
+          "display": "遗物序列"
+        },
+        {
+          "page": "创意工坊",
+          "display": "模组"
+        }
+      ]
+    },
+    "CloakClasp": {
+      "id": "CloakClasp",
+      "name_cn": "斗篷扣",
+      "name_en": "Cloak Clasp",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%96%97%E7%AF%B7%E6%89%A3",
+      "related_links": []
+    },
+    "ClockworkSouvenir": {
+      "id": "ClockworkSouvenir",
+      "name_cn": "齿轮工艺品",
+      "name_en": "Clockwork Souvenir",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%BD%BF%E8%BD%AE%E5%B7%A5%E8%89%BA%E5%93%81",
+      "related_links": []
+    },
+    "CoffeeDripper": {
+      "id": "CoffeeDripper",
+      "name_cn": "咖啡滤杯",
+      "name_en": "Coffee Dripper",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%92%96%E5%95%A1%E6%BB%A4%E6%9D%AF",
+      "related_links": [
+        {
+          "page": "每周更新56:收藏家",
+          "display": "每周更新56:收藏家"
+        },
+        {
+          "page": "每周更新29:内核加速",
+          "display": "每周更新29:内核加速"
+        },
+        {
+          "type": "relic",
+          "page": "捕梦网",
+          "display": "捕梦网"
+        },
+        {
+          "type": "relic",
+          "page": "皇家枕头",
+          "display": "皇家枕头"
+        }
+      ]
+    },
+    "CrackedCore": {
+      "id": "CrackedCore",
+      "name_cn": "裂纹核心",
+      "name_en": "",
+      "description": "破损核心是故障机器人的初始遗物，该遗物可被BOSS宝箱中获得的替换，从而使得效果改变。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A0%B4%E6%8D%9F%E6%A0%B8%E5%BF%83",
+      "related_links": [
+        {
+          "page": "故障机器人",
+          "display": "故障机器人"
+        },
+        {
+          "page": "每周更新27:你好，世界",
+          "display": "每周更新27:你好，世界"
+        },
+        {
+          "page": "故障机器人",
+          "display": "故障机器人"
+        },
+        {
+          "page": "遗物",
+          "display": "遗物"
+        },
+        {
+          "type": "relic",
+          "page": "冻结核心",
+          "display": "冻结核心"
+        },
+        {
+          "type": "card",
+          "page": "双重释放",
+          "display": "双重释放"
+        }
+      ]
+    },
+    "CultistMask": {
+      "id": "CultistMask",
+      "name_cn": "邪教徒头套",
+      "name_en": "Cultist Mask",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%82%AA%E6%95%99%E5%BE%92%E5%A4%B4%E5%A5%97",
+      "related_links": [
+        {
+          "page": "恩洛斯",
+          "display": "恩洛斯"
+        },
+        {
+          "page": "成就",
+          "display": "成就"
+        },
+        {
+          "page": "得分结算",
+          "display": "得分结算"
+        },
+        {
+          "page": "换脸商",
+          "display": "换脸商"
+        },
+        {
+          "page": "每周更新32:换脸商",
+          "display": "每周更新32:换脸商"
+        },
+        {
+          "page": "邪教徒",
+          "display": "邪教徒"
+        },
+        {
+          "page": "乐加维林",
+          "display": "乐加维林"
+        },
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        },
+        {
+          "page": "巢穴",
+          "display": "巢穴"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "恩洛斯的饥饿的脸",
+          "display": "恩洛斯的饥饿的脸"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "邪教徒头套",
+          "display": "邪教徒头套"
+        },
+        {
+          "type": "relic",
+          "page": "地精容貌",
+          "display": "地精容貌"
+        }
+      ]
+    },
+    "CursedKey": {
+      "id": "CursedKey",
+      "name_cn": "诅咒钥匙",
+      "name_en": "Cursed Key",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%AF%85%E5%92%92%E9%92%A5%E5%8C%99",
+      "related_links": [
+        {
+          "page": "钥匙（终幕）#蓝宝石钥匙",
+          "display": "蓝宝石钥匙"
+        },
+        {
+          "page": "诅咒",
+          "display": "诅咒"
+        }
+      ]
+    },
+    "Damaru": {
+      "id": "Damaru",
+      "name_cn": "手摇鼓",
+      "name_en": "Damaru",
+      "description": "At the start of your turn, gain 1 Mantra.",
+      "flavor": "The sound of the small drum keeps your mind awake, revealing a path forward.",
+      "rarity": "Relics#Common",
+      "class": "Watcher",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Damaru",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%89%8B%E6%91%87%E9%BC%93",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Watcher",
+          "display": "Watcher"
+        },
+        {
+          "page": "Category:Watcher Relic",
+          "display": "Category:Watcher Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "type": "card",
+          "page": "Prostrate",
+          "display": "Prostrate"
+        },
+        {
+          "type": "card",
+          "page": "Worship",
+          "display": "Worship"
+        }
+      ]
+    },
+    "DarkstonePeriapt": {
+      "id": "DarkstonePeriapt",
+      "name_cn": "黑石护符",
+      "name_en": "Darkstone Periapt",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%BB%91%E7%9F%B3%E6%8A%A4%E7%AC%A6",
+      "related_links": []
+    },
+    "DataDisk": {
+      "id": "DataDisk",
+      "name_cn": "数据磁盘",
+      "name_en": "Data Disk",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%95%B0%E6%8D%AE%E7%A3%81%E7%9B%98",
+      "related_links": [
+        {
+          "page": "每周更新27:你好，世界",
+          "display": "每周更新27:你好，世界"
+        },
+        {
+          "page": "故障机器人",
+          "display": "故障机器人"
+        }
+      ]
+    },
+    "DeadBranch": {
+      "id": "DeadBranch",
+      "name_cn": "枯树枝",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%9E%AF%E6%9C%A8%E6%A0%91%E6%9E%9D",
+      "related_links": [
+        {
+          "page": "无限",
+          "display": "无限"
+        },
+        {
+          "type": "relic",
+          "page": "符文金字塔",
+          "display": "符文金字塔"
+        },
+        {
+          "type": "relic",
+          "page": "异蛇之眼",
+          "display": "异蛇之眼"
+        },
+        {
+          "type": "keyword",
+          "page": "消耗",
+          "display": "消耗"
+        }
+      ]
+    },
+    "DollysMirror": {
+      "id": "DollysMirror",
+      "name_cn": "多利之镜",
+      "name_en": "Dolly's Mirror",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A4%9A%E5%88%A9%E4%B9%8B%E9%95%9C",
+      "related_links": []
+    },
+    "DreamCatcher": {
+      "id": "DreamCatcher",
+      "name_cn": "捕梦网",
+      "name_en": "Dream Catcher",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%8D%95%E6%A2%A6%E7%BD%91",
+      "related_links": [
+        {
+          "page": "休息处",
+          "display": "休息处"
+        },
+        {
+          "page": "每周更新51:递归",
+          "display": "每周更新51:递归"
+        },
+        {
+          "page": "每周更新40:预谋",
+          "display": "每周更新40:预谋"
+        },
+        {
+          "page": "每周更新34:萎靡",
+          "display": "每周更新34:萎靡"
+        },
+        {
+          "type": "relic",
+          "page": "棱镜碎片",
+          "display": "棱镜碎片"
+        },
+        {
+          "type": "relic",
+          "page": "问号牌",
+          "display": "问号牌"
+        },
+        {
+          "type": "relic",
+          "page": "颂钵",
+          "display": "颂钵"
+        },
+        {
+          "type": "relic",
+          "page": "破碎金冠",
+          "display": "破碎金冠"
+        },
+        {
+          "type": "relic",
+          "page": "熔火之蛋",
+          "display": "熔火之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "咖啡滤杯",
+          "display": "咖啡滤杯"
+        },
+        {
+          "type": "relic",
+          "page": "皇家枕头",
+          "display": "皇家枕头"
+        }
+      ]
+    },
+    "DuVuDoll": {
+      "id": "DuVuDoll",
+      "name_cn": "巫毒娃娃",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%AF%92%E5%B7%AB%E5%A8%83%E5%A8%83",
+      "related_links": []
+    },
+    "Duality": {
+      "id": "Duality",
+      "name_cn": "两仪",
+      "name_en": "Duality",
+      "description": "Whenever you play an Attack, gain 1 temporary *Dexterity*.",
+      "flavor": "And the sun was extinguished forever, as if curtains fell before it.\" - Zoroth",
+      "rarity": "Relics#Uncommon",
+      "class": "Watcher",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Duality",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E4%B8%A4%E4%BB%AA",
+      "related_links": [
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Watcher",
+          "display": "Watcher"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "page": "Category:Watcher Relic",
+          "display": "Category:Watcher Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Dexterity",
+          "display": "Dexterity"
+        },
+        {
+          "type": "keyword",
+          "page": "Artifact",
+          "display": "Artifact"
+        },
+        {
+          "type": "relic",
+          "page": "Orange Pellets",
+          "display": "Orange Pellets"
+        },
+        {
+          "type": "card",
+          "page": "Panacea",
+          "display": "Panacea"
+        },
+        {
+          "type": "potion",
+          "page": "Ancient Potion",
+          "display": "Ancient Potion"
+        }
+      ]
+    },
+    "Ectoplasm": {
+      "id": "Ectoplasm",
+      "name_cn": "灵体外质",
+      "name_en": "Ectoplasm",
+      "description": "Gain 1 Energy at the start of each turn. You can no longer gain Gold.",
+      "flavor": "This blob of slime and energy seems to pulse with life.",
+      "rarity": "Relics#Boss",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Ectoplasm",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%81%B5%E4%BD%93%E5%A4%96%E8%B4%A8",
+      "related_links": [
+        {
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "page": "Gold",
+          "display": "Gold"
+        },
+        {
+          "page": "Relics#Boss",
+          "display": "Boss"
+        },
+        {
+          "page": "Thieves",
+          "display": "Thieves'"
+        },
+        {
+          "page": "The Joust",
+          "display": "Joust"
+        },
+        {
+          "page": "Events",
+          "display": "Event"
+        },
+        {
+          "page": "Neow",
+          "display": "Neow"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Boss Relic",
+          "display": "Category:Boss Relic"
+        },
+        {
+          "page": "涅奥的祝福",
+          "display": "涅奥的祝福"
+        },
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "打劫的",
+          "display": "打劫的"
+        },
+        {
+          "page": "抢劫的",
+          "display": "抢劫的"
+        }
+      ]
+    },
+    "EmotionChip": {
+      "id": "EmotionChip",
+      "name_cn": "情感芯片",
+      "name_en": "Emotion Chip",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%83%85%E6%84%9F%E8%8A%AF%E7%89%87",
+      "related_links": []
+    },
+    "EmptyCage": {
+      "id": "EmptyCage",
+      "name_cn": "空鸟笼",
+      "name_en": "Empty Cage",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A9%BA%E9%B8%9F%E7%AC%BC",
+      "related_links": [
+        {
+          "page": "我们又见面了！",
+          "display": "我们又见面了！"
+        },
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        },
+        {
+          "page": "邪教徒",
+          "display": "邪教徒"
+        },
+        {
+          "page": "被拣选者",
+          "display": "被拣选者"
+        },
+        {
+          "page": "异鸟",
+          "display": "异鸟"
+        },
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        }
+      ]
+    },
+    "Enchiridion": {
+      "id": "Enchiridion",
+      "name_cn": "英雄宝典",
+      "name_en": "Enchiridion",
+      "description": "At the start of each combat, add a random Power card to your hand. It costs 0 until the end of turn.",
+      "flavor": "The legendary journal of an ancient lich.",
+      "rarity": "Relics#Event",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Enchiridion",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%8B%B1%E9%9B%84%E5%AE%9D%E5%85%B8",
+      "related_links": [
+        {
+          "page": "Power",
+          "display": "Power"
+        },
+        {
+          "page": "Relics#Event",
+          "display": "Event"
+        },
+        {
+          "page": "Cursed Tome",
+          "display": "Cursed Tome"
+        },
+        {
+          "page": "Events",
+          "display": "event"
+        },
+        {
+          "page": "Power",
+          "display": "Power"
+        },
+        {
+          "page": "wp:Adventure Time",
+          "display": "Adventure Time's"
+        },
+        {
+          "page": "w:c:adventuretime:The Enchiridion (book)",
+          "display": "Enchiridion"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Event Relic",
+          "display": "Category:Event Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Dead Branch",
+          "display": "Dead Branch"
+        },
+        {
+          "type": "card",
+          "page": "Self Repair",
+          "display": "Self Repair"
+        },
+        {
+          "type": "card",
+          "page": "Omega",
+          "display": "Omega"
+        },
+        {
+          "page": "诅咒书本",
+          "display": "诅咒书本"
+        },
+        {
+          "page": "每周更新52:发售日确认+价格提升",
+          "display": "每周更新52:发售日确认+价格提升"
+        },
+        {
+          "page": "每周更新44:结茧",
+          "display": "每周更新44:结茧"
+        },
+        {
+          "page": "每周更新17:吃我一拳更新啦",
+          "display": "每周更新17:吃我一拳更新啦"
+        },
+        {
+          "page": "每周更新15:没想到吧，突然更新",
+          "display": "每周更新15:没想到吧，突然更新"
+        },
+        {
+          "page": "每周更新11！",
+          "display": "每周更新11！"
+        },
+        {
+          "page": "每周更新7:妥当安排好一切",
+          "display": "每周更新7:妥当安排好一切"
+        },
+        {
+          "type": "relic",
+          "page": "忍术卷轴",
+          "display": "忍术卷轴"
+        },
+        {
+          "type": "relic",
+          "page": "尼利的宝典",
+          "display": "尼利的宝典"
+        },
+        {
+          "type": "relic",
+          "page": "异蛇之眼",
+          "display": "异蛇之眼"
+        }
+      ]
+    },
+    "EternalFeather": {
+      "id": "EternalFeather",
+      "name_cn": "永恒羽毛",
+      "name_en": "Eternal Feather",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%B0%B8%E6%81%92%E7%BE%BD%E6%AF%9B",
+      "related_links": [
+        {
+          "page": "邪教徒",
+          "display": "邪教徒"
+        },
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        }
+      ]
+    },
+    "FaceOfCleric": {
+      "id": "FaceOfCleric",
+      "name_cn": "牧师的脸",
+      "name_en": "Face of Cleric",
+      "description": "Raise your Max HP by 1 after each combat.",
+      "flavor": "Everyone loves Cleric.",
+      "rarity": "Relics#Event",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Face_of_Cleric",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%89%A7%E5%B8%88%E7%9A%84%E8%84%B8",
+      "related_links": [
+        {
+          "page": "Relics#Event",
+          "display": "Event"
+        },
+        {
+          "page": "Event Relic",
+          "display": "Event Relic"
+        },
+        {
+          "page": "Face Trader (Event)",
+          "display": "Face Trader (Event)"
+        },
+        {
+          "page": "Ironclad",
+          "display": "Ironclad"
+        },
+        {
+          "page": "The Cleric",
+          "display": "The Cleric"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Event Relic",
+          "display": "Category:Event Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Magic Flower",
+          "display": "Magic Flower"
+        },
+        {
+          "page": "换脸商",
+          "display": "换脸商"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "page": "虚弱",
+          "display": "虚弱"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "恩洛斯的饥饿的脸",
+          "display": "恩洛斯的饥饿的脸"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "邪教徒头套",
+          "display": "邪教徒头套"
+        },
+        {
+          "type": "relic",
+          "page": "地精容貌",
+          "display": "地精容貌"
+        },
+        {
+          "type": "potion",
+          "page": "烟雾弹",
+          "display": "烟雾弹"
+        }
+      ]
+    },
+    "FossilizedHelix": {
+      "id": "FossilizedHelix",
+      "name_cn": "螺类化石",
+      "name_en": "Fossilized Helix",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%9E%BA%E7%B1%BB%E5%8C%96%E7%9F%B3",
+      "related_links": []
+    },
+    "FrozenCore": {
+      "id": "FrozenCore",
+      "name_cn": "冻结核心",
+      "name_en": "Frozen Core",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%86%BB%E7%BB%93%E6%A0%B8%E5%BF%83",
+      "related_links": []
+    },
+    "FrozenEgg": {
+      "id": "FrozenEgg",
+      "name_cn": "冻结之蛋",
+      "name_en": "Frozen Egg",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%86%BB%E7%BB%93%E4%B9%8B%E8%9B%8B",
+      "related_links": [
+        {
+          "page": "钥匙（终幕）",
+          "display": "终幕"
+        },
+        {
+          "type": "relic",
+          "page": "熔火之蛋",
+          "display": "熔火之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "毒素之蛋",
+          "display": "毒素之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "冻结之蛋",
+          "display": "冻结之蛋"
+        }
+      ]
+    },
+    "FrozenEye": {
+      "id": "FrozenEye",
+      "name_cn": "冻结之眼",
+      "name_en": "Frozen Eye",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%86%BB%E7%BB%93%E4%B9%8B%E7%9C%BC",
+      "related_links": []
+    },
+    "FusionHammer": {
+      "id": "FusionHammer",
+      "name_cn": "融合之锤",
+      "name_en": "Fusion Hammer",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%9E%8D%E5%90%88%E4%B9%8B%E9%94%A4",
+      "related_links": []
+    },
+    "GamblingChip": {
+      "id": "GamblingChip",
+      "name_cn": "赌博筹码",
+      "name_en": "Gambling Chip",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%B5%8C%E5%8D%9A%E7%AD%B9%E7%A0%81",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "英雄宝典",
+          "display": "英雄宝典"
+        },
+        {
+          "type": "relic",
+          "page": "忍术卷轴",
+          "display": "忍术卷轴"
+        }
+      ]
+    },
+    "Ginger": {
+      "id": "Ginger",
+      "name_cn": "生姜",
+      "name_en": "Ginger",
+      "description": "You can no longer become Weakened.",
+      "flavor": "A potent tool in many tonics.",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Ginger",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%94%9F%E5%A7%9C",
+      "related_links": [
+        {
+          "page": "Weak",
+          "display": "Weakened"
+        },
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Relics",
+          "display": "Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Weak",
+          "display": "Weakened"
+        },
+        {
+          "type": "relic",
+          "page": "Odd Mushroom",
+          "display": "Odd Mushroom"
+        },
+        {
+          "type": "relic",
+          "page": "Turnip",
+          "display": "Turnip"
+        }
+      ]
+    },
+    "Girya": {
+      "id": "Girya",
+      "name_cn": "壶铃",
+      "name_en": "Girya",
+      "description": "You can now gain *Strength* at Rest Sites. (3 times max)",
+      "flavor": "This Girya is unfathomably heavy. You could train with this to get significantly stronger.",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Girya",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A3%B6%E9%93%83",
+      "related_links": [
+        {
+          "page": "Rest Site",
+          "display": "Rest Sites"
+        },
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "relic",
+          "page": "Shovel",
+          "display": "Shovel"
+        },
+        {
+          "type": "relic",
+          "page": "Peace Pipe",
+          "display": "Peace Pipe"
+        },
+        {
+          "page": "遗物序列",
+          "display": "遗物序列"
+        }
+      ]
+    },
+    "GoldPlatedCables": {
+      "id": "GoldPlatedCables",
+      "name_cn": "镀金缆线",
+      "name_en": "Gold-Plated Cables",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%95%80%E9%87%91%E7%BC%86%E7%BA%BF",
+      "related_links": []
+    },
+    "GoldenEye": {
+      "id": "GoldenEye",
+      "name_cn": "黄金眼",
+      "name_en": "Golden Eye",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%BB%84%E9%87%91%E7%9C%BC",
+      "related_links": []
+    },
+    "GoldenIdol": {
+      "id": "GoldenIdol",
+      "name_cn": "金神像",
+      "name_en": "Golden Idol",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%87%91%E7%A5%9E%E5%83%8F",
+      "related_links": [
+        {
+          "page": "金神像（事件）",
+          "display": "金神像（事件）"
+        },
+        {
+          "page": "被遗忘的祭坛",
+          "display": "被遗忘的祭坛"
+        },
+        {
+          "page": "鲜血神像",
+          "display": "鲜血神像"
+        },
+        {
+          "page": "摩艾石像",
+          "display": "摩艾石像"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "page": "抢劫的",
+          "display": "抢劫的"
+        },
+        {
+          "page": "被遗忘的祭坛",
+          "display": "被遗忘的祭坛"
+        }
+      ]
+    },
+    "GremlinHorn": {
+      "id": "GremlinHorn",
+      "name_cn": "地精之角",
+      "name_en": "Gremlin Horn",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%9C%B0%E7%B2%BE%E4%B9%8B%E8%A7%92",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "冰淇淋",
+          "display": "冰淇淋"
+        }
+      ]
+    },
+    "GremlinMask": {
+      "id": "GremlinMask",
+      "name_cn": "地精容貌",
+      "name_en": "Gremlin Mask",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%9C%B0%E7%B2%BE%E5%AE%B9%E8%B2%8C",
+      "related_links": [
+        {
+          "page": "换脸商",
+          "display": "换脸商"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "恩洛斯的饥饿的脸",
+          "display": "恩洛斯的饥饿的脸"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "邪教徒头套",
+          "display": "邪教徒头套"
+        },
+        {
+          "type": "relic",
+          "page": "地精容貌",
+          "display": "地精容貌"
+        }
+      ]
+    },
+    "HandDrill": {
+      "id": "HandDrill",
+      "name_cn": "手钻",
+      "name_en": "Hand Drill",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%89%8B%E9%92%BB",
+      "related_links": []
+    },
+    "HappyFlower": {
+      "id": "HappyFlower",
+      "name_cn": "开心小花",
+      "name_en": "Happy Flower",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%80%E5%BF%83%E5%B0%8F%E8%8A%B1",
+      "related_links": [
+        {
+          "page": "pvz:向日葵",
+          "display": "向日葵"
+        },
+        {
+          "page": "pvz:花盆",
+          "display": "花盆"
+        }
+      ]
+    },
+    "HolyWater": {
+      "id": "HolyWater",
+      "name_cn": "圣水",
+      "name_en": "Holy Water",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%9C%A3%E6%B0%B4",
+      "related_links": []
+    },
+    "HornCleat": {
+      "id": "HornCleat",
+      "name_cn": "船夹板",
+      "name_en": "Horn Cleat",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%88%B9%E5%A4%B9%E6%9D%BF",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "锚",
+          "display": "锚"
+        },
+        {
+          "type": "relic",
+          "page": "船夹板",
+          "display": "船夹板"
+        },
+        {
+          "type": "relic",
+          "page": "舵盘",
+          "display": "舵盘"
+        }
+      ]
+    },
+    "HoveringKite": {
+      "id": "HoveringKite",
+      "name_cn": "悬浮风筝",
+      "name_en": "Hovering Kite",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%82%AC%E6%B5%AE%E9%A3%8E%E7%AD%9D",
+      "related_links": [
+        {
+          "page": "补丁V2.0:观者",
+          "display": "补丁V2.0:观者"
+        },
+        {
+          "page": "每周更新34:萎靡",
+          "display": "每周更新34:萎靡"
+        },
+        {
+          "type": "relic",
+          "page": "悬浮风筝",
+          "display": "悬浮风筝"
+        },
+        {
+          "type": "relic",
+          "page": "悬浮风筝",
+          "display": "悬浮风筝"
+        }
+      ]
+    },
+    "IceCream": {
+      "id": "IceCream",
+      "name_cn": "冰淇淋",
+      "name_en": "Ice Cream",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%86%B0%E6%B7%87%E6%B7%8B",
+      "related_links": [
+        {
+          "page": "肾上腺素",
+          "display": "肾上腺素"
+        },
+        {
+          "type": "relic",
+          "page": "符文金字塔",
+          "display": "符文金字塔"
+        },
+        {
+          "type": "card",
+          "page": "计划妥当",
+          "display": "计划妥当"
+        },
+        {
+          "type": "card",
+          "page": "旋风斩",
+          "display": "旋风斩"
+        }
+      ]
+    },
+    "IncenseBurner": {
+      "id": "IncenseBurner",
+      "name_cn": "香炉",
+      "name_en": "Incense Burner",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%A6%99%E7%82%89",
+      "related_links": []
+    },
+    "InkBottle": {
+      "id": "InkBottle",
+      "name_cn": "墨水瓶",
+      "name_en": "Ink Bottle",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A2%A8%E6%B0%B4%E7%93%B6",
+      "related_links": []
+    },
+    "Inserter": {
+      "id": "Inserter",
+      "name_cn": "机械臂",
+      "name_en": "Inserter",
+      "description": "Every 2 turns, gain 1 Orb slot.",
+      "flavor": "Push. Pull. Stack. Repeat.",
+      "rarity": "",
+      "class": "Defect",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Inserter",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%9C%BA%E6%A2%B0%E8%87%82",
+      "related_links": [
+        {
+          "page": "Defect",
+          "display": "Defect"
+        },
+        {
+          "page": "Shop",
+          "display": "Shop"
+        },
+        {
+          "page": "Relic",
+          "display": "Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Boss Relic",
+          "display": "Category:Boss Relic"
+        },
+        {
+          "page": "Category:Defect Relic",
+          "display": "Category:Defect Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Focus",
+          "display": "Focus"
+        },
+        {
+          "type": "relic",
+          "page": "Runic Capacitor",
+          "display": "Runic Capacitor"
+        },
+        {
+          "type": "card",
+          "page": "Consume",
+          "display": "Consume"
+        },
+        {
+          "page": "集中",
+          "display": "集中"
+        },
+        {
+          "type": "card",
+          "page": "耗尽",
+          "display": "耗尽"
+        }
+      ]
+    },
+    "JuzuBracelet": {
+      "id": "JuzuBracelet",
+      "name_cn": "佛珠手链",
+      "name_en": "Juzu Bracelet",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E4%BD%9B%E7%8F%A0%E6%89%8B%E9%93%BE",
+      "related_links": [
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "宝箱房",
+          "display": "宝箱房"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "type": "relic",
+          "page": "小宝箱",
+          "display": "小宝箱"
+        },
+        {
+          "type": "relic",
+          "page": "佛珠手链",
+          "display": "佛珠手链"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        }
+      ]
+    },
+    "Kunai": {
+      "id": "Kunai",
+      "name_cn": "苦无",
+      "name_en": "Kunai",
+      "description": "Every time you play 3 Attacks in a single turn, gain 1 *Dexterity*.",
+      "flavor": "A blade favored by assassins for its lethality at range.",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Kunai",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%8B%A6%E6%97%A0",
+      "related_links": [
+        {
+          "page": "Attack",
+          "display": "Attacks"
+        },
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Ironclad Cards",
+          "display": "Ironclad Cards"
+        },
+        {
+          "page": "Silent Cards",
+          "display": "Silent Cards"
+        },
+        {
+          "page": "Defect Cards",
+          "display": "Defect Cards"
+        },
+        {
+          "page": "Relics",
+          "display": "Relics"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Dexterity",
+          "display": "Dexterity"
+        },
+        {
+          "type": "relic",
+          "page": "Shuriken",
+          "display": "Shuriken"
+        },
+        {
+          "type": "relic",
+          "page": "Ornamental Fan",
+          "display": "Ornamental Fan"
+        },
+        {
+          "type": "relic",
+          "page": "Ninja Scroll",
+          "display": "Ninja Scroll"
+        },
+        {
+          "type": "card",
+          "page": "Iron Wave",
+          "display": "Iron Wave"
+        },
+        {
+          "type": "card",
+          "page": "Cloak and Dagger",
+          "display": "Cloak and Dagger"
+        },
+        {
+          "type": "card",
+          "page": "Blade Dance",
+          "display": "Blade Dance"
+        },
+        {
+          "type": "card",
+          "page": "Infinite Blades",
+          "display": "Infinite Blades"
+        },
+        {
+          "type": "card",
+          "page": "Endless Agony",
+          "display": "Endless Agony"
+        },
+        {
+          "type": "card",
+          "page": "Dodge and Roll",
+          "display": "Dodge and Roll"
+        },
+        {
+          "type": "card",
+          "page": "Storm of Steel",
+          "display": "Storm of Steel"
+        },
+        {
+          "type": "card",
+          "page": "FTL",
+          "display": "FTL"
+        },
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "无实体",
+          "display": "无实体"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "力量",
+          "display": "力量"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "格挡",
+          "display": "格挡"
+        },
+        {
+          "page": "技能牌",
+          "display": "技能牌"
+        },
+        {
+          "type": "relic",
+          "page": "手里剑",
+          "display": "手里剑"
+        },
+        {
+          "type": "relic",
+          "page": "手里剑",
+          "display": "手里剑"
+        },
+        {
+          "type": "relic",
+          "page": "苦无",
+          "display": "苦无"
+        },
+        {
+          "type": "relic",
+          "page": "精致折扇",
+          "display": "精致折扇"
+        },
+        {
+          "type": "relic",
+          "page": "开信刀",
+          "display": "开信刀"
+        },
+        {
+          "type": "card",
+          "page": "幽魂形态",
+          "display": "幽魂形态"
+        }
+      ]
+    },
+    "Lantern": {
+      "id": "Lantern",
+      "name_cn": "灯笼",
+      "name_en": "Lantern",
+      "description": "Gain 1 Energy on the first turn of each combat.",
+      "flavor": "An eerie lantern which illuminates only for the wielder.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Lantern",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%81%AF%E7%AC%BC",
+      "related_links": [
+        {
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Common Relic",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Preparation",
+          "display": "Bag of Preparation"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        }
+      ]
+    },
+    "LeesWaffle": {
+      "id": "LeesWaffle",
+      "name_cn": "李家华夫饼",
+      "name_en": "Lee's Waffle",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%9D%8E%E5%AE%B6%E5%8D%8E%E5%A4%AB%E9%A5%BC",
+      "related_links": []
+    },
+    "LetterOpener": {
+      "id": "LetterOpener",
+      "name_cn": "开信刀",
+      "name_en": "Letter Opener",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%80%E4%BF%A1%E5%88%80",
+      "related_links": [
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "力量",
+          "display": "力量"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "敏捷",
+          "display": "敏捷"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "格挡",
+          "display": "格挡"
+        },
+        {
+          "type": "relic",
+          "page": "手里剑",
+          "display": "手里剑"
+        },
+        {
+          "type": "relic",
+          "page": "苦无",
+          "display": "苦无"
+        },
+        {
+          "type": "relic",
+          "page": "精致折扇",
+          "display": "精致折扇"
+        },
+        {
+          "type": "relic",
+          "page": "开信刀",
+          "display": "开信刀"
+        }
+      ]
+    },
+    "LizardTail": {
+      "id": "LizardTail",
+      "name_cn": "蜥蜴尾巴",
+      "name_en": "Lizard Tail",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%9C%A5%E8%9C%B4%E5%B0%BE%E5%B7%B4",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "绽放印记",
+          "display": "绽放印记"
+        }
+      ]
+    },
+    "MagicFlower": {
+      "id": "MagicFlower",
+      "name_cn": "魔法花",
+      "name_en": "Magic Flower",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%AD%94%E6%B3%95%E8%8A%B1",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "缩放仪",
+          "display": "缩放仪"
+        },
+        {
+          "type": "relic",
+          "page": "带骨肉",
+          "display": "带骨肉"
+        },
+        {
+          "type": "relic",
+          "page": "缩放仪",
+          "display": "缩放仪"
+        },
+        {
+          "type": "relic",
+          "page": "燃烧之血",
+          "display": "燃烧之血"
+        },
+        {
+          "type": "relic",
+          "page": "黑暗之血",
+          "display": "黑暗之血"
+        },
+        {
+          "type": "relic",
+          "page": "小血瓶",
+          "display": "小血瓶"
+        },
+        {
+          "type": "relic",
+          "page": "玩具扑翼飞机",
+          "display": "玩具扑翼飞机"
+        },
+        {
+          "type": "relic",
+          "page": "带骨肉",
+          "display": "带骨肉"
+        },
+        {
+          "type": "relic",
+          "page": "鸟面瓮",
+          "display": "鸟面瓮"
+        },
+        {
+          "type": "relic",
+          "page": "蜥蜴尾巴",
+          "display": "蜥蜴尾巴"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "鲜血神像",
+          "display": "鲜血神像"
+        },
+        {
+          "type": "card",
+          "page": "死亡收割",
+          "display": "死亡收割"
+        },
+        {
+          "type": "card",
+          "page": "狂宴",
+          "display": "狂宴"
+        },
+        {
+          "type": "card",
+          "page": "自我修复",
+          "display": "自我修复"
+        },
+        {
+          "type": "card",
+          "page": "包扎",
+          "display": "包扎"
+        },
+        {
+          "type": "card",
+          "page": "噬咬",
+          "display": "噬咬"
+        },
+        {
+          "type": "potion",
+          "page": "再生药水",
+          "display": "再生药水"
+        },
+        {
+          "type": "potion",
+          "page": "瓶中精灵",
+          "display": "瓶中精灵"
+        },
+        {
+          "type": "potion",
+          "page": "鲜血药水",
+          "display": "鲜血药水"
+        },
+        {
+          "type": "potion",
+          "page": "再生药水",
+          "display": "再生药水"
+        },
+        {
+          "type": "potion",
+          "page": "果汁",
+          "display": "果汁"
+        },
+        {
+          "type": "potion",
+          "page": "瓶中精灵",
+          "display": "瓶中精灵"
+        }
+      ]
+    },
+    "Mango": {
+      "id": "Mango",
+      "name_cn": "芒果",
+      "name_en": "Mango",
+      "description": "Upon pickup, raise your Max HP by 14.",
+      "flavor": "The most coveted forgotten fruit. Impeccably preserved with no signs of Spireblight.",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Mango",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%8A%92%E6%9E%9C",
+      "related_links": [
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Rare Relic",
+          "display": "Rare Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Strawberry",
+          "display": "Strawberry"
+        },
+        {
+          "type": "relic",
+          "page": "Pear",
+          "display": "Pear"
+        },
+        {
+          "type": "relic",
+          "page": "草莓",
+          "display": "草莓"
+        },
+        {
+          "type": "relic",
+          "page": "梨子",
+          "display": "梨子"
+        },
+        {
+          "type": "relic",
+          "page": "芒果",
+          "display": "芒果"
+        }
+      ]
+    },
+    "MarkOfPain": {
+      "id": "MarkOfPain",
+      "name_cn": "痛楚印记",
+      "name_en": "Mark of Pain",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%97%9B%E6%A5%9A%E5%8D%B0%E8%AE%B0",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "准备背包",
+          "display": "准备背包"
+        },
+        {
+          "type": "relic",
+          "page": "赌博筹码",
+          "display": "赌博筹码"
+        },
+        {
+          "type": "card",
+          "page": "伤口",
+          "display": "伤口"
+        },
+        {
+          "type": "card",
+          "page": "伤口",
+          "display": "伤口"
+        },
+        {
+          "type": "card",
+          "page": "伤口",
+          "display": "伤口"
+        }
+      ]
+    },
+    "MarkOfTheBloom": {
+      "id": "MarkOfTheBloom",
+      "name_cn": "绽放印记",
+      "name_en": "Mark of the Bloom",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BB%BD%E6%94%BE%E5%8D%B0%E8%AE%B0",
+      "related_links": [
+        {
+          "page": "心灵绽放",
+          "display": "心灵绽放"
+        },
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        },
+        {
+          "page": "恩洛斯",
+          "display": "恩洛斯"
+        }
+      ]
+    },
+    "Matryoshka": {
+      "id": "Matryoshka",
+      "name_cn": "套娃",
+      "name_en": "Matryoshka",
+      "description": "The next 2 chests you open contain 2 Relics. (Excludes boss chests)",
+      "flavor": "A stackable set of painted dolls. The paint depicts an unknown bird with white eyes and blue feathers.",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Matryoshka",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A5%97%E5%A8%83",
+      "related_links": [
+        {
+          "page": "Chest",
+          "display": "chests"
+        },
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Common Relic",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Uncommon Relic",
+          "display": "Uncommon Relic"
+        },
+        {
+          "page": "N'loth's Hungry Face",
+          "display": "N'loth's Hungry Face"
+        },
+        {
+          "page": "Awakened One",
+          "display": "Awakened One"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "page": "钥匙（终幕）",
+          "display": "蓝宝石钥匙"
+        },
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        }
+      ]
+    },
+    "MawBank": {
+      "id": "MawBank",
+      "name_cn": "巨口储蓄罐",
+      "name_en": "Maw Bank",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B7%A8%E5%8F%A3%E5%82%A8%E8%93%84%E7%BD%90",
+      "related_links": [
+        {
+          "page": "巨口",
+          "display": "巨口"
+        }
+      ]
+    },
+    "MealTicket": {
+      "id": "MealTicket",
+      "name_cn": "餐券",
+      "name_en": "Meal Ticket",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%A4%90%E5%88%B8",
+      "related_links": []
+    },
+    "MeatOnTheBone": {
+      "id": "MeatOnTheBone",
+      "name_cn": "带骨肉",
+      "name_en": "Meat on the Bone",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B8%A6%E9%AA%A8%E8%82%89",
+      "related_links": []
+    },
+    "MedicalKit": {
+      "id": "MedicalKit",
+      "name_cn": "医药箱",
+      "name_en": "Medical Kit",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8C%BB%E8%8D%AF%E7%AE%B1",
+      "related_links": []
+    },
+    "Melange": {
+      "id": "Melange",
+      "name_cn": "美琅脂",
+      "name_en": "Melange",
+      "description": "Whenever you shuffle your draw pile, Scry 3.",
+      "flavor": "Mysterious sands from an unknown origin. Smells of cinnamon.",
+      "rarity": "Relics#Shop",
+      "class": "Watcher",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Melange",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BE%8E%E7%90%85%E8%84%82",
+      "related_links": [
+        {
+          "page": "Relics#Shop",
+          "display": "Shop"
+        },
+        {
+          "page": "Watcher",
+          "display": "Watcher"
+        },
+        {
+          "page": "w:c:dune:Melange",
+          "display": "the fictional drug"
+        },
+        {
+          "page": "wikipedia:Melange_(fictional_drug)",
+          "display": "the same name"
+        },
+        {
+          "page": "Wikipedia:Dune_(franchise)",
+          "display": "Dune"
+        },
+        {
+          "page": "Category:Shop Relic",
+          "display": "Category:Shop Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Watcher Relic",
+          "display": "Category:Watcher Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Scry",
+          "display": "Scrying"
+        }
+      ]
+    },
+    "MembershipCard": {
+      "id": "MembershipCard",
+      "name_cn": "会员卡",
+      "name_en": "Membership Card",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E4%BC%9A%E5%91%98%E5%8D%A1",
+      "related_links": [
+        {
+          "page": "商人",
+          "display": "商人"
+        }
+      ]
+    },
+    "MercuryHourglass": {
+      "id": "MercuryHourglass",
+      "name_cn": "水银沙漏",
+      "name_en": "Mercury Hourglass",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%B0%B4%E9%93%B6%E6%B2%99%E6%BC%8F",
+      "related_links": []
+    },
+    "MoltenEgg": {
+      "id": "MoltenEgg",
+      "name_cn": "熔火之蛋",
+      "name_en": "Molten Egg",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%86%94%E7%81%AB%E4%B9%8B%E8%9B%8B",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "熔火之蛋",
+          "display": "熔火之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "毒素之蛋",
+          "display": "毒素之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "冻结之蛋",
+          "display": "冻结之蛋"
+        }
+      ]
+    },
+    "MummifiedHand": {
+      "id": "MummifiedHand",
+      "name_cn": "干瘪之手",
+      "name_en": "Mummified Hand",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B9%B2%E7%98%AA%E4%B9%8B%E6%89%8B",
+      "related_links": []
+    },
+    "MutagenicStrength": {
+      "id": "MutagenicStrength",
+      "name_cn": "突变之力",
+      "name_en": "Mutagenic Strength",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AA%81%E5%8F%98%E4%B9%8B%E5%8A%9B",
+      "related_links": []
+    },
+    "Necronomicon": {
+      "id": "Necronomicon",
+      "name_cn": "死灵之书",
+      "name_en": "Necronomicon",
+      "description": "The first Attack played each turn that costs 2 or more is played twice. When you take this relic, become Cursed.",
+      "flavor": "Only a fool would try and harness this evil power. At night your dreams are haunted by images of the book devouring your mind.",
+      "rarity": "Relics#Event",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Necronomicon",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%AD%BB%E7%81%B5%E4%B9%8B%E4%B9%A6",
+      "related_links": [
+        {
+          "page": "Attack",
+          "display": "Attack"
+        },
+        {
+          "page": "Necronomicurse",
+          "display": "Cursed"
+        },
+        {
+          "page": "Relics#Event",
+          "display": "Event"
+        },
+        {
+          "page": "Relics",
+          "display": "Relic"
+        },
+        {
+          "page": "Cursed Tome",
+          "display": "Cursed Tome"
+        },
+        {
+          "page": "Wikipedia:H.P. Lovecraft",
+          "display": "H.P. Lovecraft"
+        },
+        {
+          "page": "N'loth",
+          "display": "N'loth"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Event Relic",
+          "display": "Category:Event Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Exhaust",
+          "display": "Exhausted"
+        },
+        {
+          "type": "keyword",
+          "page": "Exhaust",
+          "display": "Exhaust"
+        },
+        {
+          "type": "keyword",
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "type": "relic",
+          "page": "Du-Vu Doll",
+          "display": "Du-Vu Doll"
+        },
+        {
+          "type": "relic",
+          "page": "Darkstone Periapt",
+          "display": "Darkstone Periapt"
+        },
+        {
+          "type": "relic",
+          "page": "Omamori",
+          "display": "Omamori"
+        },
+        {
+          "type": "card",
+          "page": "Necronomicurse",
+          "display": "Necronomicurse"
+        },
+        {
+          "type": "card",
+          "page": "Necronomicurse",
+          "display": "Necronomicurse"
+        },
+        {
+          "type": "card",
+          "page": "Necronomicurse",
+          "display": "Necronomicurse"
+        },
+        {
+          "type": "card",
+          "page": "Necronomicurse",
+          "display": "Necronomicurse"
+        },
+        {
+          "page": "诅咒书本",
+          "display": "诅咒书本"
+        },
+        {
+          "type": "relic",
+          "page": "化学物X",
+          "display": "化学物X"
+        }
+      ]
+    },
+    "NeowsLament": {
+      "id": "NeowsLament",
+      "name_cn": "涅奥的悲恸",
+      "name_en": "Neq met",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%B6%85%E5%A5%A5%E7%9A%84%E6%82%B2%E6%81%B8",
+      "related_links": [
+        {
+          "page": "精英",
+          "display": "精英怪物"
+        },
+        {
+          "page": "精英",
+          "display": "精英怪物"
+        },
+        {
+          "page": "遗物",
+          "display": "遗物"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "BOSS",
+          "display": "BOSS"
+        },
+        {
+          "page": "敌人",
+          "display": "敌人"
+        },
+        {
+          "page": "敌人",
+          "display": "敌人"
+        }
+      ]
+    },
+    "NilrysCodex": {
+      "id": "NilrysCodex",
+      "name_cn": "尼利的宝典",
+      "name_en": "Nilry's Codex",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B0%BC%E5%88%A9%E7%9A%84%E5%AE%9D%E5%85%B8",
+      "related_links": []
+    },
+    "NinjaScroll": {
+      "id": "NinjaScroll",
+      "name_cn": "忍术卷轴",
+      "name_en": "Ninja Scroll",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BF%8D%E6%9C%AF%E5%8D%B7%E8%BD%B4",
+      "related_links": []
+    },
+    "NlothsGift": {
+      "id": "NlothsGift",
+      "name_cn": "恩洛斯的礼物",
+      "name_en": "N'loth's Gift",
+      "description": "在事件恩洛斯中，用一件随机遗物换取此遗物。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%81%A9%E6%B4%9B%E6%96%AF%E7%9A%84%E7%A4%BC%E7%89%A9",
+      "related_links": [
+        {
+          "page": "恩洛斯",
+          "display": "恩洛斯"
+        },
+        {
+          "type": "card",
+          "page": "腐化",
+          "display": "腐化"
+        },
+        {
+          "type": "card",
+          "page": "尸爆术",
+          "display": "尸爆术"
+        },
+        {
+          "type": "card",
+          "page": "偏差认知",
+          "display": "偏差认知"
+        },
+        {
+          "type": "card",
+          "page": "虔信",
+          "display": "虔信"
+        }
+      ]
+    },
+    "NlothsMask": {
+      "id": "NlothsMask",
+      "name_cn": "恩洛斯的饥饿的脸",
+      "name_en": "N'loth's Mask",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%81%A9%E6%B4%9B%E6%96%AF%E7%9A%84%E9%A5%A5%E9%A5%BF%E7%9A%84%E8%84%B8",
+      "related_links": [
+        {
+          "page": "换脸商",
+          "display": "换脸商"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "恩洛斯的饥饿的脸",
+          "display": "恩洛斯的饥饿的脸"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "邪教徒头套",
+          "display": "邪教徒头套"
+        },
+        {
+          "type": "relic",
+          "page": "地精容貌",
+          "display": "地精容貌"
+        }
+      ]
+    },
+    "NuclearBattery": {
+      "id": "NuclearBattery",
+      "name_cn": "核能电池",
+      "name_en": "Nuclear Battery",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%A0%B8%E8%83%BD%E7%94%B5%E6%B1%A0",
+      "related_links": []
+    },
+    "Nunchaku": {
+      "id": "Nunchaku",
+      "name_cn": "双节棍",
+      "name_en": "Nunchaku",
+      "description": "Every time you play 10 Attacks, gain 1 Energy.",
+      "flavor": "A good training tool. Improves the posture and agility of the wielder.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Nunchaku",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8F%8C%E8%8A%82%E6%A3%8D",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        }
+      ]
+    },
+    "OddMushroom": {
+      "id": "OddMushroom",
+      "name_cn": "奇怪蘑菇",
+      "name_en": "Odd Mushroom",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A5%87%E6%80%AA%E8%98%91%E8%8F%87",
+      "related_links": []
+    },
+    "OddlySmoothStone": {
+      "id": "OddlySmoothStone",
+      "name_cn": "意外光滑的石头",
+      "name_en": "Oddly Smooth Stone",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%84%8F%E5%A4%96%E5%85%89%E6%BB%91%E7%9A%84%E7%9F%B3%E5%A4%B4",
+      "related_links": [
+        {
+          "page": "荒疫",
+          "display": "荒疫"
+        },
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        },
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        }
+      ]
+    },
+    "OldCoin": {
+      "id": "OldCoin",
+      "name_cn": "古钱币",
+      "name_en": "Old Coin",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8F%A4%E9%92%B1%E5%B8%81",
+      "related_links": []
+    },
+    "Omamori": {
+      "id": "Omamori",
+      "name_cn": "御守",
+      "name_en": "Omamori",
+      "description": "Negate the next 2 Curses you obtain.",
+      "flavor": "A common charm for staving off vile spirits. This one seems to possess a spark of divine energy.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Omamori",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BE%A1%E5%AE%88",
+      "related_links": [
+        {
+          "page": "Curse",
+          "display": "Curses"
+        },
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Relics#Common Relics",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Custom_Mode#endless",
+          "display": "Endless Mode"
+        },
+        {
+          "page": "Events",
+          "display": "Events"
+        },
+        {
+          "page": "Transform",
+          "display": "transforming"
+        },
+        {
+          "page": "Augmenter",
+          "display": "Augmenter"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Curse",
+          "display": "Curses"
+        },
+        {
+          "type": "relic",
+          "page": "Necronomicon",
+          "display": "Necronomicon"
+        },
+        {
+          "type": "relic",
+          "page": "Calling Bell",
+          "display": "Calling Bell"
+        },
+        {
+          "type": "relic",
+          "page": "Cursed Key",
+          "display": "Cursed Key"
+        },
+        {
+          "type": "relic",
+          "page": "Calling Bell",
+          "display": "Calling Bell"
+        },
+        {
+          "type": "relic",
+          "page": "Necronomicon",
+          "display": "Necronomicon"
+        },
+        {
+          "type": "relic",
+          "page": "Du-Vu Doll",
+          "display": "Du-Vu Doll"
+        },
+        {
+          "type": "relic",
+          "page": "Darkstone Periapt",
+          "display": "Darkstone Periapt"
+        },
+        {
+          "type": "card",
+          "page": "Necronomicurse",
+          "display": "Necronomicurse"
+        },
+        {
+          "type": "card",
+          "page": "Curse of the Bell",
+          "display": "Curse of the Bell"
+        },
+        {
+          "type": "card",
+          "page": "Fire Breathing",
+          "display": "Fire Breathing"
+        },
+        {
+          "type": "card",
+          "page": "Pride",
+          "display": "Prides"
+        }
+      ]
+    },
+    "OrangePellets": {
+      "id": "OrangePellets",
+      "name_cn": "橙色药丸",
+      "name_en": "Orange Pellets",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%A9%99%E8%89%B2%E8%8D%AF%E4%B8%B8",
+      "related_links": []
+    },
+    "Orichalcum": {
+      "id": "Orichalcum",
+      "name_cn": "奥利哈钢",
+      "name_en": "Orichalcum",
+      "description": "If you end your turn without *Block*, gain 6 *Block*.",
+      "flavor": "A green tinted metal of an unknown origin. Seemingly indestructible.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Orichalcum",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A5%A5%E5%88%A9%E5%93%88%E9%92%A2",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Defect",
+          "display": "Defect"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Block",
+          "display": "Block"
+        },
+        {
+          "type": "keyword",
+          "page": "Plated Armor",
+          "display": "Plated Armor"
+        },
+        {
+          "type": "relic",
+          "page": "Orichalcum",
+          "display": "Orichalcum"
+        },
+        {
+          "type": "relic",
+          "page": "Thread and Needle",
+          "display": "Thread and Needle"
+        },
+        {
+          "type": "relic",
+          "page": "Orichalcum",
+          "display": "Orichalcum"
+        },
+        {
+          "type": "relic",
+          "page": "Cloak Clasp",
+          "display": "Cloak Clasp"
+        },
+        {
+          "type": "card",
+          "page": "Metallicize",
+          "display": "Metallicize"
+        },
+        {
+          "type": "card",
+          "page": "After Image",
+          "display": "After Image"
+        },
+        {
+          "page": "充能球",
+          "display": "冰霜充能球"
+        },
+        {
+          "type": "potion",
+          "page": "格挡药水",
+          "display": "格挡药水"
+        }
+      ]
+    },
+    "OrnamentalFan": {
+      "id": "OrnamentalFan",
+      "name_cn": "精致折扇",
+      "name_en": "Ornamental Fan",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%B2%BE%E8%87%B4%E6%8A%98%E6%89%87",
+      "related_links": [
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "力量",
+          "display": "力量"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "敏捷",
+          "display": "敏捷"
+        },
+        {
+          "page": "技能牌",
+          "display": "技能牌"
+        },
+        {
+          "type": "relic",
+          "page": "手里剑",
+          "display": "手里剑"
+        },
+        {
+          "type": "relic",
+          "page": "苦无",
+          "display": "苦无"
+        },
+        {
+          "type": "relic",
+          "page": "精致折扇",
+          "display": "精致折扇"
+        },
+        {
+          "type": "relic",
+          "page": "开信刀",
+          "display": "开信刀"
+        }
+      ]
+    },
+    "Orrery": {
+      "id": "Orrery",
+      "name_cn": "星系仪",
+      "name_en": "Orrery",
+      "description": "Choose and add 5 cards to your deck.",
+      "flavor": "Once you understand the universe...\" - Zoroth",
+      "rarity": "Relics#Shop",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Orrery",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%98%9F%E7%B3%BB%E4%BB%AA",
+      "related_links": [
+        {
+          "page": "Relics#Shop",
+          "display": "Shop"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Shop Relic",
+          "display": "Category:Shop Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Question Card",
+          "display": "Question Card"
+        },
+        {
+          "type": "relic",
+          "page": "Busted Crown",
+          "display": "Busted Crown"
+        },
+        {
+          "type": "relic",
+          "page": "Prismatic Shard",
+          "display": "Prismatic Shard"
+        },
+        {
+          "type": "relic",
+          "page": "Singing Bowl",
+          "display": "Singing Bowl"
+        },
+        {
+          "type": "relic",
+          "page": "Molten Egg",
+          "display": "Molten Egg"
+        },
+        {
+          "type": "relic",
+          "page": "Toxic Egg",
+          "display": "Toxic Egg"
+        },
+        {
+          "type": "relic",
+          "page": "Frozen Egg",
+          "display": "Frozen Egg"
+        }
+      ]
+    },
+    "PandoraBox": {
+      "id": "PandoraBox",
+      "name_cn": "潘多拉魔盒",
+      "name_en": "Pandora's Box",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%BD%98%E5%A4%9A%E6%8B%89%E9%AD%94%E7%9B%92",
+      "related_links": []
+    },
+    "Pantograph": {
+      "id": "Pantograph",
+      "name_cn": "缩放仪",
+      "name_en": "Pantograph",
+      "description": "At the start of boss combats, heal 25 HP.",
+      "flavor": "Solid foundations are not accidental. Tools for planning are a must.\" - The Architect",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Pantograph",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BC%A9%E6%94%BE%E4%BB%AA",
+      "related_links": [
+        {
+          "page": "Bosses",
+          "display": "boss"
+        },
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Bosses",
+          "display": "Boss"
+        },
+        {
+          "page": "Mind Bloom",
+          "display": "Mind Bloom"
+        },
+        {
+          "page": "Events",
+          "display": "event"
+        },
+        {
+          "page": "Ascension",
+          "display": "Ascension 20"
+        },
+        {
+          "page": "Uncommon Relic",
+          "display": "Uncommon Relic"
+        },
+        {
+          "page": "wikipedia:Pantograph",
+          "display": "pantograph"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        }
+      ]
+    },
+    "PaperCrane": {
+      "id": "PaperCrane",
+      "name_cn": "纸鹤",
+      "name_en": "Paper Crane",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BA%B8%E9%B9%A4",
+      "related_links": []
+    },
+    "PaperFrog": {
+      "id": "PaperFrog",
+      "name_cn": "纸蛙",
+      "name_en": "Paper Frog",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BA%B8%E8%9B%99",
+      "related_links": []
+    },
+    "PeacePipe": {
+      "id": "PeacePipe",
+      "name_cn": "宁静烟斗",
+      "name_en": "Peace Pipe",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%AE%81%E9%9D%99%E7%83%9F%E6%96%97",
+      "related_links": [
+        {
+          "page": "商店",
+          "display": "商店"
+        }
+      ]
+    },
+    "Pear": {
+      "id": "Pear",
+      "name_cn": "梨子",
+      "name_en": "Pear",
+      "description": "Upon pickup, raise your Max HP by 10.",
+      "flavor": "A common fruit before the Spireblight.",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Pear",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%A2%A8%E5%AD%90",
+      "related_links": [
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Uncommon Relic",
+          "display": "Uncommon Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "type": "relic",
+          "page": "草莓",
+          "display": "草莓"
+        },
+        {
+          "type": "relic",
+          "page": "梨子",
+          "display": "梨子"
+        },
+        {
+          "type": "relic",
+          "page": "芒果",
+          "display": "芒果"
+        }
+      ]
+    },
+    "PenNib": {
+      "id": "PenNib",
+      "name_cn": "钢笔尖",
+      "name_en": "Pen Nib",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%92%A2%E7%AC%94%E5%B0%96",
+      "related_links": []
+    },
+    "PhilosophersStone": {
+      "id": "PhilosophersStone",
+      "name_cn": "贤者之石",
+      "name_en": "Philosopher's Stone",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%B4%A4%E8%80%85%E4%B9%8B%E7%9F%B3",
+      "related_links": []
+    },
+    "Pocketwatch": {
+      "id": "Pocketwatch",
+      "name_cn": "怀表",
+      "name_en": "Pocketwatch",
+      "description": "Whenever you play 3 or less cards in a turn, draw 3 additional cards at the start of your next turn.",
+      "flavor": "The hands seem stuck on the 3 o'clock position.",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Pocketwatch",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%80%80%E8%A1%A8",
+      "related_links": [
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "page": "荒疫（剧情）",
+          "display": "荒疫"
+        }
+      ]
+    },
+    "PotionBelt": {
+      "id": "PotionBelt",
+      "name_cn": "药水腰带",
+      "name_en": "Potion Belt",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%8D%AF%E6%B0%B4%E8%85%B0%E5%B8%A6",
+      "related_links": [
+        {
+          "page": "恩洛斯",
+          "display": "恩洛斯"
+        }
+      ]
+    },
+    "PrayerWheel": {
+      "id": "PrayerWheel",
+      "name_cn": "转经轮",
+      "name_en": "Prayer Wheel",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%BD%AC%E7%BB%8F%E8%BD%AE",
+      "related_links": []
+    },
+    "PreservedInsect": {
+      "id": "PreservedInsect",
+      "name_cn": "昆虫标本",
+      "name_en": "Preserved Insect",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%98%86%E8%99%AB%E6%A0%87%E6%9C%AC",
+      "related_links": [
+        {
+          "page": "冒险者尸体",
+          "display": "冒险者尸体"
+        },
+        {
+          "page": "竞技场",
+          "display": "竞技场"
+        }
+      ]
+    },
+    "PrismaticShard": {
+      "id": "PrismaticShard",
+      "name_cn": "棱镜碎片",
+      "name_en": "Prismatic Shard",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%A3%B1%E9%95%9C%E7%A2%8E%E7%89%87",
+      "related_links": [
+        {
+          "page": "自定义模式",
+          "display": "自定义模式"
+        }
+      ]
+    },
+    "PureWater": {
+      "id": "PureWater",
+      "name_cn": "清水",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%87%B3%E7%BA%AF%E4%B9%8B%E6%B0%B4",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "圣水",
+          "display": "圣水"
+        }
+      ]
+    },
+    "QuestionCard": {
+      "id": "QuestionCard",
+      "name_cn": "问号牌",
+      "name_en": "Question Card",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%97%AE%E5%8F%B7%E7%89%8C",
+      "related_links": []
+    },
+    "RedMask": {
+      "id": "RedMask",
+      "name_cn": "红面具",
+      "name_en": "Red Mask",
+      "description": "在事件蒙面强盗中，赢得战斗胜利可以获得此遗物。\n在事件红面具大人之墓中，可以以<b>失去所有金币</b>为代价换取此遗物。如果已经拥有此遗物，则可以选择获得222金币。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BA%A2%E9%9D%A2%E5%85%B7",
+      "related_links": [
+        {
+          "page": "蒙面强盗",
+          "display": "蒙面强盗"
+        },
+        {
+          "page": "红面具大人之墓",
+          "display": "红面具大人之墓"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "page": "易伤",
+          "display": "易伤"
+        },
+        {
+          "page": "中毒",
+          "display": "中毒"
+        },
+        {
+          "type": "relic",
+          "page": "弹珠袋",
+          "display": "弹珠袋"
+        },
+        {
+          "type": "relic",
+          "page": "红面具",
+          "display": "红面具"
+        },
+        {
+          "type": "relic",
+          "page": "扭曲漏斗",
+          "display": "扭曲漏斗"
+        }
+      ]
+    },
+    "RedSkull": {
+      "id": "RedSkull",
+      "name_cn": "红头骨",
+      "name_en": "Red Skull",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BA%A2%E5%A4%B4%E9%AA%A8",
+      "related_links": []
+    },
+    "RegalPillow": {
+      "id": "RegalPillow",
+      "name_cn": "皇家枕头",
+      "name_en": "Regal Pillow",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%9A%87%E5%AE%B6%E6%9E%95%E5%A4%B4",
+      "related_links": []
+    },
+    "RingOfTheSerpent": {
+      "id": "RingOfTheSerpent",
+      "name_cn": "长蛇戒指",
+      "name_en": "Ring of the Serpent",
+      "description": "Replaces [Ring of the Snake]. At the start of your turn, draw 1 additional card.",
+      "flavor": "Your ring has morphed and changed forms.",
+      "rarity": "",
+      "class": "Silent",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Ring_of_the_Serpent",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%95%BF%E8%9B%87%E6%88%92%E6%8C%87",
+      "related_links": [
+        {
+          "page": "Silent",
+          "display": "Silent"
+        },
+        {
+          "page": "Silent",
+          "display": "Silent"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Boss Relic",
+          "display": "Category:Boss Relic"
+        },
+        {
+          "page": "Category:Silent Relic",
+          "display": "Category:Silent Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Preparation",
+          "display": "Bag of Preparation"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Snake",
+          "display": "Ring of the Snake"
+        },
+        {
+          "type": "card",
+          "page": "Acrobatics",
+          "display": "Acrobatics"
+        }
+      ]
+    },
+    "RingOfTheSnake": {
+      "id": "RingOfTheSnake",
+      "name_cn": "蛇戒",
+      "name_en": "Ring of the Snake",
+      "description": "At the start of each combat, draw 2 additional cards.",
+      "flavor": "Made from a fossilized snake. Represents great skill as a huntress.",
+      "rarity": "Relics#Starter",
+      "class": "Silent",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Ring_of_the_Snake",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%9B%87%E4%B9%8B%E6%88%92%E6%8C%87",
+      "related_links": [
+        {
+          "page": "Relics#Starter",
+          "display": "Starter"
+        },
+        {
+          "page": "Silent",
+          "display": "Silent"
+        },
+        {
+          "page": "Silent",
+          "display": "Silent"
+        },
+        {
+          "page": "Chest#BossChest",
+          "display": "Boss Chest"
+        },
+        {
+          "page": "Category:Starter Relic",
+          "display": "Category:Starter Relic"
+        },
+        {
+          "page": "Category:Silent Relic",
+          "display": "Category:Silent Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Bag of Preparation",
+          "display": "Bag of Preparation"
+        },
+        {
+          "type": "relic",
+          "page": "Ring of the Serpent",
+          "display": "Ring of the Serpent"
+        },
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "每周更新51:递归",
+          "display": "每周更新51:递归"
+        },
+        {
+          "type": "relic",
+          "page": "准备背包",
+          "display": "准备背包"
+        },
+        {
+          "type": "relic",
+          "page": "长蛇戒指",
+          "display": "长蛇戒指"
+        },
+        {
+          "type": "relic",
+          "page": "斗篷扣",
+          "display": "斗篷扣"
+        },
+        {
+          "type": "relic",
+          "page": "赌博筹码",
+          "display": "赌博筹码"
+        },
+        {
+          "type": "relic",
+          "page": "忍术卷轴",
+          "display": "忍术卷轴"
+        },
+        {
+          "type": "relic",
+          "page": "圣水",
+          "display": "圣水"
+        },
+        {
+          "type": "relic",
+          "page": "长蛇戒指",
+          "display": "长蛇戒指"
+        },
+        {
+          "type": "card",
+          "page": "精神护盾",
+          "display": "精神护盾"
+        }
+      ]
+    },
+    "RunicCapacitor": {
+      "id": "RunicCapacitor",
+      "name_cn": "符文电容器",
+      "name_en": "Runic Capacitor",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AC%A6%E6%96%87%E7%94%B5%E5%AE%B9%E5%99%A8",
+      "related_links": []
+    },
+    "RunicCube": {
+      "id": "RunicCube",
+      "name_cn": "符文立方体",
+      "name_en": "Runic Cube",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AC%A6%E6%96%87%E7%AB%8B%E6%96%B9%E4%BD%93",
+      "related_links": []
+    },
+    "RunicDome": {
+      "id": "RunicDome",
+      "name_cn": "符文圆顶",
+      "name_en": "Runic Dome",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AC%A6%E6%96%87%E5%9C%86%E9%A1%B6",
+      "related_links": [
+        {
+          "page": "存档与读档",
+          "display": "存档与读档"
+        },
+        {
+          "page": "存档与读档",
+          "display": "存档与读档"
+        }
+      ]
+    },
+    "RunicPyramid": {
+      "id": "RunicPyramid",
+      "name_cn": "符文金字塔",
+      "name_en": "Runic Pyramid",
+      "description": "在BOSS宝箱中获得。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AC%A6%E6%96%87%E9%87%91%E5%AD%97%E5%A1%94",
+      "related_links": [
+        {
+          "page": "无限",
+          "display": "无限"
+        },
+        {
+          "page": "状态牌",
+          "display": "状态牌"
+        },
+        {
+          "page": "诅咒牌",
+          "display": "诅咒牌"
+        },
+        {
+          "page": "丢弃",
+          "display": "丢弃"
+        },
+        {
+          "page": "消耗",
+          "display": "消耗"
+        },
+        {
+          "page": "保留",
+          "display": "保留"
+        },
+        {
+          "type": "relic",
+          "page": "蓝蜡烛",
+          "display": "蓝蜡烛"
+        },
+        {
+          "type": "relic",
+          "page": "医药箱",
+          "display": "医药箱"
+        },
+        {
+          "type": "relic",
+          "page": "异蛇之眼",
+          "display": "异蛇之眼"
+        },
+        {
+          "type": "relic",
+          "page": "枯木树枝",
+          "display": "枯木树枝"
+        }
+      ]
+    },
+    "SacredBark": {
+      "id": "SacredBark",
+      "name_cn": "神圣树皮",
+      "name_en": "Sacred Bark",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A5%9E%E5%9C%A3%E6%A0%91%E7%9A%AE",
+      "related_links": [
+        {
+          "type": "potion",
+          "page": "仙馔密酒",
+          "display": "仙馔密酒"
+        },
+        {
+          "type": "potion",
+          "page": "熔炉的祝福",
+          "display": "熔炉的祝福"
+        },
+        {
+          "type": "potion",
+          "page": "混沌药水",
+          "display": "混沌药水"
+        },
+        {
+          "type": "potion",
+          "page": "万灵药水",
+          "display": "万灵药水"
+        },
+        {
+          "type": "potion",
+          "page": "赌徒特酿",
+          "display": "赌徒特酿"
+        },
+        {
+          "type": "potion",
+          "page": "烟雾弹",
+          "display": "烟雾弹"
+        },
+        {
+          "type": "potion",
+          "page": "姿态药水",
+          "display": "姿态药水"
+        },
+        {
+          "type": "potion",
+          "page": "攻击药水",
+          "display": "攻击药水"
+        }
+      ]
+    },
+    "SelfFormingClay": {
+      "id": "SelfFormingClay",
+      "name_cn": "自成型黏土",
+      "name_en": "Self-Forming Clay",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%87%AA%E6%88%90%E5%9E%8B%E9%BB%8F%E5%9C%9F",
+      "related_links": []
+    },
+    "Shovel": {
+      "id": "Shovel",
+      "name_cn": "铲子",
+      "name_en": "Shovel",
+      "description": "You can now Dig for loot at Rest Sites.",
+      "flavor": "The Spire houses all number of relics from past civilizations and powerful adventurers lost to time. Time to go dig them up!",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Shovel",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%93%B2%E5%AD%90",
+      "related_links": [
+        {
+          "page": "Rest Site",
+          "display": "Rest Sites"
+        },
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Rest Site",
+          "display": "Rest Site"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Peace Pipe",
+          "display": "Peace Pipe"
+        },
+        {
+          "type": "relic",
+          "page": "Girya",
+          "display": "Girya"
+        },
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        }
+      ]
+    },
+    "Shuriken": {
+      "id": "Shuriken",
+      "name_cn": "手里剑",
+      "name_en": "Shuriken",
+      "description": "Every time you play 3 Attacks in a single turn, gain 1 *Strength*.",
+      "flavor": "Lightweight throwing weapons. Recommend going for the eyes.",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Shuriken",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%89%8B%E9%87%8C%E5%89%91",
+      "related_links": [
+        {
+          "page": "Attack",
+          "display": "Attacks"
+        },
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Attack",
+          "display": "Attack"
+        },
+        {
+          "page": "Uncommon Relic",
+          "display": "Uncommon Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "page": "铁甲战士",
+          "display": "铁甲战士"
+        },
+        {
+          "page": "静默猎手",
+          "display": "静默猎手"
+        },
+        {
+          "page": "故障机器人",
+          "display": "故障机器人"
+        },
+        {
+          "page": "观者",
+          "display": "观者"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "敏捷",
+          "display": "敏捷"
+        },
+        {
+          "page": "攻击牌",
+          "display": "攻击牌"
+        },
+        {
+          "page": "格挡",
+          "display": "格挡"
+        },
+        {
+          "page": "技能牌",
+          "display": "技能牌"
+        },
+        {
+          "type": "relic",
+          "page": "手里剑",
+          "display": "手里剑"
+        },
+        {
+          "type": "relic",
+          "page": "苦无",
+          "display": "苦无"
+        },
+        {
+          "type": "relic",
+          "page": "精致折扇",
+          "display": "精致折扇"
+        },
+        {
+          "type": "relic",
+          "page": "开信刀",
+          "display": "开信刀"
+        },
+        {
+          "type": "card",
+          "page": "重刃",
+          "display": "重刃"
+        }
+      ]
+    },
+    "SingingBowl": {
+      "id": "SingingBowl",
+      "name_cn": "颂钵",
+      "name_en": "Singing Bowl",
+      "description": "When adding cards to your deck, you may gain +2 Max HP instead.",
+      "flavor": "This well-used artifact rings out with a beautiful melody when struck.",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Singing_Bowl",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%A2%82%E9%92%B5",
+      "related_links": [
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Sensory Stone",
+          "display": "Sensory Stone"
+        },
+        {
+          "page": "Custom_Mode#vintage",
+          "display": "Vintage"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Busted Crown",
+          "display": "Busted Crown"
+        },
+        {
+          "type": "relic",
+          "page": "Prayer Wheel",
+          "display": "Prayer Wheel"
+        },
+        {
+          "type": "relic",
+          "page": "Dream Catcher",
+          "display": "Dream Catcher"
+        },
+        {
+          "type": "relic",
+          "page": "Orrery",
+          "display": "Orrery"
+        },
+        {
+          "type": "relic",
+          "page": "Tiny House",
+          "display": "Tiny House"
+        },
+        {
+          "page": "感知石",
+          "display": "感知石"
+        },
+        {
+          "page": "每周更新33:恐怖",
+          "display": "每周更新33:恐怖"
+        }
+      ]
+    },
+    "SlaverCollar": {
+      "id": "SlaverCollar",
+      "name_cn": "奴隶项圈",
+      "name_en": "",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "",
+      "related_links": []
+    },
+    "Sling": {
+      "id": "Sling",
+      "name_cn": "勇气投石索",
+      "name_en": "Sling",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8B%87%E6%B0%94%E6%8A%95%E7%9F%B3%E7%B4%A2",
+      "related_links": []
+    },
+    "SmilingMask": {
+      "id": "SmilingMask",
+      "name_cn": "微笑面具",
+      "name_en": "Smiling Mask",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BE%AE%E7%AC%91%E9%9D%A2%E5%85%B7",
+      "related_links": []
+    },
+    "SneckoEye": {
+      "id": "SneckoEye",
+      "name_cn": "异蛇之眼",
+      "name_en": "Snecko Eye",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%82%E8%9B%87%E4%B9%8B%E7%9C%BC",
+      "related_links": []
+    },
+    "SneckoSkull": {
+      "id": "SneckoSkull",
+      "name_cn": "异蛇头骨",
+      "name_en": "Snecko Skull",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%82%E8%9B%87%E5%A4%B4%E9%AA%A8",
+      "related_links": []
+    },
+    "Sozu": {
+      "id": "Sozu",
+      "name_cn": "添水",
+      "name_en": "Sozu",
+      "description": "Gain 1 Energy at the start of each turn. You can no longer obtain potions.",
+      "flavor": "You notice that magical liquids seem to lose their properties when near this relic.",
+      "rarity": "Relics#Boss",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Sozu",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%B7%BB%E6%B0%B4",
+      "related_links": [
+        {
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "page": "Potions",
+          "display": "potions"
+        },
+        {
+          "page": "Relics#Boss",
+          "display": "Boss"
+        },
+        {
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "page": "Potions",
+          "display": "Potions"
+        },
+        {
+          "page": "Merchant",
+          "display": "Merchant"
+        },
+        {
+          "page": "Knowing Skull",
+          "display": "Knowing Skull"
+        },
+        {
+          "page": "Boss Relic",
+          "display": "Boss Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Boss Relic",
+          "display": "Category:Boss Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Cauldron",
+          "display": "Cauldron"
+        },
+        {
+          "type": "card",
+          "page": "Alchemize",
+          "display": "Alchemize"
+        },
+        {
+          "type": "potion",
+          "page": "Entropic Brew",
+          "display": "Entropic Brew"
+        },
+        {
+          "type": "potion",
+          "page": "混沌药水",
+          "display": "混沌药水"
+        }
+      ]
+    },
+    "SpiritPoop": {
+      "id": "SpiritPoop",
+      "name_cn": "精灵便便",
+      "name_en": "Spirit Poop",
+      "description": "在篝火精灵事件中将诅咒丢入篝火中以获得此遗物。",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%B2%BE%E7%81%B5%E4%BE%BF%E4%BE%BF",
+      "related_links": [
+        {
+          "page": "篝火精灵",
+          "display": "篝火精灵"
+        },
+        {
+          "page": "恩洛斯",
+          "display": "恩洛斯"
+        },
+        {
+          "page": "成就",
+          "display": "成就"
+        },
+        {
+          "page": "分数",
+          "display": "得分结算"
+        }
+      ]
+    },
+    "SsserpentHead": {
+      "id": "SsserpentHead",
+      "name_cn": "蛇的头",
+      "name_en": "Ssserpent Head",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%9B%87%E7%9A%84%E5%A4%B4",
+      "related_links": [
+        {
+          "page": "蛇～",
+          "display": "蛇～"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "宝箱房",
+          "display": "宝箱房"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "换脸商",
+          "display": "换脸商"
+        },
+        {
+          "page": "虚弱",
+          "display": "虚弱"
+        },
+        {
+          "type": "relic",
+          "page": "小宝箱",
+          "display": "小宝箱"
+        },
+        {
+          "type": "relic",
+          "page": "佛珠手链",
+          "display": "佛珠手链"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        },
+        {
+          "type": "relic",
+          "page": "恩洛斯的饥饿的脸",
+          "display": "恩洛斯的饥饿的脸"
+        },
+        {
+          "type": "relic",
+          "page": "牧师的脸",
+          "display": "牧师的脸"
+        },
+        {
+          "type": "relic",
+          "page": "邪教徒头套",
+          "display": "邪教徒头套"
+        },
+        {
+          "type": "relic",
+          "page": "地精容貌",
+          "display": "地精容貌"
+        }
+      ]
+    },
+    "StoneCalendar": {
+      "id": "StoneCalendar",
+      "name_cn": "历石",
+      "name_en": "Stone Calendar",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8E%86%E7%9F%B3",
+      "related_links": []
+    },
+    "StrangeSpoon": {
+      "id": "StrangeSpoon",
+      "name_cn": "奇怪的勺子",
+      "name_en": "Strange Spoon",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A5%87%E6%80%AA%E7%9A%84%E5%8B%BA%E5%AD%90",
+      "related_links": [
+        {
+          "page": "消耗",
+          "display": "消耗"
+        },
+        {
+          "page": "虚无",
+          "display": "虚无"
+        },
+        {
+          "page": "状态牌",
+          "display": "状态牌"
+        },
+        {
+          "page": "诅咒牌",
+          "display": "诅咒牌"
+        },
+        {
+          "type": "relic",
+          "page": "悬浮风筝",
+          "display": "悬浮风筝"
+        },
+        {
+          "type": "relic",
+          "page": "枯木树枝",
+          "display": "枯木树枝"
+        },
+        {
+          "type": "relic",
+          "page": "医药箱",
+          "display": "医药箱"
+        },
+        {
+          "type": "relic",
+          "page": "蓝蜡烛",
+          "display": "蓝蜡烛"
+        },
+        {
+          "type": "card",
+          "page": "机械降神",
+          "display": "机械降神"
+        },
+        {
+          "type": "card",
+          "page": "破灭",
+          "display": "破灭"
+        },
+        {
+          "type": "card",
+          "page": "通晓万物",
+          "display": "通晓万物"
+        },
+        {
+          "type": "card",
+          "page": "伤口",
+          "display": "伤口"
+        },
+        {
+          "type": "card",
+          "page": "通晓万物",
+          "display": "通晓万物"
+        },
+        {
+          "type": "card",
+          "page": "小刀",
+          "display": "小刀"
+        },
+        {
+          "type": "card",
+          "page": "灵体",
+          "display": "灵体"
+        }
+      ]
+    },
+    "Strawberry": {
+      "id": "Strawberry",
+      "name_cn": "草莓",
+      "name_en": "Strawberry",
+      "description": "Upon pickup, raise your Max HP by 7.",
+      "flavor": "Delicious! Haven't seen any of these since the blight.\" - Ranwid",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Strawberry",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%8D%89%E8%8E%93",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Common Relic",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Mango",
+          "display": "Mango"
+        },
+        {
+          "page": "荒疫",
+          "display": "荒疫"
+        },
+        {
+          "type": "relic",
+          "page": "草莓",
+          "display": "草莓"
+        },
+        {
+          "type": "relic",
+          "page": "梨子",
+          "display": "梨子"
+        },
+        {
+          "type": "relic",
+          "page": "芒果",
+          "display": "芒果"
+        }
+      ]
+    },
+    "StrikeDummy": {
+      "id": "StrikeDummy",
+      "name_cn": "打击木偶",
+      "name_en": "Strike Dummy",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%89%93%E5%87%BB%E6%9C%A8%E5%81%B6",
+      "related_links": [
+        {
+          "page": "打击",
+          "display": "打击"
+        }
+      ]
+    },
+    "Sundial": {
+      "id": "Sundial",
+      "name_cn": "日晷",
+      "name_en": "Sundial",
+      "description": "Every 3 times you shuffle your draw pile, gain 2 Energy.",
+      "flavor": "Early man's foolish obsession with time caused them to look to the sky for guidance, hoping for something permanent.\" - Zoroth",
+      "rarity": "Relics#Uncommon",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Sundial",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%97%A5%E6%99%B7",
+      "related_links": [
+        {
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "page": "Relics#Uncommon",
+          "display": "Uncommon"
+        },
+        {
+          "page": "Uncommon Relic",
+          "display": "Uncommon Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Uncommon Relic",
+          "display": "Category:Uncommon Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Energy",
+          "display": "Energy"
+        },
+        {
+          "type": "relic",
+          "page": "The Abacus",
+          "display": "The Abacus"
+        },
+        {
+          "type": "card",
+          "page": "Deep Breath",
+          "display": "Deep Breath"
+        },
+        {
+          "type": "card",
+          "page": "Reboot",
+          "display": "Reboot"
+        },
+        {
+          "type": "card",
+          "page": "Pommel Strike",
+          "display": "Pommel Strike"
+        },
+        {
+          "type": "card",
+          "page": "Shrug It Off",
+          "display": "Shrug It Off"
+        },
+        {
+          "type": "card",
+          "page": "Pommel Strike",
+          "display": "Pommel Strike"
+        },
+        {
+          "type": "card",
+          "page": "Shrug It Off",
+          "display": "Shrug It Off"
+        },
+        {
+          "page": "无限",
+          "display": "无限"
+        },
+        {
+          "page": "无限",
+          "display": "无限"
+        },
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        }
+      ]
+    },
+    "SymbioticVirus": {
+      "id": "SymbioticVirus",
+      "name_cn": "共生病毒",
+      "name_en": "Symbiotic Virus",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%85%B1%E7%94%9F%E7%97%85%E6%AF%92",
+      "related_links": []
+    },
+    "TeardropLocket": {
+      "id": "TeardropLocket",
+      "name_cn": "泪滴吊坠盒",
+      "name_en": "Teardrop Locket",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%B3%AA%E6%BB%B4%E5%90%8A%E5%9D%A0%E7%9B%92",
+      "related_links": []
+    },
+    "TheAbacus": {
+      "id": "TheAbacus",
+      "name_cn": "算盘",
+      "name_en": "The Abacus",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%AE%97%E7%9B%98",
+      "related_links": []
+    },
+    "TheBoot": {
+      "id": "TheBoot",
+      "name_cn": "发条靴",
+      "name_en": "The Boot",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%8F%91%E6%9D%A1%E9%9D%B4",
+      "related_links": [
+        {
+          "page": "攻击牌",
+          "display": "攻击伤害"
+        },
+        {
+          "page": "天罚",
+          "display": "天罚"
+        }
+      ]
+    },
+    "TheCourier": {
+      "id": "TheCourier",
+      "name_cn": "送货员",
+      "name_en": "The Courier",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%80%81%E8%B4%A7%E5%91%98",
+      "related_links": []
+    },
+    "TheSpecimen": {
+      "id": "TheSpecimen",
+      "name_cn": "生物样本",
+      "name_en": "The Specimen",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%94%9F%E7%89%A9%E6%A0%B7%E6%9C%AC",
+      "related_links": [
+        {
+          "page": "觉醒者",
+          "display": "觉醒者"
+        },
+        {
+          "page": "小黑",
+          "display": "小黑"
+        },
+        {
+          "page": "爆炸机",
+          "display": "爆炸机"
+        },
+        {
+          "page": "酸液史莱姆（大）",
+          "display": "史莱姆"
+        }
+      ]
+    },
+    "ThreadAndNeedle": {
+      "id": "ThreadAndNeedle",
+      "name_cn": "针线",
+      "name_en": "Thread and Needle",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%92%88%E7%BA%BF",
+      "related_links": []
+    },
+    "Tingsha": {
+      "id": "Tingsha",
+      "name_cn": "铜钹",
+      "name_en": "Tingsha",
+      "description": "Whenever you discard a card during your turn, deal 3 damage to a random enemy for each card discarded.",
+      "flavor": "The sound this instrument generates seems to be capable of reverberating to painful levels of volume.",
+      "rarity": "Relics#Rare",
+      "class": "Silent",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Tingsha",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%93%9C%E9%92%B9",
+      "related_links": [
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Silent",
+          "display": "Silent"
+        },
+        {
+          "page": "Discard",
+          "display": "Discard"
+        },
+        {
+          "page": "Rare Relic",
+          "display": "Rare Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "page": "Category:Silent Relic",
+          "display": "Category:Silent Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Gambling Chip",
+          "display": "Gambling Chip"
+        },
+        {
+          "type": "relic",
+          "page": "Tough Bandages",
+          "display": "Tough Bandages"
+        },
+        {
+          "type": "card",
+          "page": "计算下注",
+          "display": "计算下注"
+        }
+      ]
+    },
+    "TinyChest": {
+      "id": "TinyChest",
+      "name_cn": "小宝箱",
+      "name_en": "Tiny Chest",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B0%8F%E5%AE%9D%E7%AE%B1",
+      "related_links": [
+        {
+          "page": "先古之民",
+          "display": "先古之民"
+        },
+        {
+          "page": "钥匙（终幕）#蓝宝石钥匙",
+          "display": "蓝宝石钥匙"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "？房间",
+          "display": "？房间"
+        },
+        {
+          "page": "金币",
+          "display": "金币"
+        },
+        {
+          "type": "relic",
+          "page": "小宝箱",
+          "display": "小宝箱"
+        },
+        {
+          "type": "relic",
+          "page": "佛珠手链",
+          "display": "佛珠手链"
+        },
+        {
+          "type": "relic",
+          "page": "蛇的头",
+          "display": "蛇的头"
+        }
+      ]
+    },
+    "TinyHouse": {
+      "id": "TinyHouse",
+      "name_cn": "小屋子",
+      "name_en": "Tiny House",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B0%8F%E5%B1%8B%E5%AD%90",
+      "related_links": []
+    },
+    "Toolbox": {
+      "id": "Toolbox",
+      "name_cn": "工具箱",
+      "name_en": "Toolbox",
+      "description": "At the start of each combat, choose 1 of 3 random Colorless cards and add the chosen card into your hand.",
+      "flavor": "A tool for every job.",
+      "rarity": "Relics#Shop",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Toolbox",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%B7%A5%E5%85%B7%E7%AE%B1",
+      "related_links": [
+        {
+          "page": "Relics#Shop",
+          "display": "Shop"
+        },
+        {
+          "page": "Colorless Cards",
+          "display": "colorless card"
+        },
+        {
+          "page": "Discard Pile",
+          "display": "Discard Pile"
+        },
+        {
+          "page": "relics",
+          "display": "relics"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Shop Relic",
+          "display": "Category:Shop Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Toolbox",
+          "display": "Toolbox"
+        },
+        {
+          "type": "card",
+          "page": "Bite",
+          "display": "Bite"
+        },
+        {
+          "type": "card",
+          "page": "Ritual Dagger",
+          "display": "Ritual Dagger"
+        },
+        {
+          "type": "card",
+          "page": "Shiv",
+          "display": "Shiv"
+        },
+        {
+          "type": "card",
+          "page": "Smite",
+          "display": "Smite"
+        },
+        {
+          "type": "card",
+          "page": "Through Violence",
+          "display": "Through Violence"
+        },
+        {
+          "type": "card",
+          "page": "Bandage Up",
+          "display": "Bandage Up"
+        },
+        {
+          "type": "card",
+          "page": "Apparition",
+          "display": "Apparition"
+        },
+        {
+          "type": "card",
+          "page": "J.A.X.",
+          "display": "J.A.X."
+        },
+        {
+          "type": "card",
+          "page": "Beta",
+          "display": "Beta"
+        },
+        {
+          "type": "card",
+          "page": "Insight",
+          "display": "Insight"
+        },
+        {
+          "type": "card",
+          "page": "Miracle",
+          "display": "Miracle"
+        },
+        {
+          "type": "card",
+          "page": "Safety",
+          "display": "Safety"
+        },
+        {
+          "type": "card",
+          "page": "Omega",
+          "display": "Omega"
+        },
+        {
+          "type": "potion",
+          "page": "Bottled Miracle",
+          "display": "potion"
+        },
+        {
+          "page": "商店",
+          "display": "商店"
+        },
+        {
+          "type": "card",
+          "page": "包扎",
+          "display": "包扎"
+        }
+      ]
+    },
+    "Torii": {
+      "id": "Torii",
+      "name_cn": "鸟居",
+      "name_en": "Torii",
+      "description": "Whenever you would receive 5 or less unblocked Attack damage, reduce it to 1.",
+      "flavor": "Holding the small Torii, you feel a sense of calm and safety drift through your mind.",
+      "rarity": "Relics#Rare",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Torii",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%B8%9F%E5%B1%85",
+      "related_links": [
+        {
+          "page": "Attack",
+          "display": "Attack"
+        },
+        {
+          "page": "Relics#Rare",
+          "display": "Rare"
+        },
+        {
+          "page": "Rare Relic",
+          "display": "Rare Relic"
+        },
+        {
+          "page": "Corrupt Heart",
+          "display": "the heart"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "relic",
+          "page": "Tungsten Rod",
+          "display": "Tungsten Rod"
+        }
+      ]
+    },
+    "ToughBandages": {
+      "id": "ToughBandages",
+      "name_cn": "结实绷带",
+      "name_en": "Tough Bandages",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BB%93%E5%AE%9E%E7%BB%B7%E5%B8%A6",
+      "related_links": [
+        {
+          "type": "card",
+          "page": "计算下注",
+          "display": "计算下注"
+        }
+      ]
+    },
+    "ToxicEgg": {
+      "id": "ToxicEgg",
+      "name_cn": "毒素之蛋",
+      "name_en": "Toxic Egg",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%AF%92%E7%B4%A0%E4%B9%8B%E8%9B%8B",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "熔火之蛋",
+          "display": "熔火之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "毒素之蛋",
+          "display": "毒素之蛋"
+        },
+        {
+          "type": "relic",
+          "page": "冻结之蛋",
+          "display": "冻结之蛋"
+        }
+      ]
+    },
+    "ToyOrnithopter": {
+      "id": "ToyOrnithopter",
+      "name_cn": "玩具扑翼飞机",
+      "name_en": "Toy Ornithopter",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%8E%A9%E5%85%B7%E6%89%91%E7%BF%BC%E9%A3%9E%E6%9C%BA",
+      "related_links": [
+        {
+          "type": "relic",
+          "page": "白兽雕像",
+          "display": "白兽雕像"
+        }
+      ]
+    },
+    "TungstenRod": {
+      "id": "TungstenRod",
+      "name_cn": "钨合金棍",
+      "name_en": "Tungsten Rod",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%92%A8%E5%90%88%E9%87%91%E6%A3%8D",
+      "related_links": [
+        {
+          "page": "腐化之心",
+          "display": "腐化之心"
+        },
+        {
+          "page": "破烂软泥",
+          "display": "破烂软泥"
+        },
+        {
+          "page": "诅咒书本",
+          "display": "诅咒书本"
+        }
+      ]
+    },
+    "Turnip": {
+      "id": "Turnip",
+      "name_cn": "萝卜",
+      "name_en": "Turnip",
+      "description": "You can no longer become Frail.",
+      "flavor": "Best with ginger.",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Turnip",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%90%9D%E5%8D%9C",
+      "related_links": [
+        {
+          "page": "Relics#Rare",
+          "display": "Rare Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Rare Relic",
+          "display": "Category:Rare Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Frail",
+          "display": "Frail"
+        },
+        {
+          "type": "relic",
+          "page": "Ginger",
+          "display": "Ginger"
+        },
+        {
+          "type": "relic",
+          "page": "Odd Mushroom",
+          "display": "Odd Mushroom"
+        }
+      ]
+    },
+    "TwistedFunnel": {
+      "id": "TwistedFunnel",
+      "name_cn": "扭曲漏斗",
+      "name_en": "Twisted Funnel",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%89%AD%E6%9B%B2%E6%BC%8F%E6%96%97",
+      "related_links": [
+        {
+          "page": "易伤",
+          "display": "易伤"
+        },
+        {
+          "page": "虚弱",
+          "display": "虚弱"
+        },
+        {
+          "type": "relic",
+          "page": "弹珠袋",
+          "display": "弹珠袋"
+        },
+        {
+          "type": "relic",
+          "page": "红面具",
+          "display": "红面具"
+        },
+        {
+          "type": "relic",
+          "page": "扭曲漏斗",
+          "display": "扭曲漏斗"
+        }
+      ]
+    },
+    "UnceasingTop": {
+      "id": "UnceasingTop",
+      "name_cn": "不休陀螺",
+      "name_en": "Unceasing Top",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E4%B8%8D%E4%BC%91%E9%99%80%E8%9E%BA",
+      "related_links": []
+    },
+    "Vajra": {
+      "id": "Vajra",
+      "name_cn": "金刚杵",
+      "name_en": "Vajra",
+      "description": "At the start of each combat, gain 1 *Strength*.",
+      "flavor": "An ornamental relic given to warriors displaying glory in battle.",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Vajra",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E9%87%91%E5%88%9A%E6%9D%B5",
+      "related_links": [
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Common Relic",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "keyword",
+          "page": "Strength",
+          "display": "Strength"
+        },
+        {
+          "type": "card",
+          "page": "Heavy Blade",
+          "display": "Heavy Blade"
+        },
+        {
+          "type": "card",
+          "page": "Limit Break",
+          "display": "Limit Break"
+        }
+      ]
+    },
+    "VelvetChoker": {
+      "id": "VelvetChoker",
+      "name_cn": "天鹅绒颈圈",
+      "name_en": "Velvet Choker",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%A4%A9%E9%B9%85%E7%BB%92%E9%A2%88%E5%9C%88",
+      "related_links": []
+    },
+    "VioletLotus": {
+      "id": "VioletLotus",
+      "name_cn": "紫色莲花",
+      "name_en": "Violet Lotus",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%B4%AB%E8%89%B2%E8%8E%B2%E8%8A%B1",
+      "related_links": []
+    },
+    "WarPaint": {
+      "id": "WarPaint",
+      "name_cn": "战纹涂料",
+      "name_en": "War Paint",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E6%88%98%E7%BA%B9%E6%B6%82%E6%96%99",
+      "related_links": [
+        {
+          "page": "防御(消歧义)",
+          "display": "防御"
+        }
+      ]
+    },
+    "WarpedTongs": {
+      "id": "WarpedTongs",
+      "name_cn": "弯曲铁钳",
+      "name_en": "Warped Tongs",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E5%BC%AF%E6%9B%B2%E9%93%81%E9%92%B3",
+      "related_links": []
+    },
+    "Whetstone": {
+      "id": "Whetstone",
+      "name_cn": "磨刀石",
+      "name_en": "Whetstone",
+      "description": "Upon pick up, Upgrade 2 random Attacks.",
+      "flavor": "Flesh never beats steel.\" - Kublai the Great",
+      "rarity": "Relics#Common",
+      "class": "",
+      "wiki_url_en": "https://slay-the-spire.fandom.com/wiki/Whetstone",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%A3%A8%E5%88%80%E7%9F%B3",
+      "related_links": [
+        {
+          "page": "Upgrade",
+          "display": "Upgrade"
+        },
+        {
+          "page": "Attack",
+          "display": "Attacks"
+        },
+        {
+          "page": "Relics#Common",
+          "display": "Common"
+        },
+        {
+          "page": "Upgrade",
+          "display": "Upgrade"
+        },
+        {
+          "page": "Attack",
+          "display": "Attack"
+        },
+        {
+          "page": "Common Relic",
+          "display": "Common Relic"
+        },
+        {
+          "page": "Category:Relic",
+          "display": "Category:Relic"
+        },
+        {
+          "page": "Category:Common Relic",
+          "display": "Category:Common Relic"
+        },
+        {
+          "page": "打击",
+          "display": "打击"
+        }
+      ]
+    },
+    "WhiteBeastStatue": {
+      "id": "WhiteBeastStatue",
+      "name_cn": "白兽雕像",
+      "name_en": "White Beast Statue",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%99%BD%E5%85%BD%E9%9B%95%E5%83%8F",
+      "related_links": [
+        {
+          "page": "精英",
+          "display": "强化精英"
+        },
+        {
+          "page": "创意工坊",
+          "display": "模组"
+        }
+      ]
+    },
+    "WingedGreaves": {
+      "id": "WingedGreaves",
+      "name_cn": "羽翼之靴",
+      "name_en": "Winged Greaves",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E7%BE%BD%E7%BF%BC%E4%B9%8B%E9%9D%B4",
+      "related_links": []
+    },
+    "WristBlade": {
+      "id": "WristBlade",
+      "name_cn": "袖剑",
+      "name_en": "Wrist Blade",
+      "description": "",
+      "flavor": "",
+      "rarity": "",
+      "class": "",
+      "wiki_url_en": "",
+      "wiki_url_cn": "https://sts.huijiwiki.com/%E8%A2%96%E5%89%91",
+      "related_links": [
+        {
+          "type": "card",
+          "page": "子弹时间",
+          "display": "子弹时间"
+        }
+      ]
+    }
+  }
+}

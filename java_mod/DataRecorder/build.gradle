@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+}
+
+group 'sts_recorder'
+version '0.1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+def stsPath = System.getenv('STS_PATH') ?: 'D:/steam/steamapps/common/SlayTheSpire'
+def workshopPath = System.getenv('STS_WORKSHOP') ?: 'D:/steam/steamapps/workshop/content/646570'
+
+dependencies {
+    implementation files("${stsPath}/desktop-1.0.jar")
+    implementation files("${workshopPath}/1605060445/ModTheSpire.jar")
+    implementation files("${workshopPath}/1605833019/BaseMod.jar")
+    implementation files("${workshopPath}/1609158507/StSLib.jar")
+}
+
+jar {
+    baseName 'DataRecorder'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'stsrecorder.DataRecorder'
+    }
+    from('ModTheSpire.json')
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
