@@ -9,19 +9,19 @@ def test_phase271_translate_event_name_uses_event_key_for_canonical_runtime_ids(
     assert translate_event_name(build_event("Big Fish")) == "大鱼"
 
 
-def test_phase271_event_surface_falls_back_to_presentable_english_when_cn_is_broken() -> None:
+def test_phase271_event_surface_uses_official_chinese_when_snapshot_is_available() -> None:
     lines = render_event_choice_lines(build_event("The Woman in Blue"))
 
     assert lines
-    assert "woman in blue" in lines[0].lower()
+    assert "药水" in lines[0]
     assert all("�" not in line for line in lines)
     assert any("20" in line or "30" in line or "40" in line for line in lines[1:])
 
 
-def test_phase271_placeholder_like_stagewide_surface_is_replaced_with_canonical_copy() -> None:
+def test_phase271_placeholder_like_stagewide_surface_is_replaced_with_official_copy() -> None:
     lines = render_event_choice_lines(build_event("MindBloom"))
 
     assert lines
-    assert "strange bloom" in lines[0].lower()
+    assert "真实" in lines[0]
     assert any("mark of the bloom" in line.lower() for line in lines[1:])
     assert not any("Nothing happens" in line for line in lines)

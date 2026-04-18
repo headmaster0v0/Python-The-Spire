@@ -164,6 +164,7 @@ class RunState:
     current_event_id: str | None = None
     current_event_key: str | None = None
     current_event_state: dict[str, Any] = field(default_factory=dict)
+    pending_card_choice: dict[str, Any] | None = None
     dead_adventurer_state: dict[str, Any] = field(default_factory=dict)
     current_event_combat: dict[str, Any] | None = None
     neow_options: list[dict[str, Any]] = field(default_factory=list)
@@ -212,6 +213,7 @@ class RunState:
             "current_event_id": self.current_event_id,
             "current_event_key": self.current_event_key,
             "current_event_state": self.current_event_state,
+            "pending_card_choice": self.pending_card_choice,
             "current_event_combat": self.current_event_combat,
             "neow_options": self.neow_options,
             "pending_neow_choice": self.pending_neow_choice,
@@ -548,10 +550,450 @@ class RunEngine:
         self.state.question_room_treasure_chance = 0.02
         self.state.question_room_last_encounter = ""
 
+    def _event_state(self) -> dict[str, Any]:
+        current = self.state.current_event_state
+        if isinstance(current, dict):
+            return current
+        self.state.current_event_state = {}
+        return self.state.current_event_state
+
+    def _event_handler_key(self, event: "Event") -> str:
+        from sts_py.engine.run.events import _resolve_event_key
+
+        event_key = str(getattr(event, "event_key", "") or "")
+        event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
+        return (
+            _resolve_event_key(event_key)
+            or _resolve_event_key(event_id)
+            or event_key
+            or event_id
+        )
+
+    def _event_rng(self) -> MutableRNG | None:
+        rng_state = getattr(self.state, "rng", None)
+        return getattr(rng_state, "event_rng", None)
+
+    def _event_desc(self, event: "Event", idx: int, *, cn: bool = False) -> str:
+        values = getattr(event, "source_descriptions_cn" if cn else "source_descriptions", []) or []
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return str(getattr(event, "description_cn" if cn else "description", "") or "")
+
+    def _event_opt(self, event: "Event", idx: int, *, cn: bool = False) -> str:
+        values = getattr(event, "source_options_cn" if cn else "source_options", []) or []
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return ""
+
+    def _make_event_choice(
+        self,
+        *,
+        description: str,
+        description_cn: str = "",
+        enabled: bool = True,
+        disabled_reason: str = "",
+        disabled_reason_cn: str = "",
+        **kwargs: Any,
+    ) -> "EventChoice":
+        from sts_py.engine.run.events import EventChoice
+
+        return EventChoice(
+            description=description,
+            description_cn=description_cn,
+            enabled=enabled,
+            disabled_reason=disabled_reason,
+            disabled_reason_cn=disabled_reason_cn,
+            **kwargs,
+        )
+
+    def _set_pending_event_card_choice(
+        self,
+        *,
+        choice_index: int,
+        custom_action: str,
+        cards: list[str],
+        prompt: str,
+        prompt_cn: str = "",
+        deck_indexes: list[int] | None = None,
+        can_cancel: bool = False,
+        extra: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        self.state.pending_card_choice = {
+            "choice_index": choice_index,
+            "custom_action": custom_action,
+            "cards": list(cards),
+            "deck_indexes": list(deck_indexes or []),
+            "prompt": prompt,
+            "prompt_cn": prompt_cn,
+            "can_cancel": can_cancel,
+            **dict(extra or {}),
+        }
+        return {
+            "success": True,
+            "requires_card_choice": True,
+            "choice_index": choice_index,
+            "custom_action": custom_action,
+        }
+
+    def _prepare_event_for_runtime(self, event: "Event") -> None:
+        handler_key = self._event_handler_key(event)
+        if handler_key == "Addict":
+            self._configure_addict_event(event)
+        elif handler_key == "Back to Basics":
+            self._configure_back_to_basics_event(event)
+        elif handler_key == "Drug Dealer":
+            self._configure_drug_dealer_event(event)
+        elif handler_key == "Designer":
+            self._configure_designer_event(event)
+        elif handler_key == "Ghosts":
+            self._configure_ghosts_event(event)
+        elif handler_key == "Vampires":
+            self._configure_vampires_event(event)
+        elif handler_key == "Golden Shrine":
+            self._configure_golden_shrine_event(event)
+        elif handler_key == "Duplicator":
+            self._configure_duplicator_event(event)
+        elif handler_key == "Purifier":
+            self._configure_purifier_event(event)
+        elif handler_key == "Upgrade Shrine":
+            self._configure_upgrade_shrine_event(event)
+        elif handler_key == "Transmorgrifier":
+            self._configure_transmorgrifier_event(event)
+        elif handler_key == "Lab":
+            self._configure_lab_event(event)
+        elif handler_key == "N'loth":
+            self._configure_nloth_event(event)
+        elif handler_key == "SecretPortal":
+            self._configure_secret_portal_event(event)
+        elif handler_key == "WeMeetAgain":
+            self._configure_we_meet_again_event(event)
+        elif handler_key == "The Woman in Blue":
+            self._configure_woman_in_blue_event(event)
+        elif handler_key == "The Joust":
+            self._configure_the_joust_event(event)
+        elif handler_key == "Falling":
+            self._configure_falling_event(event)
+        elif handler_key == "MindBloom":
+            self._configure_mind_bloom_event(event)
+        elif handler_key == "Mysterious Sphere":
+            self._configure_mysterious_sphere_event(event)
+        elif handler_key == "Bonfire Elementals":
+            self._configure_bonfire_event(event)
+
+    def _configure_addict_event(self, event: "Event") -> None:
+        gold_required = 85
+        has_gold = self.state.player_gold >= gold_required
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=(self._event_opt(event, 0) + str(gold_required) + self._event_opt(event, 1)) if has_gold else (self._event_opt(event, 2) + str(gold_required) + self._event_opt(event, 3)),
+                description_cn=(self._event_opt(event, 0, cn=True) + str(gold_required) + self._event_opt(event, 1, cn=True)) if has_gold else (self._event_opt(event, 2, cn=True) + str(gold_required) + self._event_opt(event, 3, cn=True)),
+                enabled=has_gold,
+                disabled_reason="Requires 85 Gold.",
+                disabled_reason_cn="需要：85金币。",
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 4),
+                description_cn=self._event_opt(event, 4, cn=True),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 5),
+                description_cn=self._event_opt(event, 5, cn=True),
+            ),
+        ]
+
+    def _configure_back_to_basics_event(self, event: "Event") -> None:
+        from sts_py.engine.run.events import EventChoice
+
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            EventChoice(
+                description=self._event_opt(event, 0),
+                description_cn=self._event_opt(event, 0, cn=True),
+                requires_card_removal=True,
+            ),
+            EventChoice(
+                description=self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 1, cn=True),
+            ),
+        ]
+
+    def _configure_drug_dealer_event(self, event: "Event") -> None:
+        purgeable_cards = [card_id for card_id in self.state.deck if card_id not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}]
+        can_transform = len(purgeable_cards) >= 2
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(
+                description=self._event_opt(event, 1) if can_transform else self._event_opt(event, 4),
+                description_cn=self._event_opt(event, 1, cn=True) if can_transform else self._event_opt(event, 4, cn=True),
+                enabled=can_transform,
+                disabled_reason="Requires: 2 or more cards in deck.",
+                disabled_reason_cn="需要：牌组中至少有2张牌。",
+            ),
+            self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True)),
+        ]
+
+    def _configure_designer_event(self, event: "Event") -> None:
+        rng = self._event_rng()
+        adjustment_upgrades_one = bool(rng.random_boolean() if rng is not None else True)
+        clean_up_removes_cards = bool(rng.random_boolean() if rng is not None else True)
+        if self.state.ascension >= 15:
+            adjust_cost, clean_up_cost, full_service_cost, hp_loss = 50, 75, 110, 5
+        else:
+            adjust_cost, clean_up_cost, full_service_cost, hp_loss = 40, 60, 90, 3
+        state = self._event_state()
+        state["designer"] = {
+            "stage": "intro",
+            "adjustment_upgrades_one": adjustment_upgrades_one,
+            "clean_up_removes_cards": clean_up_removes_cards,
+            "adjust_cost": adjust_cost,
+            "clean_up_cost": clean_up_cost,
+            "full_service_cost": full_service_cost,
+            "hp_loss": hp_loss,
+        }
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
+
+    def _configure_ghosts_event(self, event: "Event") -> None:
+        hp_loss = min(self.state.player_max_hp - 1, int((self.state.player_max_hp + 1) / 2))
+        accept_en = (self._event_opt(event, 3) if self.state.ascension >= 15 else self._event_opt(event, 0)) + str(hp_loss) + self._event_opt(event, 1)
+        accept_cn = (self._event_opt(event, 3, cn=True) if self.state.ascension >= 15 else self._event_opt(event, 0, cn=True)) + str(hp_loss) + self._event_opt(event, 1, cn=True)
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices[0].description = accept_en
+        event.choices[0].description_cn = accept_cn
+        if len(event.choices) > 1:
+            event.choices[1].description = self._event_opt(event, 2)
+            event.choices[1].description_cn = self._event_opt(event, 2, cn=True)
+
+    def _configure_vampires_event(self, event: "Event") -> None:
+        max_hp_loss = min(self.state.player_max_hp - 1, int((self.state.player_max_hp * 0.3) + 0.999999))
+        has_vial = self._has_relic("BloodVial")
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + str(max_hp_loss) + self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 0, cn=True) + str(max_hp_loss) + self._event_opt(event, 1, cn=True),
+            ),
+        ]
+        if has_vial:
+            event.choices.append(
+                self._make_event_choice(
+                    description=self._event_opt(event, 3) + "Blood Vial" + self._event_opt(event, 4),
+                    description_cn=self._event_opt(event, 3, cn=True) + "Blood Vial" + self._event_opt(event, 4, cn=True),
+                )
+            )
+        event.choices.append(
+            self._make_event_choice(
+                description=self._event_opt(event, 2),
+                description_cn=self._event_opt(event, 2, cn=True),
+            )
+        )
+
+    def _configure_golden_shrine_event(self, event: "Event") -> None:
+        gold_amount = 50 if self.state.ascension >= 15 else 100
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + str(gold_amount) + self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 0, cn=True) + str(gold_amount) + self._event_opt(event, 1, cn=True),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 2),
+                description_cn=self._event_opt(event, 2, cn=True),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 3),
+                description_cn=self._event_opt(event, 3, cn=True),
+            ),
+        ]
+
+    def _configure_duplicator_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_purifier_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_upgrade_shrine_event(self, event: "Event") -> None:
+        has_upgrades = any(self._upgrade_card(card_id) is not None for card_id in self.state.deck)
+        first_desc = self._event_opt(event, 0) if has_upgrades else self._event_opt(event, 3)
+        first_desc_cn = self._event_opt(event, 0, cn=True) if has_upgrades else self._event_opt(event, 3, cn=True)
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=first_desc,
+                description_cn=first_desc_cn,
+                enabled=has_upgrades,
+                disabled_reason="Requires: Upgradeable Cards",
+                disabled_reason_cn="需要：可以升级的牌",
+            ),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_transmorgrifier_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_lab_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
+
+    def _configure_nloth_event(self, event: "Event") -> None:
+        rng = self._event_rng()
+        relics = list(self.state.relics)
+        if rng is not None:
+            for idx in range(len(relics) - 1, 0, -1):
+                swap_idx = rng.random_int(idx)
+                relics[idx], relics[swap_idx] = relics[swap_idx], relics[idx]
+        choices = relics[:2]
+        state = self._event_state()
+        state["nloth_choices"] = list(choices)
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + choices[0] + self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 0, cn=True) + choices[0] + self._event_opt(event, 1, cn=True),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + choices[1] + self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 0, cn=True) + choices[1] + self._event_opt(event, 1, cn=True),
+            ),
+            self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True)),
+        ]
+
+    def _configure_secret_portal_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_we_meet_again_event(self, event: "Event") -> None:
+        rng = self._event_rng()
+        potion_ids = [p for p in self.state.potions if p != "EmptyPotionSlot"]
+        potion_id = None
+        if potion_ids:
+            potion_id = potion_ids[(rng.random_int(len(potion_ids) - 1) if rng is not None else 0)]
+        non_basic_cards = [
+            card_id for card_id in self.state.deck
+            if not self._canonical_card_id(card_id).startswith(("Strike", "Defend"))
+            and self._canonical_card_id(card_id) not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}
+            and self._canonical_card_id(card_id) not in {"Curse", "Doubt", "Regret", "Shame", "Pain", "Normality", "Parasite", "Clumsy", "Writhe", "Decay", "Injury"}
+        ]
+        card_id = None
+        if non_basic_cards:
+            card_id = non_basic_cards[(rng.random_int(len(non_basic_cards) - 1) if rng is not None else 0)]
+        gold_amount = 0
+        if self.state.player_gold >= 50:
+            upper = min(150, self.state.player_gold)
+            gold_amount = (rng.random_int(upper - 50) + 50) if (rng is not None and upper > 50) else upper
+        state = self._event_state()
+        state["we_meet_again"] = {"potion_id": potion_id, "card_id": card_id, "gold_amount": gold_amount}
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=(self._event_opt(event, 0) + str(potion_id) + self._event_opt(event, 6)) if potion_id else self._event_opt(event, 1),
+                description_cn=(self._event_opt(event, 0, cn=True) + str(potion_id) + self._event_opt(event, 6, cn=True)) if potion_id else self._event_opt(event, 1, cn=True),
+                enabled=potion_id is not None,
+                disabled_reason="Requires: Potion.",
+                disabled_reason_cn="需要：药水。",
+            ),
+            self._make_event_choice(
+                description=(self._event_opt(event, 2) + str(gold_amount) + self._event_opt(event, 9) + self._event_opt(event, 6)) if gold_amount else self._event_opt(event, 3),
+                description_cn=(self._event_opt(event, 2, cn=True) + str(gold_amount) + self._event_opt(event, 9, cn=True) + self._event_opt(event, 6, cn=True)) if gold_amount else self._event_opt(event, 3, cn=True),
+                enabled=gold_amount > 0,
+                disabled_reason="Requires: At least 50 Gold.",
+                disabled_reason_cn="需要：至少50金币。",
+            ),
+            self._make_event_choice(
+                description=(self._event_opt(event, 4) + str(card_id) + self._event_opt(event, 6)) if card_id else self._event_opt(event, 5),
+                description_cn=(self._event_opt(event, 4, cn=True) + str(card_id) + self._event_opt(event, 6, cn=True)) if card_id else self._event_opt(event, 5, cn=True),
+                enabled=card_id is not None,
+                disabled_reason="Requires: Card.",
+                disabled_reason_cn="需要：卡牌。",
+            ),
+            self._make_event_choice(description=self._event_opt(event, 7), description_cn=self._event_opt(event, 7, cn=True)),
+        ]
+
+    def _configure_woman_in_blue_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        leave_desc = self._event_opt(event, 4) if self.state.ascension < 15 else (self._event_opt(event, 5) + str(max(1, int((self.state.player_max_hp * 0.05) + 0.999999))) + self._event_opt(event, 6))
+        leave_desc_cn = self._event_opt(event, 4, cn=True) if self.state.ascension < 15 else (self._event_opt(event, 5, cn=True) + str(max(1, int((self.state.player_max_hp * 0.05) + 0.999999))) + self._event_opt(event, 6, cn=True))
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0) + "20" + self._event_opt(event, 3), description_cn=self._event_opt(event, 0, cn=True) + "20" + self._event_opt(event, 3, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1) + "30" + self._event_opt(event, 3), description_cn=self._event_opt(event, 1, cn=True) + "30" + self._event_opt(event, 3, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 2) + "40" + self._event_opt(event, 3), description_cn=self._event_opt(event, 2, cn=True) + "40" + self._event_opt(event, 3, cn=True)),
+            self._make_event_choice(description=leave_desc, description_cn=leave_desc_cn),
+        ]
+
+    def _configure_the_joust_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
+
+    def _configure_mind_bloom_event(self, event: "Event") -> None:
+        rich_branch = (self.state.floor % 50) <= 40
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 3), description_cn=self._event_opt(event, 3, cn=True)),
+            self._make_event_choice(
+                description=self._event_opt(event, 1 if rich_branch else 2),
+                description_cn=self._event_opt(event, 1 if rich_branch else 2, cn=True),
+            ),
+        ]
+
+    def _configure_falling_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
+
+    def _configure_mysterious_sphere_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_bonfire_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
+
     def _set_current_event(self, event: "Event") -> None:
         self._current_event = event
         self.state.current_event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
         self.state.current_event_key = str(getattr(event, "event_key", "") or "")
+        self._prepare_event_for_runtime(event)
         self.state.phase = RunPhase.EVENT
 
     def _clear_current_event(self) -> None:
@@ -559,6 +1001,7 @@ class RunEngine:
         self.state.current_event_id = None
         self.state.current_event_key = None
         self.state.current_event_state = {}
+        self.state.pending_card_choice = None
 
     def _has_event_relic(self, relic_id: str) -> bool:
         return relic_id in set(getattr(self.state, "relics", []) or [])
@@ -2372,9 +2815,16 @@ class RunEngine:
         choice = event.get_choice(choice_index)
         if choice is None:
             return {"success": False, "reason": "invalid_choice"}
+        if not getattr(choice, "enabled", True):
+            return {"success": False, "reason": "choice_disabled"}
 
         event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
         event_key = str(getattr(event, "event_key", "") or "")
+        handler_key = self._event_handler_key(event)
+
+        custom_result = self._dispatch_event_handler(handler_key, choice_index)
+        if custom_result is not None:
+            return custom_result
 
         if event_id in {"DeadAdventurer", "Dead Adventurer"} or event_key == "Dead Adventurer":
             return self._handle_dead_adventurer(choice_index)
@@ -2456,10 +2906,12 @@ class RunEngine:
         if self._current_event is None:
             return {"success": False, "reason": "no_event"}
 
-        if not hasattr(self.state, 'pending_card_choice'):
+        if self.state.pending_card_choice is None:
             return {"success": False, "reason": "no_pending_card_choice"}
 
         pending = self.state.pending_card_choice
+        if pending.get("custom_action"):
+            return self._resolve_custom_event_card_choice(card_index)
         choice_index = pending["choice_index"]
         effect_type = pending["effect_type"]
 
@@ -2468,25 +2920,33 @@ class RunEngine:
         if choice is None:
             return {"success": False, "reason": "invalid_choice"}
 
-        if card_index < 0 or card_index >= len(self.state.deck):
-            return {"success": False, "reason": "invalid_card_index"}
-
-        card_id = self.state.deck[card_index]
+        pending_deck_indexes = list(pending.get("deck_indexes") or [])
+        if pending_deck_indexes:
+            if card_index < 0 or card_index >= len(pending_deck_indexes):
+                return {"success": False, "reason": "invalid_card_index"}
+            deck_index = pending_deck_indexes[card_index]
+            if deck_index < 0 or deck_index >= len(self.state.deck):
+                return {"success": False, "reason": "invalid_card_index"}
+            card_id = self.state.deck[deck_index]
+        else:
+            if card_index < 0 or card_index >= len(self.state.deck):
+                return {"success": False, "reason": "invalid_card_index"}
+            deck_index = card_index
+            card_id = self.state.deck[deck_index]
 
         from sts_py.engine.run.events import EventEffectType, _apply_parasite_penalty, _get_transformed_card
 
         if effect_type == EventEffectType.CHOOSE_CARD_TO_REMOVE.value:
             _apply_parasite_penalty(self.state, card_id)
-            self.state.deck.remove(card_id)
+            self.state.deck.pop(deck_index)
             result = {"success": True, "action": "card_removed", "card_id": card_id}
         elif effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM.value:
             _apply_parasite_penalty(self.state, card_id)
-            deck_idx = self.state.deck.index(card_id)
             rng = getattr(getattr(self.state, "rng", None), "card_random_rng", None)
             if rng is None:
                 rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
             transformed_card = _get_transformed_card(card_id, rng)
-            self.state.deck[deck_idx] = transformed_card
+            self.state.deck[deck_index] = transformed_card
             result = {
                 "success": True,
                 "action": "card_transformed",
@@ -2497,8 +2957,7 @@ class RunEngine:
             upgraded_card = self._upgrade_card(card_id)
             if not upgraded_card or upgraded_card == card_id:
                 return {"success": False, "reason": "card_cannot_be_upgraded", "card_id": card_id}
-            deck_idx = self.state.deck.index(card_id)
-            self.state.deck[deck_idx] = upgraded_card
+            self.state.deck[deck_index] = upgraded_card
             result = {
                 "success": True,
                 "action": "card_upgraded",
@@ -2525,6 +2984,835 @@ class RunEngine:
             self.state.phase = RunPhase.GAME_OVER
 
         return result
+
+    def _record_current_event_choice(
+        self,
+        event: "Event",
+        *,
+        choice_index: int,
+        choice_text: str,
+        **extra: Any,
+    ) -> None:
+        entry = {
+            "floor": self.state.floor,
+            "event_id": getattr(event, "event_id", getattr(event, "id", "")),
+            "event_key": getattr(event, "event_key", None),
+            "choice_index": choice_index,
+            "choice_text": choice_text,
+        }
+        entry.update(extra)
+        self.state.event_choices.append(entry)
+
+    def _finish_event(self, *, next_phase: RunPhase = RunPhase.MAP) -> None:
+        self._clear_current_event()
+        self.state.phase = next_phase
+        if self.state.player_hp <= 0:
+            self.state.phase = RunPhase.GAME_OVER
+
+    def _draw_random_relic_of_tier(self, tier_name: str) -> str | None:
+        from sts_py.engine.content.relics import get_random_relic_by_tier
+
+        rng = getattr(getattr(self.state, "rng", None), "relic_rng", None)
+        return get_random_relic_by_tier(str(tier_name).upper(), rng)
+
+    def _remove_potion_id(self, potion_id: str) -> bool:
+        for idx, candidate in enumerate(self.state.potions):
+            if candidate == potion_id:
+                self.state.potions[idx] = "EmptyPotionSlot"
+                return True
+        return False
+
+    def _gain_random_event_potions(self, count: int) -> list[str]:
+        from sts_py.engine.combat.potion_effects import get_random_potion_by_rarity, roll_potion_rarity
+
+        gained: list[str] = []
+        for _ in range(max(0, int(count))):
+            rarity = roll_potion_rarity()
+            potion = get_random_potion_by_rarity(rarity, self.state.character_class)
+            if potion and self.gain_potion(potion.potion_id):
+                gained.append(potion.potion_id)
+        if gained:
+            self._pending_potion_reward = gained[0]
+        return gained
+
+    def _dispatch_event_handler(self, handler_key: str, choice_index: int) -> dict[str, Any] | None:
+        handlers = {
+            "Addict": self._handle_addict_event,
+            "Back to Basics": self._handle_back_to_basics_event,
+            "Drug Dealer": self._handle_drug_dealer_event,
+            "Designer": self._handle_designer_event,
+            "Golden Shrine": self._handle_golden_shrine_event,
+            "Duplicator": self._handle_duplicator_event,
+            "Purifier": self._handle_purifier_event,
+            "Upgrade Shrine": self._handle_upgrade_shrine_event,
+            "Transmorgrifier": self._handle_transmorgrifier_event,
+            "Lab": self._handle_lab_event,
+            "N'loth": self._handle_nloth_event,
+            "SecretPortal": self._handle_secret_portal_event,
+            "WeMeetAgain": self._handle_we_meet_again_event,
+            "The Woman in Blue": self._handle_woman_in_blue_event,
+            "The Joust": self._handle_the_joust_event,
+            "Falling": self._handle_falling_event,
+            "MindBloom": self._handle_mind_bloom_event,
+            "Mysterious Sphere": self._handle_mysterious_sphere_event,
+            "Bonfire Elementals": self._handle_bonfire_event,
+        }
+        handler = handlers.get(handler_key)
+        if handler is None:
+            return None
+        return handler(choice_index)
+
+    def _resolve_custom_event_card_choice(self, card_index: int) -> dict[str, Any]:
+        event = self._current_event
+        pending = self.state.pending_card_choice or {}
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+
+        cards = list(pending.get("cards") or [])
+        if card_index < 0 or card_index >= len(cards):
+            return {"success": False, "reason": "invalid_card_index"}
+
+        action = str(pending.get("custom_action", "") or "")
+        if action == "duplicate_card":
+            card_id = cards[card_index]
+            self.state.deck.append(card_id)
+            self._record_current_event_choice(event, choice_index=int(pending.get("choice_index", 0)), choice_text=f"Duplicate {card_id}", card_id=card_id)
+            self._finish_event()
+            return {"success": True, "action": "card_duplicated", "card_id": card_id}
+        if action == "drug_dealer_transform":
+            deck_indexes = list(pending.get("deck_indexes") or [])
+            selected = list(pending.get("selected", []) or [])
+            selected.append(deck_indexes[card_index] if deck_indexes else card_index)
+            remaining_indexes = [idx for i, idx in enumerate(deck_indexes) if i != card_index]
+            remaining_cards = [card for i, card in enumerate(cards) if i != card_index]
+            if len(selected) < 2:
+                pending["selected"] = selected
+                pending["deck_indexes"] = remaining_indexes
+                pending["cards"] = remaining_cards
+                self.state.pending_card_choice = pending
+                return {"success": True, "action": "select_next_card", "remaining": 2 - len(selected)}
+            from sts_py.engine.run.events import _get_transformed_card
+
+            rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
+            transformed: list[dict[str, str]] = []
+            for deck_index in sorted(selected):
+                old_card = self.state.deck[deck_index]
+                new_card = _get_transformed_card(old_card, rng)
+                self.state.deck[deck_index] = new_card
+                transformed.append({"old_card": old_card, "new_card": new_card})
+            self._record_current_event_choice(
+                event,
+                choice_index=int(pending.get("choice_index", 0)),
+                choice_text="Transform 2 cards",
+                transformed=transformed,
+            )
+            self._finish_event()
+            return {"success": True, "action": "cards_transformed", "transformed": transformed}
+        if action == "bonfire_offer":
+            deck_indexes = list(pending.get("deck_indexes") or [])
+            deck_index = deck_indexes[card_index] if deck_indexes else card_index
+            card_id = self.state.deck.pop(deck_index)
+            rarity = "COMMON"
+            try:
+                from sts_py.engine.content.card_instance import get_runtime_card_base_id
+                from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+
+                base_id = get_runtime_card_base_id(card_id)
+                rarity = str(getattr(ALL_CARD_DEFS.get(base_id), "rarity", "COMMON"))
+                if "." in rarity:
+                    rarity = rarity.rsplit(".", 1)[-1]
+            except Exception:
+                rarity = "COMMON"
+            result: dict[str, Any] = {"success": True, "action": "bonfire_offer", "card_id": card_id, "rarity": rarity}
+            if rarity == "CURSE":
+                relic_id = "SpiritPoop" if not self._has_relic("SpiritPoop") else "Circlet"
+                self._acquire_relic(relic_id, source=RelicSource.EVENT, record_pending=True)
+                result["relic_id"] = relic_id
+            elif rarity in {"COMMON", "SPECIAL"}:
+                healed = min(5, self.state.player_max_hp - self.state.player_hp)
+                self.state.player_hp += healed
+                result["heal"] = healed
+            elif rarity == "UNCOMMON":
+                healed = self.state.player_max_hp - self.state.player_hp
+                self.state.player_hp = self.state.player_max_hp
+                result["heal"] = healed
+            elif rarity == "RARE":
+                self.state.player_max_hp += 10
+                self.state.player_hp = self.state.player_max_hp
+                result["max_hp_gain"] = 10
+            self._record_current_event_choice(
+                event,
+                choice_index=int(pending.get("choice_index", 0)),
+                choice_text=f"Offered {card_id}",
+                offered_card=card_id,
+                rarity=rarity,
+            )
+            self._finish_event()
+            return result
+        if action == "designer_remove_and_upgrade":
+            deck_indexes = list(pending.get("deck_indexes") or [])
+            deck_index = deck_indexes[card_index] if deck_indexes else card_index
+            removed_card = self.state.deck.pop(deck_index)
+            upgraded_card = self._upgrade_random_deck_card()
+            self._record_current_event_choice(
+                event,
+                choice_index=int(pending.get("choice_index", 0)),
+                choice_text="Designer full service",
+                removed_card=removed_card,
+                upgraded_card=upgraded_card,
+            )
+            self._finish_event()
+            return {"success": True, "action": "designer_full_service", "removed_card": removed_card, "upgraded_card": upgraded_card}
+        return {"success": False, "reason": "unknown_custom_action"}
+
+    def _handle_addict_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
+            self.state.player_gold -= 85
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id, gold_paid=85)
+            self._finish_event()
+            return {"success": True, "action": "paid_gold", "relic_id": relic_id}
+        if choice_index == 1:
+            relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
+            self.state.deck.append("Shame")
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id, curse="Shame")
+            self._finish_event()
+            return {"success": True, "action": "robbed", "relic_id": relic_id, "curse": "Shame"}
+        if choice_index == 2:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_back_to_basics_event(self, choice_index: int) -> dict[str, Any]:
+        from sts_py.engine.run.events import _can_remove_card
+
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            if not cards:
+                self._finish_event()
+                return {"success": True, "action": "no_purgeable_cards"}
+            self.state.pending_card_choice = {
+                "choice_index": choice_index,
+                "effect_type": "choose_card_to_remove",
+                "cards": cards,
+                "deck_indexes": deck_indexes,
+                "prompt": self._event_opt(event, 2),
+                "prompt_cn": self._event_opt(event, 2, cn=True),
+            }
+            return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+        if choice_index == 1:
+            upgraded: list[str] = []
+            for idx, card_id in enumerate(list(self.state.deck)):
+                base = self._canonical_card_id(card_id)
+                if base not in {"Strike", "Defend", "Strike_B", "Defend_B", "Strike_P", "Defend_P"}:
+                    continue
+                upgraded_card = self._upgrade_card(card_id)
+                if upgraded_card and upgraded_card != card_id:
+                    self.state.deck[idx] = upgraded_card
+                    upgraded.append(base)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, upgraded_cards=upgraded)
+            self._finish_event()
+            return {"success": True, "action": "upgraded_starters", "upgraded_cards": upgraded}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_drug_dealer_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            self.state.deck.append("JAX")
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, card_id="JAX")
+            self._finish_event()
+            return {"success": True, "action": "obtained_jax", "card_id": "JAX"}
+        if choice_index == 1:
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if self._canonical_card_id(card_id) not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            return self._set_pending_event_card_choice(
+                choice_index=choice_index,
+                custom_action="drug_dealer_transform",
+                cards=cards,
+                deck_indexes=deck_indexes,
+                prompt=self._event_opt(event, 5),
+                prompt_cn=self._event_opt(event, 5, cn=True),
+                extra={"selected": []},
+            )
+        if choice_index == 2:
+            relic_id = "Circlet" if self._has_relic("MutagenicStrength") else "MutagenicStrength"
+            self._acquire_relic(relic_id, source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id)
+            self._finish_event()
+            return {"success": True, "action": "obtained_relic", "relic_id": relic_id}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_designer_event(self, choice_index: int) -> dict[str, Any]:
+        from sts_py.engine.run.events import _can_remove_card
+
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        state = dict(self._event_state().get("designer") or {})
+        stage = str(state.get("stage", "intro"))
+        if stage == "intro":
+            state["stage"] = "main"
+            self._event_state()["designer"] = state
+            event.description = self._event_desc(event, 1)
+            event.description_cn = self._event_desc(event, 1, cn=True)
+            adjustment_upgrades_one = bool(state.get("adjustment_upgrades_one", True))
+            clean_up_removes_cards = bool(state.get("clean_up_removes_cards", True))
+            adjust_cost = int(state.get("adjust_cost", 40))
+            clean_up_cost = int(state.get("clean_up_cost", 60))
+            full_service_cost = int(state.get("full_service_cost", 90))
+            hp_loss = int(state.get("hp_loss", 3))
+            has_upgrades = any(self._upgrade_card(card_id) is not None for card_id in self.state.deck)
+            removable_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            event.choices = [
+                self._make_event_choice(
+                    description=self._event_opt(event, 1) + str(adjust_cost) + self._event_opt(event, 6) + (self._event_opt(event, 9) if adjustment_upgrades_one else self._event_opt(event, 7) + "2" + self._event_opt(event, 8)),
+                    description_cn=self._event_opt(event, 1, cn=True) + str(adjust_cost) + self._event_opt(event, 6, cn=True) + (self._event_opt(event, 9, cn=True) if adjustment_upgrades_one else self._event_opt(event, 7, cn=True) + "2" + self._event_opt(event, 8, cn=True)),
+                    enabled=self.state.player_gold >= adjust_cost and has_upgrades,
+                ),
+                self._make_event_choice(
+                    description=self._event_opt(event, 2) + str(clean_up_cost) + self._event_opt(event, 6) + (self._event_opt(event, 10) if clean_up_removes_cards else self._event_opt(event, 11) + "2" + self._event_opt(event, 12)),
+                    description_cn=self._event_opt(event, 2, cn=True) + str(clean_up_cost) + self._event_opt(event, 6, cn=True) + (self._event_opt(event, 10, cn=True) if clean_up_removes_cards else self._event_opt(event, 11, cn=True) + "2" + self._event_opt(event, 12, cn=True)),
+                    enabled=self.state.player_gold >= clean_up_cost and len(removable_indexes) >= (1 if clean_up_removes_cards else 2),
+                ),
+                self._make_event_choice(
+                    description=self._event_opt(event, 3) + str(full_service_cost) + self._event_opt(event, 6) + self._event_opt(event, 13),
+                    description_cn=self._event_opt(event, 3, cn=True) + str(full_service_cost) + self._event_opt(event, 6, cn=True) + self._event_opt(event, 13, cn=True),
+                    enabled=self.state.player_gold >= full_service_cost and len(removable_indexes) >= 1,
+                ),
+                self._make_event_choice(
+                    description=self._event_opt(event, 4) + str(hp_loss) + self._event_opt(event, 5),
+                    description_cn=self._event_opt(event, 4, cn=True) + str(hp_loss) + self._event_opt(event, 5, cn=True),
+                ),
+            ]
+            return {"success": True, "action": "main_menu", "event_continues": True}
+
+        adjustment_upgrades_one = bool(state.get("adjustment_upgrades_one", True))
+        clean_up_removes_cards = bool(state.get("clean_up_removes_cards", True))
+        adjust_cost = int(state.get("adjust_cost", 40))
+        clean_up_cost = int(state.get("clean_up_cost", 60))
+        full_service_cost = int(state.get("full_service_cost", 90))
+        hp_loss = int(state.get("hp_loss", 3))
+
+        if choice_index == 0:
+            self.state.player_gold -= adjust_cost
+            if adjustment_upgrades_one:
+                deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if self._upgrade_card(card_id) is not None]
+                cards = [self.state.deck[idx] for idx in deck_indexes]
+                self.state.pending_card_choice = {
+                    "choice_index": choice_index,
+                    "effect_type": "choose_card_to_upgrade",
+                    "cards": cards,
+                    "deck_indexes": deck_indexes,
+                    "prompt": self._event_opt(event, 15),
+                    "prompt_cn": self._event_opt(event, 15, cn=True),
+                }
+                return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+            upgraded_cards: list[str] = []
+            candidates = [idx for idx, card_id in enumerate(self.state.deck) if self._upgrade_card(card_id) is not None]
+            rng = self._event_rng()
+            while candidates and len(upgraded_cards) < 2:
+                pick = rng.random_int(len(candidates) - 1) if rng is not None else 0
+                deck_index = candidates.pop(pick)
+                old_card = self.state.deck[deck_index]
+                upgraded = self._upgrade_card(old_card)
+                if upgraded and upgraded != old_card:
+                    self.state.deck[deck_index] = upgraded
+                    upgraded_cards.append(self._canonical_card_id(old_card))
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold_paid=adjust_cost, upgraded_cards=upgraded_cards)
+            self._finish_event()
+            return {"success": True, "action": "designer_upgrade_two", "upgraded_cards": upgraded_cards}
+
+        if choice_index == 1:
+            self.state.player_gold -= clean_up_cost
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            if clean_up_removes_cards:
+                self.state.pending_card_choice = {
+                    "choice_index": choice_index,
+                    "effect_type": "choose_card_to_remove",
+                    "cards": cards,
+                    "deck_indexes": deck_indexes,
+                    "prompt": self._event_opt(event, 17),
+                    "prompt_cn": self._event_opt(event, 17, cn=True),
+                }
+                return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+            return self._set_pending_event_card_choice(
+                choice_index=choice_index,
+                custom_action="drug_dealer_transform",
+                cards=cards,
+                deck_indexes=deck_indexes,
+                prompt=self._event_opt(event, 16),
+                prompt_cn=self._event_opt(event, 16, cn=True),
+                extra={"selected": []},
+            )
+
+        if choice_index == 2:
+            self.state.player_gold -= full_service_cost
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            return self._set_pending_event_card_choice(
+                choice_index=choice_index,
+                custom_action="designer_remove_and_upgrade",
+                cards=cards,
+                deck_indexes=deck_indexes,
+                prompt=self._event_opt(event, 17),
+                prompt_cn=self._event_opt(event, 17, cn=True),
+            )
+
+        if choice_index == 3:
+            self.state.player_hp = max(0, self.state.player_hp - hp_loss)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, hp_loss=hp_loss)
+            self._finish_event()
+            return {"success": True, "action": "designer_punch", "hp_loss": hp_loss}
+
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_golden_shrine_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            gold_amount = 50 if self.state.ascension >= 15 else 100
+            self.state.player_gold += gold_amount
+            self._pending_gold_reward += gold_amount
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold=gold_amount)
+            self._finish_event()
+            return {"success": True, "action": "prayed", "gold_gained": gold_amount}
+        if choice_index == 1:
+            self.state.player_gold += 275
+            self._pending_gold_reward += 275
+            self.state.deck.append("Regret")
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold=275, curse="Regret")
+            self._finish_event()
+            return {"success": True, "action": "desecrated", "gold_gained": 275, "curse": "Regret"}
+        if choice_index == 2:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_duplicator_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            return self._set_pending_event_card_choice(
+                choice_index=choice_index,
+                custom_action="duplicate_card",
+                cards=list(self.state.deck),
+                deck_indexes=list(range(len(self.state.deck))),
+                prompt=self._event_opt(event, 2),
+                prompt_cn=self._event_opt(event, 2, cn=True),
+            )
+        if choice_index == 1:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_purifier_event(self, choice_index: int) -> dict[str, Any]:
+        from sts_py.engine.run.events import _can_remove_card
+
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            self.state.pending_card_choice = {
+                "choice_index": choice_index,
+                "effect_type": "choose_card_to_remove",
+                "cards": cards,
+                "deck_indexes": deck_indexes,
+                "prompt": self._event_opt(event, 2),
+                "prompt_cn": self._event_opt(event, 2, cn=True),
+            }
+            return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+        if choice_index == 1:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_upgrade_shrine_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if self._upgrade_card(card_id) is not None]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            self.state.pending_card_choice = {
+                "choice_index": choice_index,
+                "effect_type": "choose_card_to_upgrade",
+                "cards": cards,
+                "deck_indexes": deck_indexes,
+                "prompt": self._event_opt(event, 2),
+                "prompt_cn": self._event_opt(event, 2, cn=True),
+            }
+            return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+        if choice_index == 1:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_transmorgrifier_event(self, choice_index: int) -> dict[str, Any]:
+        from sts_py.engine.run.events import _can_remove_card
+
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index == 0:
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            self.state.pending_card_choice = {
+                "choice_index": choice_index,
+                "effect_type": "choose_card_to_transform",
+                "cards": cards,
+                "deck_indexes": deck_indexes,
+                "prompt": self._event_opt(event, 2),
+                "prompt_cn": self._event_opt(event, 2, cn=True),
+            }
+            return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
+        if choice_index == 1:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_lab_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index != 0:
+            return {"success": False, "reason": "invalid_choice"}
+        count = 2 if self.state.ascension >= 15 else 3
+        potions = self._gain_random_event_potions(count)
+        self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, potions=potions)
+        self._finish_event()
+        return {"success": True, "action": "gain_potions", "potions": potions}
+
+    def _handle_nloth_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        state = self._event_state().get("nloth_choices", [])
+        if choice_index in {0, 1}:
+            if choice_index >= len(state):
+                return {"success": False, "reason": "invalid_choice"}
+            relic_to_lose = state[choice_index]
+            relic_id = "Circlet" if self._has_relic("NlothsGift") else "NlothsGift"
+            if relic_id != "Circlet" and relic_to_lose in self.state.relics:
+                self.state.relics.remove(relic_to_lose)
+            self._acquire_relic(relic_id, source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, lost_relic=relic_to_lose, gained_relic=relic_id)
+            self._finish_event()
+            return {"success": True, "action": "traded_relic", "lost_relic": relic_to_lose, "relic_id": relic_id}
+        if choice_index == 2:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "left"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_secret_portal_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        event_state = self._event_state()
+        stage = str(event_state.get("stage", "intro"))
+        if stage == "intro":
+            if choice_index == 0:
+                event_state["stage"] = "accept"
+                event.description = self._event_desc(event, 1)
+                event.description_cn = self._event_desc(event, 1, cn=True)
+                event.choices = [self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True))]
+                return {"success": True, "action": "accept_portal", "event_continues": True}
+            if choice_index == 1:
+                self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+                self._finish_event()
+                return {"success": True, "action": "left"}
+            return {"success": False, "reason": "invalid_choice"}
+        if stage == "accept":
+            boss_encounter = self._get_boss_encounter()
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, boss_encounter=boss_encounter)
+            self._clear_current_event()
+            self._start_combat(boss_encounter)
+            return {"success": True, "action": "took_portal", "boss_encounter": boss_encounter}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_we_meet_again_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        state = dict(self._event_state().get("we_meet_again") or {})
+        if choice_index == 0 and state.get("potion_id"):
+            self._remove_potion_id(str(state["potion_id"]))
+            relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, potion_id=state["potion_id"], relic_id=relic_id)
+            self._finish_event()
+            return {"success": True, "action": "gave_potion", "relic_id": relic_id}
+        if choice_index == 1 and state.get("gold_amount"):
+            self.state.player_gold -= int(state["gold_amount"])
+            relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold_paid=state["gold_amount"], relic_id=relic_id)
+            self._finish_event()
+            return {"success": True, "action": "gave_gold", "relic_id": relic_id}
+        if choice_index == 2 and state.get("card_id"):
+            card_id = str(state["card_id"])
+            if card_id in self.state.deck:
+                self.state.deck.remove(card_id)
+            relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, card_id=card_id, relic_id=relic_id)
+            self._finish_event()
+            return {"success": True, "action": "gave_card", "relic_id": relic_id}
+        if choice_index == 3:
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+            self._finish_event()
+            return {"success": True, "action": "attacked"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_woman_in_blue_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        if choice_index in {0, 1, 2}:
+            prices = {0: 20, 1: 30, 2: 40}
+            counts = {0: 1, 1: 2, 2: 3}
+            self.state.player_gold -= prices[choice_index]
+            potions = self._gain_random_event_potions(counts[choice_index])
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, potions=potions, gold_paid=prices[choice_index])
+            self._finish_event()
+            return {"success": True, "action": "bought_potions", "potions": potions}
+        if choice_index == 3:
+            hp_loss = 0
+            if self.state.ascension >= 15:
+                hp_loss = max(1, int((self.state.player_max_hp * 0.05) + 0.999999))
+                self.state.player_hp = max(0, self.state.player_hp - hp_loss)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, hp_loss=hp_loss)
+            self._finish_event()
+            return {"success": True, "action": "left", "hp_loss": hp_loss}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_the_joust_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        event_state = self._event_state()
+        stage = str(event_state.get("stage", "intro"))
+        rng = self._event_rng()
+        if stage == "intro":
+            event_state["stage"] = "bet"
+            event.description = self._event_desc(event, 1)
+            event.description_cn = self._event_desc(event, 1, cn=True)
+            event.choices = [
+                self._make_event_choice(
+                    description=self._event_opt(event, 1) + "50" + self._event_opt(event, 2) + "100" + self._event_opt(event, 3),
+                    description_cn=self._event_opt(event, 1, cn=True) + "50" + self._event_opt(event, 2, cn=True) + "100" + self._event_opt(event, 3, cn=True),
+                ),
+                self._make_event_choice(
+                    description=self._event_opt(event, 4) + "50" + self._event_opt(event, 5) + "250" + self._event_opt(event, 3),
+                    description_cn=self._event_opt(event, 4, cn=True) + "50" + self._event_opt(event, 5, cn=True) + "250" + self._event_opt(event, 3, cn=True),
+                ),
+            ]
+            return {"success": True, "action": "bet_choice", "event_continues": True}
+        if stage == "bet":
+            self.state.player_gold -= 50
+            owner_wins = bool(rng.random_boolean_chance(0.3) if rng is not None else False)
+            bet_for_owner = choice_index == 1
+            gold_gained = 0
+            if owner_wins and bet_for_owner:
+                gold_gained = 250
+            elif not owner_wins and not bet_for_owner:
+                gold_gained = 100
+            self.state.player_gold += gold_gained
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold_paid=50, gold_gained=gold_gained, owner_wins=owner_wins)
+            self._finish_event()
+            return {"success": True, "action": "resolved_bet", "owner_wins": owner_wins, "gold_gained": gold_gained}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_mind_bloom_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        rich_branch = (self.state.floor % 50) <= 40
+        if choice_index == 0:
+            rng = self._event_rng()
+            bosses = ["The Guardian", "Hexaghost", "Slime Boss"]
+            boss_encounter = bosses[rng.random_int(len(bosses) - 1)] if rng is not None else bosses[0]
+            rare_relic = self._draw_random_relic_of_tier("RARE")
+            gold_amount = 25 if self.state.ascension >= 13 else 50
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, boss_encounter=boss_encounter, relic_id=rare_relic, gold_reward=gold_amount)
+            self._clear_current_event()
+            self._set_current_event_combat(
+                enemies=[boss_encounter],
+                bonus_reward=rare_relic,
+                pending_event_rewards=[f"gold:{gold_amount}"],
+                is_elite_combat=False,
+            )
+            self.start_combat_with_monsters([boss_encounter])
+            return {"success": True, "action": "boss_combat", "boss_encounter": boss_encounter, "relic_id": rare_relic, "gold_reward": gold_amount}
+        if choice_index == 1:
+            upgraded_cards: list[str] = []
+            for idx, card_id in enumerate(list(self.state.deck)):
+                upgraded = self._upgrade_card(card_id)
+                if upgraded is None or upgraded == card_id:
+                    continue
+                self.state.deck[idx] = upgraded
+                upgraded_cards.append(self._canonical_card_id(card_id))
+            self._acquire_relic("MarkOfTheBloom", source=RelicSource.EVENT, record_pending=True)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, upgraded_cards=upgraded_cards, relic_id="MarkOfTheBloom")
+            self._finish_event()
+            return {"success": True, "action": "upgrade_all", "upgraded_cards": upgraded_cards, "relic_id": "MarkOfTheBloom"}
+        if choice_index == 2:
+            if rich_branch:
+                self.state.player_gold += 999
+                self._pending_gold_reward += 999
+                self.state.deck.extend(["Normality", "Normality"])
+                self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, gold=999, curses=["Normality", "Normality"])
+                self._finish_event()
+                return {"success": True, "action": "gain_gold", "gold_gained": 999, "curses": ["Normality", "Normality"]}
+            healed = self.state.player_max_hp - self.state.player_hp
+            self.state.player_hp = self.state.player_max_hp
+            self.state.deck.append("Doubt")
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, healed=healed, curse="Doubt")
+            self._finish_event()
+            return {"success": True, "action": "heal_to_full", "healed": healed, "curse": "Doubt"}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_falling_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        event_state = self._event_state()
+        stage = str(event_state.get("stage", "intro"))
+        rng = self._event_rng()
+        if stage == "intro":
+            from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+
+            buckets = {"ATTACK": [], "SKILL": [], "POWER": []}
+            for deck_index, card_id in enumerate(self.state.deck):
+                base = self._canonical_card_id(card_id)
+                card_def = ALL_CARD_DEFS.get(base)
+                if card_def is None:
+                    continue
+                card_type = str(getattr(card_def, "card_type", "")).rsplit(".", 1)[-1]
+                if card_type in buckets:
+                    buckets[card_type].append((deck_index, card_id))
+            picks: dict[str, tuple[int, str] | None] = {}
+            for card_type, options in buckets.items():
+                if not options:
+                    picks[card_type] = None
+                    continue
+                pick_idx = rng.random_int(len(options) - 1) if rng is not None else 0
+                picks[card_type] = options[pick_idx]
+            event_state["stage"] = "choice"
+            event_state["falling_picks"] = picks
+            event.description = self._event_desc(event, 1)
+            event.description_cn = self._event_desc(event, 1, cn=True)
+            if not any(picks.values()):
+                event.choices = [self._make_event_choice(description=self._event_opt(event, 8), description_cn=self._event_opt(event, 8, cn=True))]
+                return {"success": True, "action": "no_cards", "event_continues": True}
+            event.choices = []
+            if picks["SKILL"] is not None:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 1) + str(picks["SKILL"][1]), description_cn=self._event_opt(event, 1, cn=True) + str(picks["SKILL"][1])))
+            else:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True), enabled=False))
+            if picks["POWER"] is not None:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 3) + str(picks["POWER"][1]), description_cn=self._event_opt(event, 3, cn=True) + str(picks["POWER"][1])))
+            else:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 4), description_cn=self._event_opt(event, 4, cn=True), enabled=False))
+            if picks["ATTACK"] is not None:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 5) + str(picks["ATTACK"][1]), description_cn=self._event_opt(event, 5, cn=True) + str(picks["ATTACK"][1])))
+            else:
+                event.choices.append(self._make_event_choice(description=self._event_opt(event, 6), description_cn=self._event_opt(event, 6, cn=True), enabled=False))
+            return {"success": True, "action": "choice", "event_continues": True}
+        if stage == "choice":
+            picks = dict(event_state.get("falling_picks") or {})
+            choice_map = [picks.get("SKILL"), picks.get("POWER"), picks.get("ATTACK")]
+            target = choice_map[choice_index] if 0 <= choice_index < len(choice_map) else None
+            if target is None:
+                self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+                self._finish_event()
+                return {"success": True, "action": "nothing_to_remove"}
+            deck_index, card_id = target
+            if 0 <= deck_index < len(self.state.deck):
+                self.state.deck.pop(deck_index)
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, card_id=card_id)
+            self._finish_event()
+            return {"success": True, "action": "removed_card", "card_id": card_id}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_mysterious_sphere_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        event_state = self._event_state()
+        stage = str(event_state.get("stage", "intro"))
+        if stage == "intro":
+            if choice_index == 0:
+                event_state["stage"] = "pre_combat"
+                event.description = self._event_desc(event, 1)
+                event.description_cn = self._event_desc(event, 1, cn=True)
+                event.choices = [self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True))]
+                return {"success": True, "action": "pre_combat", "event_continues": True}
+            if choice_index == 1:
+                self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description)
+                self._finish_event()
+                return {"success": True, "action": "left"}
+            return {"success": False, "reason": "invalid_choice"}
+        if stage == "pre_combat":
+            relic_id = self._draw_random_relic_of_tier("rare")
+            self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id)
+            self._clear_current_event()
+            self._set_current_event_combat(
+                enemies=["OrbWalker", "OrbWalker"],
+                bonus_reward=relic_id,
+                pending_event_rewards=[],
+                is_elite_combat=False,
+            )
+            self.start_combat_with_monsters(["OrbWalker", "OrbWalker"])
+            return {"success": True, "action": "combat", "relic_id": relic_id, "is_event_combat": True}
+        return {"success": False, "reason": "invalid_choice"}
+
+    def _handle_bonfire_event(self, choice_index: int) -> dict[str, Any]:
+        event = self._current_event
+        if event is None:
+            return {"success": False, "reason": "no_event"}
+        event_state = self._event_state()
+        stage = str(event_state.get("stage", "intro"))
+        if stage == "intro":
+            event_state["stage"] = "offer"
+            event.description = self._event_desc(event, 1)
+            event.description_cn = self._event_desc(event, 1, cn=True)
+            event.choices = [self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True))]
+            return {"success": True, "action": "offer_prompt", "event_continues": True}
+        if stage == "offer":
+            from sts_py.engine.run.events import _can_remove_card
+
+            deck_indexes = [idx for idx, card_id in enumerate(self.state.deck) if _can_remove_card(self.state, card_id)]
+            cards = [self.state.deck[idx] for idx in deck_indexes]
+            if not cards:
+                self._finish_event()
+                return {"success": True, "action": "no_offerable_cards"}
+            return self._set_pending_event_card_choice(
+                choice_index=choice_index,
+                custom_action="bonfire_offer",
+                cards=cards,
+                deck_indexes=deck_indexes,
+                prompt=self._event_opt(event, 3),
+                prompt_cn=self._event_opt(event, 3, cn=True),
+            )
+        return {"success": False, "reason": "invalid_choice"}
 
     def _handle_dead_adventurer(self, choice_index: int) -> dict[str, Any]:
         event = self._current_event
@@ -3871,6 +5159,10 @@ class RunEngine:
             if reward_type == "gold":
                 self.state.player_gold += 30
                 self._pending_gold_reward += 30
+            elif isinstance(reward_type, str) and reward_type.startswith("gold:"):
+                amount = int(str(reward_type).split(":", 1)[1] or 0)
+                self.state.player_gold += amount
+                self._pending_gold_reward += amount
             elif reward_type == "relic":
                 self._grant_random_relic(source=RelicSource.EVENT)
 

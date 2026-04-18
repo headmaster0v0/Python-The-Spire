@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Generate map image using original game sprites."""
 
 import os

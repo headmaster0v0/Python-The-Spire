@@ -649,11 +649,24 @@ def render_event_choice_lines(event) -> list[str]:
         choice_cn = str(getattr(choice, "description_cn", "") or "").strip()
         choice_en = str(getattr(choice, "description", "") or "").strip()
         label = choice_cn if _looks_sane_translation(choice_cn) else choice_en
+        if not getattr(choice, "enabled", True):
+            disabled_cn = str(getattr(choice, "disabled_reason_cn", "") or "").strip()
+            disabled_en = str(getattr(choice, "disabled_reason", "") or "").strip()
+            if disabled_cn and disabled_cn not in label:
+                label = f"{label} ({disabled_cn})"
+            elif disabled_en and disabled_en not in label:
+                label = f"{label} ({disabled_en})"
         lines.append(f"[{idx}] {label}")
     return lines
 
 
 def describe_event_card_choice(pending_choice: dict[str, Any] | None) -> str:
+    prompt_cn = str((pending_choice or {}).get("prompt_cn", "") or "").strip()
+    prompt = str((pending_choice or {}).get("prompt", "") or "").strip()
+    if prompt_cn:
+        return prompt_cn
+    if prompt:
+        return prompt
     effect_type = str((pending_choice or {}).get("effect_type", "") or "")
     label_map = {
         "choose_card_to_remove": "移除",

@@ -524,7 +524,6 @@ def _event_inventory() -> dict[str, Event]:
     return {
         event_key: event.clone()
         for event_key, event in EVENTS_BY_KEY.items()
-        if getattr(event, "pool_bucket", "") != "terminal"
     }
 
 
@@ -1136,7 +1135,7 @@ def build_cli_raw_snapshot(
 
     for event_id, event in sorted(_event_inventory().items()):
         source_facts = build_event_source_facts(event)
-        runtime_name_en = str(getattr(event, "id", event_id))
+        runtime_name_en = str(getattr(event, "name", "") or getattr(event, "event_key", "") or event_id)
         runtime_name_cn = translate_event_name(event)
         en_wiki, cn_wiki = (
             _fetch_entity_wiki_pages(

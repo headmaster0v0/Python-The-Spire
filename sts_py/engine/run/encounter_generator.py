@@ -8,8 +8,9 @@ ACT 2 (TheCity): Mid game monsters
 ACT 3 (TheBeyond): Late game monsters
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Literal
 
 from sts_py.engine.core.rng import MutableRNG
 

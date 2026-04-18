@@ -3,12 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 try:
-    from typing import Dict, List, Tuple, Type
+    from typing import Dict, List, Tuple, Type, Union
 except ImportError:
     Dict = dict
     List = list
     Tuple = tuple
     Type = type
+    Union = object
 
 from sts_py.engine.core.rng import MutableRNG
 from sts_py.engine.combat.card_effects import (
@@ -71,7 +72,7 @@ if TYPE_CHECKING:
 
 EncounterSpec = Tuple[Type[MonsterBase], Dict[str, Any]]
 
-WeakEncounterType = Tuple[str, list[EncounterSpec] | str, int]
+WeakEncounterType = Tuple[str, Union[List[EncounterSpec], str], int]
 
 WEAK_ENCOUNTER_TEMPLATES_ACT1: list[WeakEncounterType] = [
     ("Cultist", [(Cultist, {})], 1),

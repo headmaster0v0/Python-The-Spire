@@ -12,10 +12,14 @@ import urllib.parse
 from pathlib import Path
 from typing import Any
 
-import cloudscraper
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+try:
+    import cloudscraper  # type: ignore
+except ImportError:  # pragma: no cover - optional network dependency
+    cloudscraper = None
 
 
 def _contains_cjk(text: str) -> bool:
@@ -57,7 +61,7 @@ class BilingualWikiScraper:
         self._cache: dict[str, Any] = {}
         self._en_session = self._create_en_session()
         self._wiki_gg_session = self._create_en_session()
-        self._cn_session = cloudscraper.create_scraper()
+        self._cn_session = cloudscraper.create_scraper() if cloudscraper is not None else self._create_en_session()
 
         # Legacy script compatibility maps are derived from checked-in runtime
         # catalog/content instead of static scraped dictionaries.

@@ -6,11 +6,11 @@
       "potion": 42,
       "power": 99,
       "monster": 62,
-      "event": 51
+      "event": 52
     },
     "family_count": 212,
     "dedicated_entity_count": 32,
-    "family_entity_count": 401
+    "family_entity_count": 402
   },
   "family_tests": {
     "event:choose_card_to_remove": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
@@ -631,6 +631,15 @@
     {
       "entity_type": "event",
       "entity_id": "Shining Light",
+      "family_ids": [
+        "event:no_effect_choices"
+      ],
+      "proof_kind": "family",
+      "notes": ""
+    },
+    {
+      "entity_type": "event",
+      "entity_id": "SpireHeart",
       "family_ids": [
         "event:no_effect_choices"
       ],

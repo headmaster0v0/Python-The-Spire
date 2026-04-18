@@ -13,6 +13,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Callable
 
 from sts_py.engine.content.relics import RelicSource
+from sts_py.engine.run.official_event_strings import apply_official_event_strings
 
 if TYPE_CHECKING:
     from sts_py.engine.run.run_engine import RunEngine
@@ -138,6 +139,9 @@ class EventChoice:
     description: str
     description_cn: str = ""
     effects: list[EventEffect] = field(default_factory=list)
+    enabled: bool = True
+    disabled_reason: str = ""
+    disabled_reason_cn: str = ""
     cost: int = 0
     encounter_chance: int = 0
     search_level: int = 0
@@ -473,6 +477,10 @@ class Event:
     description_cn: str = ""
     description_variants: list[str] = field(default_factory=list)
     description_cn_variants: list[str] = field(default_factory=list)
+    source_descriptions: list[str] = field(default_factory=list)
+    source_descriptions_cn: list[str] = field(default_factory=list)
+    source_options: list[str] = field(default_factory=list)
+    source_options_cn: list[str] = field(default_factory=list)
     choices: list[EventChoice] = field(default_factory=list)
     act: int = 1
     min_floor: int = 0
@@ -2081,19 +2089,20 @@ def _canonicalize_event_template(event_key: str) -> Event:
     return event
 
 
-def _set_choice_text(event: Event, descriptions: list[str]) -> None:
+def _set_choice_text(
+    event: Event,
+    descriptions: list[str],
+    descriptions_cn: list[str] | None = None,
+) -> None:
+    cn_labels = list(descriptions_cn or [])
     for idx, label in enumerate(descriptions):
         if idx >= len(event.choices):
             break
         event.choices[idx].description = label
-        event.choices[idx].description_cn = ""
+        event.choices[idx].description_cn = cn_labels[idx] if idx < len(cn_labels) else ""
 
 
 def _apply_event_truth_overrides(event: Event) -> None:
-    event.description_cn = ""
-    for choice in event.choices:
-        choice.description_cn = ""
-
     if event.event_key == "Back to Basics":
         event.name = "Back to Basics"
         event.description = "Inside the ancient ruins, two paths present themselves: embrace elegance and remove a card, or choose simplicity and upgrade all your starter Strikes and Defends."
@@ -2255,6 +2264,7 @@ def build_event(event_key: str, event_rng: Any | None = None) -> Event:
     if canonical_key is None:
         raise KeyError(f"Unknown event identifier: {event_key}")
     event = _canonicalize_event_template(canonical_key)
+    apply_official_event_strings(event)
     _apply_event_truth_overrides(event)
     if event_rng is not None:
         event.select_variant(event_rng)

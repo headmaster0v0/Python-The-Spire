@@ -9,6 +9,7 @@ from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.content.cards_min import ALL_CARD_DEFS
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import get_relic_by_id
+from sts_py.engine.run.official_event_strings import get_official_event_strings
 from sts_py.engine.run.run_engine import RoomType
 from sts_py.terminal.translation_policy import get_translation_policy_entry
 
@@ -803,6 +804,11 @@ def translate_event_name(event: Any) -> str:
         event_id = getattr(event, "event_id", getattr(event, "id", str(event)))
         event_key = getattr(event, "event_key", event_id)
         name_cn = getattr(event, "name_cn", None)
+    official = get_official_event_strings(str(event_key or event_id))
+    if official is None and event_id != event_key:
+        official = get_official_event_strings(str(event_id))
+    if official is not None and _looks_sane_translation(official.name_zhs):
+        return official.name_zhs
     policy_name = _policy_translation("event", event_key) or _policy_translation("event", event_id)
     if policy_name is not None:
         return policy_name

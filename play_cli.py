@@ -589,14 +589,15 @@ def handle_card_selection(engine: RunEngine) -> None:
     while engine.state.phase == RunPhase.EVENT and getattr(engine.state, "pending_card_choice", None):
         clear_screen()
         pending_choice = getattr(engine.state, "pending_card_choice", None)
+        choice_cards = list((pending_choice or {}).get("cards") or engine.state.deck)
         _show_lines(
             describe_event_card_choice(pending_choice),
-            render_card_collection_lines(engine.state.deck),
+            render_card_collection_lines(choice_cards),
         )
         raw = input("选牌> ").strip()
         if not raw:
             continue
-        if _handle_common_info_command(engine, raw, context="event", inspect_cards=list(engine.state.deck)):
+        if _handle_common_info_command(engine, raw, context="event", inspect_cards=choice_cards):
             continue
         pick_idx = _parse_int(raw)
         if pick_idx is None:
