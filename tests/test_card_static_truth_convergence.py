@@ -94,6 +94,8 @@ def test_java_card_fact_extraction_normalizes_special_and_dynamic_cards() -> Non
     tempest = wiki_audit.build_card_java_facts(repo_root, "Tempest")
     ascenders_bane = wiki_audit.build_card_java_facts(repo_root, "AscendersBane")
     burn = wiki_audit.build_card_java_facts(repo_root, "Burn")
+    burn_plus = wiki_audit.build_card_java_facts(repo_root, "Burn+")
+    bullseye = wiki_audit.build_card_java_facts(repo_root, "Bullseye")
     genetic_algorithm = wiki_audit.build_card_java_facts(repo_root, "GeneticAlgorithm")
     ritual_dagger = wiki_audit.build_card_java_facts(repo_root, "RitualDagger")
     shiv = wiki_audit.build_card_java_facts(repo_root, "Shiv")
@@ -106,6 +108,10 @@ def test_java_card_fact_extraction_normalizes_special_and_dynamic_cards() -> Non
     assert ascenders_bane["ethereal"] is True
     assert burn["rarity"] == "SPECIAL"
     assert burn["magic_number"] == 2
+    assert burn_plus["java_class"] == "Burn"
+    assert burn_plus["java_class"] == "Burn"
+    assert bullseye["java_class"] == "LockOn"
+    assert bullseye["official_key"] == "Lockon"
     assert genetic_algorithm["block"] == 1
     assert ritual_dagger["damage"] == 15
     assert shiv["damage"] == 4

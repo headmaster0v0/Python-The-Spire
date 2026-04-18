@@ -82,7 +82,7 @@ class MonsterBase:
             for p in list(self.powers.powers):
                 if hasattr(p, 'on_attacked'):
                     block_gain = p.on_attacked(actual_damage, self)
-                    if block_gain > 0:
+                    if isinstance(block_gain, int) and block_gain > 0:
                         self.gain_block(block_gain)
             if self.hp <= 0:
                 self.is_dying = True

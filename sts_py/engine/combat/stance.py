@@ -141,4 +141,17 @@ def change_stance(player: Any, stance_type: StanceType | None) -> dict[str, int]
     else:
         player._stance = next_type.value.lower()
 
+    combat_state = getattr(player, "_combat_state", None)
+    card_manager = getattr(combat_state, "card_manager", None)
+    discard_pile = getattr(card_manager, "discard_pile", None)
+    if discard_pile is not None:
+        returning_cards = [
+            card
+            for card in list(getattr(discard_pile, "cards", []) or [])
+            if getattr(card, "card_id", None) == "FlurryOfBlows"
+        ]
+        for returning_card in returning_cards:
+            if discard_pile.remove(returning_card):
+                card_manager._add_card_to_hand_with_limit(returning_card)
+
     return exit_effects

@@ -7,6 +7,8 @@ from typing import Any
 from sts_py.engine.combat.card_effects import get_card_effects
 from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+from sts_py.engine.content.official_card_strings import get_official_card_strings
+from sts_py.engine.content.official_relic_manifest import get_runtime_relic_manifest
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import get_relic_by_id
 from sts_py.engine.run.official_event_strings import get_official_event_strings
@@ -711,6 +713,54 @@ def _definition_card_name(card: CardInstance) -> str | None:
     return None
 
 
+def _official_card_name(card: CardInstance) -> str | None:
+    official = get_official_card_strings(card.runtime_card_id)
+    if official is None:
+        return None
+    if str(official.name_zhs or "").strip() and str(official.name_zhs or "").strip().upper() != "DEPRECATED":
+        return official.name_zhs
+    return None
+
+
+def _normalize_official_card_description(text: str) -> str:
+    normalized = str(text or "").replace("NL", " ")
+    normalized = normalized.replace("*", "")
+    normalized = normalized.replace("获得 [W]", "获得 1 点能量")
+    normalized = normalized.replace("少获得1 [W]", "少获得1点能量")
+    normalized = normalized.replace("少获得 1 [W]", "少获得 1 点能量")
+    normalized = normalized.replace("[W]", "能量")
+    normalized = normalized.replace("[E]", "能量")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    normalized = re.sub(r"\s*([，。！？；：、）])", r"\1", normalized)
+    normalized = re.sub(r"([（])\s*", r"\1", normalized)
+    return normalized.strip()
+
+
+def _official_card_description(card: CardInstance) -> str | None:
+    official = get_official_card_strings(card.runtime_card_id)
+    if official is None:
+        return None
+
+    description = official.description_zhs
+    if official.variant_kind == "upgrade_variant" and official.upgrade_description_zhs:
+        description = official.upgrade_description_zhs
+    elif card.upgraded and official.upgrade_description_zhs:
+        description = official.upgrade_description_zhs
+
+    if not _looks_presentable_text(description):
+        return None
+
+    substitutions = {
+        "!D!": str(max(0, int(getattr(card, "base_damage", 0) or 0))),
+        "!B!": str(max(0, int(getattr(card, "base_block", 0) or 0))),
+        "!M!": str(max(0, int(getattr(card, "base_magic_number", 0) or 0))),
+    }
+    for token, value in substitutions.items():
+        description = description.replace(token, value)
+    description = _normalize_official_card_description(description)
+    return description if _looks_presentable_text(description) else None
+
+
 def _policy_translation(entity_type: str, entity_id: str) -> str | None:
     entry = get_translation_policy_entry(entity_type, entity_id)
     if entry is None:
@@ -725,7 +775,12 @@ def _policy_translation(entity_type: str, entity_id: str) -> str | None:
 def translate_card_name(card_id: str) -> str:
     card = _canonical_card(card_id)
     base_id = card.card_id
-    name = _policy_translation("card", base_id) or CARD_NAME_OVERRIDES.get(base_id) or _definition_card_name(card)
+    name = (
+        _official_card_name(card)
+        or _policy_translation("card", base_id)
+        or CARD_NAME_OVERRIDES.get(base_id)
+        or _definition_card_name(card)
+    )
     if name is None:
         name = _humanize_identifier(base_id)
     return f"{name}{_format_upgrade_suffix(card)}"
@@ -780,17 +835,173 @@ def translate_relic(relic_id: str) -> str:
     return _humanize_identifier(relic_id)
 
 
-def get_relic_info(relic_id: str) -> tuple[str, str]:
-    name = translate_relic(relic_id)
+def _relic_used_up_description(relic_id: str) -> str | None:
     relic_def = get_relic_by_id(relic_id)
-    description = getattr(relic_def, "description_zhs", None) if relic_def is not None else None
-    if not _looks_presentable_text(description):
-        description = getattr(relic_def, "description", None) if relic_def is not None else None
-    return name, str(description).strip() if _looks_presentable_text(description) else ""
+    if relic_def is None:
+        return None
+    for variant in list(getattr(relic_def, "stateful_description_variants", ()) or ()):
+        description = str(variant.get("description_zhs", "") or "").strip()
+        if not _looks_presentable_text(description):
+            continue
+        if str(variant.get("source_method", "") or "") == "usedUp":
+            return description
+        if any(marker in description for marker in ("耗尽", "失效")):
+            return description
+    return None
+
+
+def _first_presentable_relic_variant(
+    relic_id: str,
+    *,
+    require_placeholder: bool = False,
+    exclude_used_up: bool = False,
+) -> str | None:
+    relic_def = get_relic_by_id(relic_id)
+    if relic_def is None:
+        return None
+    for variant in list(getattr(relic_def, "stateful_description_variants", ()) or ()):
+        description = str(variant.get("description_zhs", "") or "").strip()
+        if not _looks_presentable_text(description):
+            continue
+        if require_placeholder and "{selected_card_name}" not in description:
+            continue
+        if exclude_used_up and (
+            str(variant.get("source_method", "") or "") == "usedUp" or any(marker in description for marker in ("耗尽", "失效"))
+        ):
+            continue
+        return description
+    return None
+
+
+def _substitute_selected_card_name(description: str, relic_context: dict[str, Any]) -> str:
+    selected_card_name = str(relic_context.get("selected_card_name", "") or "").strip()
+    if not selected_card_name:
+        return description
+    return description.replace("{selected_card_name}", selected_card_name)
+
+
+def _relic_manifest_entry(relic_id: str) -> Any | None:
+    relic_def = get_relic_by_id(relic_id)
+    runtime_id = getattr(relic_def, "id", relic_id) if relic_def is not None else relic_id
+    return get_runtime_relic_manifest().get(str(runtime_id))
+
+
+def _resolve_relic_description(relic_id: str, relic_context: dict[str, Any] | None = None) -> str:
+    relic_def = get_relic_by_id(relic_id)
+    if relic_def is None:
+        return ""
+
+    default_description = str(getattr(relic_def, "description_zhs", None) or getattr(relic_def, "description", None) or "").strip()
+    if not _looks_presentable_text(default_description):
+        default_description = ""
+
+    context = dict(relic_context or {})
+    owned = bool(context.get("owned"))
+    counter = context.get("counter")
+    used_up = bool(context.get("used_up"))
+
+    if str(relic_def.id) in {"BottledFlame", "BottledLightning", "BottledTornado"}:
+        bottled = _first_presentable_relic_variant(relic_def.id, require_placeholder=True)
+        if bottled and str(context.get("selected_card_name", "") or "").strip():
+            return _substitute_selected_card_name(bottled, context)
+
+    if relic_def.id == "Omamori":
+        if counter is not None:
+            counter_value = int(counter)
+            if counter_value <= 0:
+                return _relic_used_up_description(relic_def.id) or default_description
+            if counter_value == 1:
+                variant = _first_presentable_relic_variant(relic_def.id, exclude_used_up=True)
+                if variant:
+                    return variant
+
+    if relic_def.id == "MawBank" and (used_up or counter == -2):
+        return _relic_used_up_description(relic_def.id) or default_description
+
+    if relic_def.id == "NeowsLament":
+        if counter is not None:
+            counter_value = max(0, int(counter))
+            if counter_value <= 0:
+                return _relic_used_up_description(relic_def.id) or default_description
+            if default_description:
+                return re.sub(r"\d+", str(counter_value), default_description, count=1)
+
+    if relic_def.id == "Necronomicon" and owned:
+        variant = _first_presentable_relic_variant(relic_def.id, exclude_used_up=True)
+        if variant:
+            return variant
+
+    if relic_def.id == "DuVuDoll":
+        curse_count = context.get("curse_count")
+        if curse_count is not None:
+            count_value = max(0, int(curse_count))
+            manifest_entry = _relic_manifest_entry(relic_def.id)
+            parts = list(getattr(manifest_entry, "description_zhs_parts", ()) or ())
+            if len(parts) >= 5:
+                if count_value <= 0:
+                    return f"{parts[0]}1{parts[1]}{parts[2]}".strip()
+                return f"{parts[0]}1{parts[1]}{parts[3]}{count_value}{parts[4]}".strip()
+            if count_value > 0:
+                return f"{default_description} 你有 {count_value} 张诅咒牌。".strip()
+
+    if used_up:
+        used_up_description = _relic_used_up_description(relic_def.id)
+        if used_up_description:
+            return used_up_description
+
+    return default_description
+
+
+def build_relic_contexts_from_engine(engine: Any) -> dict[str, dict[str, Any]]:
+    state = getattr(engine, "state", None)
+    if state is None:
+        return {}
+
+    contexts: dict[str, dict[str, Any]] = {}
+    relic_counters = dict(getattr(state, "relic_counters", {}) or {})
+    deck = list(getattr(state, "deck", []) or [])
+
+    for relic_id in list(getattr(state, "relics", []) or []):
+        relic_def = get_relic_by_id(relic_id)
+        if relic_def is None:
+            continue
+        context: dict[str, Any] = {"owned": True}
+        if relic_def.id in relic_counters:
+            context["counter"] = int(relic_counters[relic_def.id])
+        elif getattr(relic_def, "initial_counter", None) is not None:
+            context["counter"] = int(relic_def.initial_counter)
+
+        if relic_def.id == "NeowsLament":
+            context["counter"] = int(getattr(state, "neow_blessing_remaining", 0) or 0)
+            context["used_up"] = context["counter"] <= 0
+        elif relic_def.id == "MawBank":
+            context["used_up"] = int(relic_counters.get("MawBank", 0) or 0) == -2
+        elif relic_def.id == "DuVuDoll":
+            curse_count = 0
+            for deck_card_id in deck:
+                base_card_id = re.sub(r"\+\d+$", "", str(deck_card_id)).rstrip("+")
+                card_def = ALL_CARD_DEFS.get(base_card_id)
+                if card_def is not None and getattr(card_def.card_type, "value", "") == "CURSE":
+                    curse_count += 1
+            context["curse_count"] = curse_count
+
+        contexts[relic_def.id] = context
+    return contexts
+
+
+def get_relic_info(relic_id: str, relic_context: dict[str, Any] | None = None) -> tuple[str, str]:
+    name = translate_relic(relic_id)
+    description = _resolve_relic_description(relic_id, relic_context)
+    return name, description if _looks_presentable_text(description) else ""
 
 
 def translate_power(power_id: str) -> str:
-    return _policy_translation("power", power_id) or POWER_NAME_OVERRIDES.get(power_id, _humanize_identifier(power_id))
+    card_like_name = None
+    if power_id in ALL_CARD_DEFS:
+        card_like_name = translate_card_name(power_id)
+    if power_id == "Mark":
+        return "印记"
+    return _policy_translation("power", power_id) or card_like_name or POWER_NAME_OVERRIDES.get(power_id, _humanize_identifier(power_id))
 
 
 def translate_room_type(room_type: RoomType) -> str:
@@ -850,7 +1061,7 @@ def _generic_card_summary(card: CardInstance) -> str:
 def get_card_info(card_id: str) -> tuple[str, str]:
     card = _canonical_card(card_id)
     name = translate_card_name(card_id)
-    description = CARD_DESCRIPTION_OVERRIDES.get(card.card_id)
+    description = _official_card_description(card) or CARD_DESCRIPTION_OVERRIDES.get(card.card_id)
     if description is None:
         description = _generic_card_summary(card)
     return name, description

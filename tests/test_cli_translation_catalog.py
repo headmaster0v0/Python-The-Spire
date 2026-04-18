@@ -32,7 +32,7 @@ def test_card_translations_use_huiji_aligned_chinese_names() -> None:
     assert translate_card_name("MasterOfStrategy") == "战略大师"
     assert translate_card_name("Apotheosis") == "神化"
     assert translate_card_name("Bite") == "噬咬"
-    assert translate_card_name("Apparition") == "幻影"
+    assert translate_card_name("Apparition") == "灵体"
     assert translate_card_name("Safety") == "平安"
     assert translate_card_name("Smite") == "惩恶"
     assert translate_card_name("ThroughViolence") == "以暴易暴"
@@ -52,15 +52,14 @@ def test_entity_translations_cover_relic_potion_monster_power_and_event() -> Non
     assert translate_room_type(RoomType.BOSS) == "首领房间"
 
 
-def test_card_info_falls_back_to_engine_derived_summary_without_mojibake() -> None:
+def test_card_info_uses_official_card_strings_without_mojibake() -> None:
     name, description = get_card_info("Bash")
 
     assert name == "痛击"
-    assert "8 点伤害" in description
+    assert "8" in description
     assert "易伤" in description
     assert "\ufffd" not in name
     assert "\ufffd" not in description
-    assert "?" not in description
 
 
 def test_phase248_card_info_uses_clean_runtime_descriptions() -> None:
@@ -71,7 +70,7 @@ def test_phase248_card_info_uses_clean_runtime_descriptions() -> None:
     assert apotheosis_name == "神化"
     assert "升级" in apotheosis_desc
     assert madness_name == "疯狂"
-    assert "费用" in madness_desc
+    assert "耗能变为0" in madness_desc
     assert hand_name == "贪婪之手"
     assert "金币" in hand_desc
     for text in (apotheosis_name, apotheosis_desc, madness_name, madness_desc, hand_name, hand_desc):

@@ -15,6 +15,7 @@ import sts_py.engine.combat.powers as power_module
 import sts_py.terminal.catalog as terminal_catalog
 from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
+from sts_py.engine.content.official_card_strings import get_official_card_strings
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
@@ -137,6 +138,7 @@ MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID = {
     "Nightmare": "Night Terror",
     "Foresight": "Wireheading",
     "Void": "VoidCard",
+    "Bullseye": "LockOn",
 }
 
 ACT1_MONSTER_IDS = {
@@ -229,6 +231,13 @@ CLI_UI_TERMS = {
     "end": {"contexts": ["combat"]},
     "use": {"contexts": ["combat"]},
 }
+
+
+def _canonical_card_catalog_override_keys() -> set[str]:
+    keys = set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys())
+    keys.update(getattr(terminal_catalog, "CARD_DESCRIPTION_OVERRIDES", {}).keys())
+    return {CARD_ID_ALIASES.get(str(key), str(key)) for key in keys}
+
 
 EVENT_WIKI_NAME_ALIASES = {
     "NoteForYourself": {"en": ["A Note For Yourself"]},
@@ -324,7 +333,7 @@ EVENT_FLOW_FACTS_BY_KEY = RUNTIME_EVENT_FLOW_FACTS_BY_KEY
 EVENT_RNG_STREAMS_BY_KEY = RUNTIME_EVENT_RNG_STREAMS_BY_KEY
 
 CATALOG_OVERRIDE_SOURCES = {
-    "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
+    "card": lambda: _canonical_card_catalog_override_keys() | set(translation_policy_entity_ids_by_type().get("card", [])),
     "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
     "potion": lambda: set(getattr(terminal_catalog, "POTION_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("potion", [])),
     "monster": lambda: set(getattr(terminal_catalog, "MONSTER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("monster", [])),
@@ -634,6 +643,51 @@ def _catalog_override_keys() -> dict[str, list[str]]:
     return result
 
 
+def _normalize_entity_type_filter(entity_types: Iterable[str] | None) -> set[str] | None:
+    if entity_types is None:
+        return None
+    normalized = {str(entity_type).strip() for entity_type in entity_types if str(entity_type).strip()}
+    if not normalized:
+        return None
+    unknown = sorted(normalized - set(ENTITY_TYPES))
+    if unknown:
+        raise ValueError(f"unknown entity types: {unknown}")
+    return normalized
+
+
+def _filter_mapping_by_entity_types(mapping: dict[str, Any], entity_types: set[str] | None) -> dict[str, Any]:
+    if entity_types is None:
+        return dict(mapping)
+    return {
+        entity_type: value
+        for entity_type, value in mapping.items()
+        if entity_type in entity_types
+    }
+
+
+def filter_raw_snapshot_entity_types(raw_snapshot: dict[str, Any], entity_types: Iterable[str] | None) -> dict[str, Any]:
+    normalized = _normalize_entity_type_filter(entity_types)
+    if normalized is None:
+        return dict(raw_snapshot)
+
+    filtered = dict(raw_snapshot)
+    filtered["entity_types"] = sorted(normalized)
+    filtered["catalog_overrides"] = _filter_mapping_by_entity_types(dict(raw_snapshot.get("catalog_overrides") or {}), normalized)
+    filtered["runtime_inventory"] = _filter_mapping_by_entity_types(dict(raw_snapshot.get("runtime_inventory") or {}), normalized)
+    filtered["source_inventory"] = _filter_mapping_by_entity_types(dict(raw_snapshot.get("source_inventory") or {}), normalized)
+    filtered["translation_policy"] = [
+        record
+        for record in list(raw_snapshot.get("translation_policy") or [])
+        if str(record.get("entity_type", "") or "") in normalized
+    ]
+    filtered["records"] = [
+        record
+        for record in list(raw_snapshot.get("records") or [])
+        if str(record.get("entity_type", "") or "") in normalized
+    ]
+    return filtered
+
+
 def _policy_entries_from_snapshot(snapshot: dict[str, Any] | None) -> dict[tuple[str, str], TranslationPolicyEntry]:
     if not snapshot:
         return dict(load_translation_policy_entries())
@@ -741,6 +795,8 @@ def _resolve_java_card_class_name(card_id: str) -> str:
 
 
 def _java_card_file(repo_root: Path, card_id: str) -> Path | None:
+    if card_id == "Burn+":
+        card_id = "Burn"
     java_name = _resolve_java_card_class_name(card_id)
     for relative_dir in (
         "decompiled_src/com/megacrit/cardcrawl/cards/red",
@@ -778,6 +834,10 @@ def _decompiled_card_runtime_inventory(repo_root: Path) -> set[str]:
             class_name = java_file.stem
             runtime_id = inverse_manual.get(class_name) or CARD_ID_ALIASES.get(class_name) or class_name
             inventory.add(str(runtime_id))
+            if class_name == "LockOn":
+                inventory.add("Lockon")
+    if "Burn" in inventory:
+        inventory.add("Burn+")
     return inventory
 
 
@@ -870,8 +930,17 @@ _JAVA_CARD_FACT_OVERRIDES: dict[str, dict[str, Any]] = {
 
 def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
     java_file = _java_card_file(repo_root, card_id)
+    official = get_official_card_strings(card_id)
     if java_file is None:
-        return {"source_kind": "decompiled_java_card", "missing": True}
+        return {
+            "source_kind": "decompiled_java_card",
+            "missing": True,
+            "official_key": str(getattr(official, "official_key", "") or ""),
+            "official_name_en": str(getattr(official, "name_en", "") or ""),
+            "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+            "translation_source": str(getattr(official, "translation_source", "") or ""),
+            "description_source": str(getattr(official, "description_source", "") or ""),
+        }
     text = java_file.read_text(encoding="utf-8", errors="ignore")
     super_fields = _extract_java_card_super_fields(text)
     path_text = str(java_file).replace("\\", "/")
@@ -884,6 +953,11 @@ def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
         "source_kind": "decompiled_java_card",
         "java_class": java_file.stem,
         "java_path": str(java_file),
+        "official_key": str(getattr(official, "official_key", "") or ""),
+        "official_name_en": str(getattr(official, "name_en", "") or ""),
+        "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+        "translation_source": str(getattr(official, "translation_source", "") or ""),
+        "description_source": str(getattr(official, "description_source", "") or ""),
         **super_fields,
         "rarity": normalized_rarity,
         "damage": _first_int(r"baseDamage\s*=\s*(\d+)", text) or 0,
@@ -902,6 +976,7 @@ def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
 
 def build_card_runtime_facts(card_id: str) -> dict[str, Any]:
     card = CardInstance(card_id)
+    official = get_official_card_strings(card_id)
     return {
         "source_kind": "runtime_card_def",
         "cost": int(card.cost),
@@ -915,6 +990,17 @@ def build_card_runtime_facts(card_id: str) -> dict[str, Any]:
         "ethereal": bool(card.is_ethereal),
         "retain": bool(card.retain or card.self_retain),
         "innate": bool(card.is_innate),
+        "official_key": str(getattr(official, "official_key", "") or ""),
+        "official_name_en": str(getattr(official, "name_en", "") or ""),
+        "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+        "official_desc_en": str(getattr(official, "description_en", "") or ""),
+        "official_desc_zhs": str(getattr(official, "description_zhs", "") or ""),
+        "official_upgrade_desc_en": str(getattr(official, "upgrade_description_en", "") or ""),
+        "official_upgrade_desc_zhs": str(getattr(official, "upgrade_description_zhs", "") or ""),
+        "translation_source": str(getattr(official, "translation_source", "") or ""),
+        "description_source": str(getattr(official, "description_source", "") or ""),
+        "official_name_cn_available": bool(str(getattr(official, "name_zhs", "") or "").strip()),
+        "official_description_cn_available": bool(str(getattr(official, "description_zhs", "") or "").strip()),
     }
 
 
@@ -1284,16 +1370,91 @@ def _generic_en_page_candidates(entity_type: str, entity_id: str, runtime_name_e
     if entity_type == "event":
         aliases = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("en", []))
         return _unique_nonempty([*aliases, runtime_name_en, _humanize_identifier(entity_id)])
+    if entity_type == "relic":
+        return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
     return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
 
 
 def _generic_cn_page_candidates(entity_type: str, entity_id: str, runtime_name_cn: str, runtime_name_en: str) -> list[str]:
+    if entity_type == "relic":
+        policy = get_translation_policy_entry("relic", entity_id)
+        candidates: list[str] = []
+        if policy is not None and policy.huiji_page_or_title.strip():
+            candidates.append(policy.huiji_page_or_title.strip())
+        if policy is not None and policy.alignment_status == "approved_alias" and policy.runtime_name_cn.strip():
+            candidates.append(policy.runtime_name_cn.strip())
+        if _looks_cataloged_cn(runtime_name_cn):
+            candidates.append(runtime_name_cn)
+        if _contains_cjk(runtime_name_en):
+            candidates.append(runtime_name_en)
+        return _unique_nonempty(candidates)
     candidates = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("cn", [])) if entity_type == "event" else []
     if _looks_cataloged_cn(runtime_name_cn):
         candidates.append(runtime_name_cn)
     if _contains_cjk(runtime_name_en):
         candidates.append(runtime_name_en)
     return _unique_nonempty(candidates)
+
+
+def _parse_relic_wiki_summary_facts(summary: str) -> dict[str, Any]:
+    text = str(summary or "").strip()
+    if not text:
+        return {}
+    facts: dict[str, Any] = {}
+    tier_match = re.search(
+        r"\bis\s+(?:an?|the)\s+(?:[\w-]+\s+){0,4}?(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\s+Relic\b",
+        text,
+        re.I,
+    )
+    if tier_match:
+        facts["tier"] = tier_match.group(1).upper()
+    class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b(?:\s+Only)?", text)
+    if class_match:
+        facts["character_class"] = class_match.group(1).upper()
+    return facts
+
+
+def _normalize_relic_wiki_infobox_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    normalized: dict[str, Any] = {}
+    rarity_text = str(facts.get("rarity") or facts.get("tier") or "").strip()
+    if rarity_text:
+        tier_match = re.search(r"\b(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\b", rarity_text, re.I)
+        if tier_match:
+            normalized["tier"] = tier_match.group(1).upper()
+
+    character_text = str(facts.get("character") or facts.get("class") or facts.get("character_class") or "").strip()
+    if character_text:
+        class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b", character_text, re.I)
+        if class_match:
+            normalized["character_class"] = class_match.group(1).upper()
+
+    description = str(facts.get("description") or facts.get("effect") or facts.get("text") or "").strip()
+    if description:
+        normalized["description"] = description
+
+    return normalized
+
+
+def _augment_relic_wiki_page(page: WikiPageSnapshot, *, source_lang: str) -> WikiPageSnapshot:
+    if page.error:
+        return page
+    payload = dict(page.payload or {})
+    facts = dict(payload.get("facts") or {})
+    facts.update(_normalize_relic_wiki_infobox_facts(facts))
+    if source_lang == "en" and not {"tier", "character_class"} <= set(facts):
+        for key, value in _parse_relic_wiki_summary_facts(page.summary).items():
+            facts.setdefault(key, value)
+    payload["facts"] = facts
+    return WikiPageSnapshot(
+        source=page.source,
+        requested_title=page.requested_title,
+        resolved_title=page.resolved_title,
+        url=page.url,
+        summary=page.summary,
+        payload=payload,
+        attempts=list(page.attempts or []),
+        error=page.error,
+    )
 
 
 def _fetch_entity_wiki_pages(
@@ -1313,6 +1474,9 @@ def _fetch_entity_wiki_pages(
 
     en_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(EN_SOURCE_ORDER, en_candidates))
     cn_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(CN_SOURCE_ORDER, cn_candidates))
+    if entity_type == "relic":
+        en_page = _augment_relic_wiki_page(en_page, source_lang="en")
+        cn_page = _augment_relic_wiki_page(cn_page, source_lang="cn")
     return en_page, cn_page
 
 
@@ -1344,8 +1508,8 @@ def _neow_runtime_description() -> str:
     return " | ".join(text for text in snippets if text)
 
 
-def _source_inventory_from_repo(repo_root: Path) -> dict[str, list[str]]:
-    return {
+def _source_inventory_from_repo(repo_root: Path, *, entity_types: set[str] | None = None) -> dict[str, list[str]]:
+    inventory = {
         "card": sorted(_decompiled_card_runtime_inventory(repo_root)),
         "relic": sorted(ALL_RELICS.keys()),
         "potion": sorted(POTION_DEFINITIONS.keys()),
@@ -1356,6 +1520,7 @@ def _source_inventory_from_repo(repo_root: Path) -> dict[str, list[str]]:
         "room_type": sorted(room_type.name for room_type in RoomType),
         "ui_term": sorted(CLI_UI_TERMS.keys()),
     }
+    return _filter_mapping_by_entity_types(inventory, entity_types)
 
 
 def build_cli_raw_snapshot(
@@ -1363,25 +1528,218 @@ def build_cli_raw_snapshot(
     *,
     enable_network: bool = False,
     scraper: BilingualWikiScraper | None = None,
+    entity_types: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     repo_root = Path(repo_root)
+    entity_type_filter = _normalize_entity_type_filter(entity_types)
     if enable_network and scraper is None:
         scraper = BilingualWikiScraper(use_cache=True)
 
     records: list[RawEntitySnapshot] = []
 
-    for card_id in sorted(ALL_CARD_DEFS):
-        runtime_name_cn, runtime_desc = get_card_info(card_id)
-        runtime_name_en = _humanize_identifier(_resolve_java_card_class_name(card_id))
-        runtime_facts = build_card_runtime_facts(card_id)
-        java_facts = build_card_java_facts(repo_root, card_id)
+    if entity_type_filter is None or "card" in entity_type_filter:
+        for card_id in sorted(ALL_CARD_DEFS):
+            runtime_name_cn, runtime_desc = get_card_info(card_id)
+            official = get_official_card_strings(card_id)
+            runtime_name_en = str(getattr(official, "name_en", "") or _humanize_identifier(_resolve_java_card_class_name(card_id)))
+            runtime_facts = build_card_runtime_facts(card_id)
+            java_facts = build_card_java_facts(repo_root, card_id)
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="card",
+                    entity_id=card_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="card",
+                    entity_id=card_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=runtime_desc,
+                    runtime_facts=runtime_facts,
+                    java_facts=java_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+
+    if entity_type_filter is None or "relic" in entity_type_filter:
+        for relic_id, relic_def in sorted(ALL_RELICS.items()):
+            source_facts = build_relic_source_facts(relic_def)
+            runtime_name_en = str(source_facts.get("display_name_en") or _humanize_identifier(relic_id))
+            runtime_name_cn = translate_relic(relic_id)
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="relic",
+                    entity_id=relic_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="relic",
+                    entity_id=relic_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=str(getattr(relic_def, "description", "") or ""),
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+
+    if entity_type_filter is None or "potion" in entity_type_filter:
+        for potion_id in sorted(POTION_DEFINITIONS):
+            source_facts = build_potion_source_facts(potion_id)
+            potion_data = POTION_DEFINITIONS[potion_id]
+            runtime_name_en = _humanize_identifier(potion_id)
+            runtime_name_cn = translate_potion(potion_id)
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="potion",
+                    entity_id=potion_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="potion",
+                    entity_id=potion_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=str(getattr(potion_data, "DESCRIPTION", "") or ""),
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+
+    if entity_type_filter is None or "power" in entity_type_filter:
+        for power_id, power_cls in _power_class_inventory():
+            source_facts = build_power_source_facts(power_id, power_cls)
+            runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(power_id))
+            runtime_name_cn = translate_power(power_id)
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="power",
+                    entity_id=power_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="power",
+                    entity_id=power_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=get_power_str(power_id, 0),
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+
+    if entity_type_filter is None or "monster" in entity_type_filter:
+        for monster_id, monster_cls in sorted(_monster_inventory().items()):
+            source_facts = build_monster_source_facts(monster_id, monster_cls)
+            runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(monster_id))
+            runtime_name_cn = translate_monster(monster_id)
+            runtime_desc = ", ".join(source_facts.get("sample_intents") or [])
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="monster",
+                    entity_id=monster_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="monster",
+                    entity_id=monster_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=runtime_desc,
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+
+    if entity_type_filter is None or "event" in entity_type_filter:
+        for event_id, event in sorted(_event_inventory().items()):
+            source_facts = build_event_source_facts(event)
+            java_facts = build_event_java_facts(repo_root, event_id, event)
+            runtime_name_en = str(getattr(event, "name", "") or getattr(event, "event_key", "") or event_id)
+            runtime_name_cn = translate_event_name(event)
+            en_wiki, cn_wiki = (
+                _fetch_entity_wiki_pages(
+                    scraper,
+                    entity_type="event",
+                    entity_id=event_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    enable_network=enable_network,
+                )
+                if scraper is not None
+                else (WikiPageSnapshot(), WikiPageSnapshot())
+            )
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="event",
+                    entity_id=event_id,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=_event_runtime_description(event),
+                    runtime_facts=source_facts,
+                    java_facts=java_facts,
+                    en_wiki=en_wiki,
+                    cn_wiki=cn_wiki,
+                )
+            )
+    if entity_type_filter is None or "neow" in entity_type_filter:
+        neow_event_strings = get_official_neow_event_strings()
+        neow_name_en = str(neow_event_strings.names_en[0] if neow_event_strings.names_en else "Neow")
+        neow_name_cn = str(neow_event_strings.names_zhs[0] if neow_event_strings.names_zhs else neow_name_en)
+        neow_facts = build_neow_source_facts()
+        neow_java_facts = build_neow_java_facts()
         en_wiki, cn_wiki = (
             _fetch_entity_wiki_pages(
                 scraper,
-                entity_type="card",
-                entity_id=card_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
+                entity_type="neow",
+                entity_id="NeowEvent",
+                runtime_name_en=neow_name_en,
+                runtime_name_cn=neow_name_cn,
                 enable_network=enable_network,
             )
             if scraper is not None
@@ -1389,231 +1747,49 @@ def build_cli_raw_snapshot(
         )
         records.append(
             RawEntitySnapshot(
-                entity_type="card",
-                entity_id=card_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=runtime_desc,
-                runtime_facts=runtime_facts,
-                java_facts=java_facts,
+                entity_type="neow",
+                entity_id="NeowEvent",
+                runtime_name_en=neow_name_en,
+                runtime_name_cn=neow_name_cn,
+                runtime_desc_runtime=_neow_runtime_description(),
+                runtime_facts=neow_facts,
+                java_facts=neow_java_facts,
                 en_wiki=en_wiki,
                 cn_wiki=cn_wiki,
             )
         )
 
-    for relic_id, relic_def in sorted(ALL_RELICS.items()):
-        source_facts = build_relic_source_facts(relic_def)
-        runtime_name_en = str(source_facts.get("display_name_en") or _humanize_identifier(relic_id))
-        runtime_name_cn = translate_relic(relic_id)
-        en_wiki, cn_wiki = (
-            _fetch_entity_wiki_pages(
-                scraper,
-                entity_type="relic",
-                entity_id=relic_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                enable_network=enable_network,
+    if entity_type_filter is None or "room_type" in entity_type_filter:
+        for room_type in RoomType:
+            runtime_name_en = _humanize_identifier(room_type.name.title())
+            runtime_name_cn = translate_room_type(room_type)
+            source_facts = build_room_type_source_facts(room_type)
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="room_type",
+                    entity_id=room_type.name,
+                    runtime_name_en=runtime_name_en,
+                    runtime_name_cn=runtime_name_cn,
+                    runtime_desc_runtime=room_type.value,
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                )
             )
-            if scraper is not None
-            else (WikiPageSnapshot(), WikiPageSnapshot())
-        )
-        records.append(
-            RawEntitySnapshot(
-                entity_type="relic",
-                entity_id=relic_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=str(getattr(relic_def, "description", "") or ""),
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-                en_wiki=en_wiki,
-                cn_wiki=cn_wiki,
-            )
-        )
 
-    for potion_id in sorted(POTION_DEFINITIONS):
-        source_facts = build_potion_source_facts(potion_id)
-        potion_data = POTION_DEFINITIONS[potion_id]
-        runtime_name_en = _humanize_identifier(potion_id)
-        runtime_name_cn = translate_potion(potion_id)
-        en_wiki, cn_wiki = (
-            _fetch_entity_wiki_pages(
-                scraper,
-                entity_type="potion",
-                entity_id=potion_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                enable_network=enable_network,
+    if entity_type_filter is None or "ui_term" in entity_type_filter:
+        for command in sorted(CLI_UI_TERMS):
+            source_facts = build_ui_term_source_facts(command)
+            records.append(
+                RawEntitySnapshot(
+                    entity_type="ui_term",
+                    entity_id=command,
+                    runtime_name_en=command,
+                    runtime_name_cn=UI_TERM_CN_NAMES.get(command, command),
+                    runtime_desc_runtime=", ".join(source_facts["contexts"]),
+                    runtime_facts=source_facts,
+                    java_facts=source_facts,
+                )
             )
-            if scraper is not None
-            else (WikiPageSnapshot(), WikiPageSnapshot())
-        )
-        records.append(
-            RawEntitySnapshot(
-                entity_type="potion",
-                entity_id=potion_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=str(getattr(potion_data, "DESCRIPTION", "") or ""),
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-                en_wiki=en_wiki,
-                cn_wiki=cn_wiki,
-            )
-        )
-
-    for power_id, power_cls in _power_class_inventory():
-        source_facts = build_power_source_facts(power_id, power_cls)
-        runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(power_id))
-        runtime_name_cn = translate_power(power_id)
-        en_wiki, cn_wiki = (
-            _fetch_entity_wiki_pages(
-                scraper,
-                entity_type="power",
-                entity_id=power_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                enable_network=enable_network,
-            )
-            if scraper is not None
-            else (WikiPageSnapshot(), WikiPageSnapshot())
-        )
-        records.append(
-            RawEntitySnapshot(
-                entity_type="power",
-                entity_id=power_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=get_power_str(power_id, 0),
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-                en_wiki=en_wiki,
-                cn_wiki=cn_wiki,
-            )
-        )
-
-    for monster_id, monster_cls in sorted(_monster_inventory().items()):
-        source_facts = build_monster_source_facts(monster_id, monster_cls)
-        runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(monster_id))
-        runtime_name_cn = translate_monster(monster_id)
-        runtime_desc = ", ".join(source_facts.get("sample_intents") or [])
-        en_wiki, cn_wiki = (
-            _fetch_entity_wiki_pages(
-                scraper,
-                entity_type="monster",
-                entity_id=monster_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                enable_network=enable_network,
-            )
-            if scraper is not None
-            else (WikiPageSnapshot(), WikiPageSnapshot())
-        )
-        records.append(
-            RawEntitySnapshot(
-                entity_type="monster",
-                entity_id=monster_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=runtime_desc,
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-                en_wiki=en_wiki,
-                cn_wiki=cn_wiki,
-            )
-        )
-
-    for event_id, event in sorted(_event_inventory().items()):
-        source_facts = build_event_source_facts(event)
-        java_facts = build_event_java_facts(repo_root, event_id, event)
-        runtime_name_en = str(getattr(event, "name", "") or getattr(event, "event_key", "") or event_id)
-        runtime_name_cn = translate_event_name(event)
-        en_wiki, cn_wiki = (
-            _fetch_entity_wiki_pages(
-                scraper,
-                entity_type="event",
-                entity_id=event_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                enable_network=enable_network,
-            )
-            if scraper is not None
-            else (WikiPageSnapshot(), WikiPageSnapshot())
-        )
-        records.append(
-            RawEntitySnapshot(
-                entity_type="event",
-                entity_id=event_id,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=_event_runtime_description(event),
-                runtime_facts=source_facts,
-                java_facts=java_facts,
-                en_wiki=en_wiki,
-                cn_wiki=cn_wiki,
-            )
-        )
-
-    neow_event_strings = get_official_neow_event_strings()
-    neow_name_en = str(neow_event_strings.names_en[0] if neow_event_strings.names_en else "Neow")
-    neow_name_cn = str(neow_event_strings.names_zhs[0] if neow_event_strings.names_zhs else neow_name_en)
-    neow_facts = build_neow_source_facts()
-    neow_java_facts = build_neow_java_facts()
-    en_wiki, cn_wiki = (
-        _fetch_entity_wiki_pages(
-            scraper,
-            entity_type="neow",
-            entity_id="NeowEvent",
-            runtime_name_en=neow_name_en,
-            runtime_name_cn=neow_name_cn,
-            enable_network=enable_network,
-        )
-        if scraper is not None
-        else (WikiPageSnapshot(), WikiPageSnapshot())
-    )
-    records.append(
-        RawEntitySnapshot(
-            entity_type="neow",
-            entity_id="NeowEvent",
-            runtime_name_en=neow_name_en,
-            runtime_name_cn=neow_name_cn,
-            runtime_desc_runtime=_neow_runtime_description(),
-            runtime_facts=neow_facts,
-            java_facts=neow_java_facts,
-            en_wiki=en_wiki,
-            cn_wiki=cn_wiki,
-        )
-    )
-
-    for room_type in RoomType:
-        runtime_name_en = _humanize_identifier(room_type.name.title())
-        runtime_name_cn = translate_room_type(room_type)
-        source_facts = build_room_type_source_facts(room_type)
-        records.append(
-            RawEntitySnapshot(
-                entity_type="room_type",
-                entity_id=room_type.name,
-                runtime_name_en=runtime_name_en,
-                runtime_name_cn=runtime_name_cn,
-                runtime_desc_runtime=room_type.value,
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-            )
-        )
-
-    for command in sorted(CLI_UI_TERMS):
-        source_facts = build_ui_term_source_facts(command)
-        records.append(
-            RawEntitySnapshot(
-                entity_type="ui_term",
-                entity_id=command,
-                runtime_name_en=command,
-                runtime_name_cn=UI_TERM_CN_NAMES.get(command, command),
-                runtime_desc_runtime=", ".join(source_facts["contexts"]),
-                runtime_facts=source_facts,
-                java_facts=source_facts,
-            )
-        )
 
     runtime_inventory: dict[str, list[str]] = {entity_type: [] for entity_type in ENTITY_TYPES}
     for record in records:
@@ -1625,15 +1801,16 @@ def build_cli_raw_snapshot(
         "generated_at": _utc_now(),
         "repo_root": str(repo_root),
         "network_enabled": bool(enable_network),
+        "entity_types": sorted(entity_type_filter or set(ENTITY_TYPES)),
         "source_priority": {
             "mechanics_truth": "decompiled_src",
             "english_reference": EN_SOURCE_ORDER,
             "chinese_reference": CN_SOURCE_ORDER,
         },
-        "catalog_overrides": _catalog_override_keys(),
+        "catalog_overrides": _filter_mapping_by_entity_types(_catalog_override_keys(), entity_type_filter),
         "translation_policy": list(load_translation_policy_bundle().get("records") or []),
         "runtime_inventory": runtime_inventory,
-        "source_inventory": _source_inventory_from_repo(repo_root),
+        "source_inventory": _source_inventory_from_repo(repo_root, entity_types=entity_type_filter),
         "records": [record.to_dict() for record in records],
     }
 
@@ -1667,6 +1844,14 @@ def normalize_raw_snapshot(raw_snapshot: dict[str, Any]) -> dict[str, Any]:
         audit_status.setdefault("cn_wiki_match", cn_match)
         audit_status.setdefault("translation_reference_source", policy["reference_source"])
         audit_status.setdefault("translation_alignment_status", policy["alignment_status"])
+        reference_source = str(policy["reference_source"] or record.runtime_facts.get("translation_source") or "")
+        alignment_status = str(policy["alignment_status"] or "")
+        if (
+            not alignment_status
+            and record.entity_type == "card"
+            and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        ):
+            alignment_status = "exact_match"
 
         normalized_records.append(
             NormalizedEntitySnapshot(
@@ -1691,8 +1876,8 @@ def normalize_raw_snapshot(raw_snapshot: dict[str, Any]) -> dict[str, Any]:
                     "en_source": record.en_wiki.source,
                     "cn_source": record.cn_wiki.source,
                 },
-                reference_source=policy["reference_source"],
-                alignment_status=policy["alignment_status"],
+                reference_source=reference_source,
+                alignment_status=alignment_status,
                 huiji_page_or_title=policy["huiji_page_or_title"],
                 approved_alias_note=policy["approved_alias_note"],
             )
@@ -1782,6 +1967,13 @@ def _runtime_name_issue(record: NormalizedEntitySnapshot) -> str:
     runtime_name_cn = str(record.runtime_name_cn or "").strip()
     if _looks_mojibake(runtime_name_cn):
         return "mojibake_or_corrupt"
+    if (
+        record.entity_type == "card"
+        and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        and _normalize_lookup_key(runtime_name_cn)
+        == _normalize_lookup_key(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+    ):
+        return "ok"
     if not _looks_cataloged_cn(runtime_name_cn):
         return "missing_cn"
     return "ok"
@@ -1803,6 +1995,17 @@ def _translation_status_note(status: str) -> str:
 
 def _resolve_translation_status(record: NormalizedEntitySnapshot) -> tuple[str, str]:
     policy_status = str(record.alignment_status or "").strip()
+    if (
+        record.entity_type == "card"
+        and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+    ):
+        official_name_cn = str(record.runtime_facts.get("official_name_zhs", "") or "").strip()
+        if policy_status == "approved_alias":
+            return "approved_alias", record.approved_alias_note or "官方卡牌简中保留，Huiji 页名差异已登记为批准别名。"
+        if _normalize_lookup_key(record.runtime_name_cn) == _normalize_lookup_key(official_name_cn):
+            return "exact_match", "CLI 中文名与官方卡牌简中资源一致。"
+        return "likely_wrong_translation", "CLI 中文名与官方卡牌简中资源不一致。"
+
     if policy_status in ALIGNMENT_STATUSES:
         return policy_status, _translation_status_note(policy_status)
 
@@ -1964,6 +2167,13 @@ def build_completeness_audit(records: Any, *, repo_root: Path | None = None) -> 
 
     present_but_not_cataloged: list[dict[str, Any]] = []
     for record in normalized_records:
+        if (
+            record.entity_type == "card"
+            and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+            and _normalize_lookup_key(record.runtime_name_cn)
+            == _normalize_lookup_key(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        ):
+            continue
         if not _looks_cataloged_cn(record.runtime_name_cn):
             present_but_not_cataloged.append(
                 {
@@ -2387,11 +2597,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     refresh_parser.add_argument("--repo-root", default=str(REPO_ROOT))
     refresh_parser.add_argument("--output-dir", default=None)
     refresh_parser.add_argument("--offline", action="store_true", help="Build a raw snapshot without network fetches.")
+    refresh_parser.add_argument("--entity-types", nargs="*", choices=ENTITY_TYPES, default=None)
 
     audit_parser = subparsers.add_parser("audit", help="Generate normalized snapshot and audit reports from an existing raw snapshot.")
     audit_parser.add_argument("--repo-root", default=str(REPO_ROOT))
     audit_parser.add_argument("--raw-snapshot", required=True)
     audit_parser.add_argument("--output-dir", default=None)
+    audit_parser.add_argument("--entity-types", nargs="*", choices=ENTITY_TYPES, default=None)
 
     return parser.parse_args(argv)
 
@@ -2402,9 +2614,14 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = Path(args.output_dir).resolve() if args.output_dir else _default_output_dir(repo_root)
 
     if args.command == "refresh":
-        raw_snapshot = build_cli_raw_snapshot(repo_root, enable_network=not args.offline)
+        raw_snapshot = build_cli_raw_snapshot(
+            repo_root,
+            enable_network=not args.offline,
+            entity_types=args.entity_types,
+        )
     elif args.command == "audit":
         raw_snapshot = load_raw_snapshot(args.raw_snapshot)
+        raw_snapshot = filter_raw_snapshot_entity_types(raw_snapshot, args.entity_types)
     else:
         raise ValueError(f"unsupported command: {args.command}")
 
