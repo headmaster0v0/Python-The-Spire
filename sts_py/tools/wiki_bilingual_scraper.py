@@ -7,6 +7,7 @@ workflows or ad-hoc audit scripts.
 """
 from __future__ import annotations
 
+from html import unescape
 import re
 import urllib.parse
 from pathlib import Path
@@ -42,6 +43,17 @@ def _normalize_lookup_key(value: str) -> str:
     candidate = re.sub(r"[ _-]+", "", candidate)
     candidate = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "", candidate)
     return candidate.lower()
+
+
+def _normalize_infobox_field_name(field_name: str) -> str:
+    candidate = re.sub(r"[^0-9A-Za-z]+", "", str(field_name or "")).strip().lower()
+    if candidate in {"rarity", "tier"}:
+        return "rarity"
+    if candidate in {"character", "class"}:
+        return "character"
+    if candidate in {"description", "effect", "effects", "text", "cardtext"}:
+        return "description"
+    return candidate
 
 
 class BilingualWikiScraper:
@@ -154,18 +166,57 @@ class BilingualWikiScraper:
                 return self._clean_wiki_text(match.group(1))
         return ""
 
+    def _clean_html_text(self, text: str) -> str:
+        cleaned = re.sub(r"<br\s*/?>", " ", str(text or ""), flags=re.I)
+        cleaned = re.sub(r"</p\s*>", " ", cleaned, flags=re.I)
+        cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+        cleaned = unescape(cleaned)
+        cleaned = re.sub(r"\s+", " ", cleaned)
+        return cleaned.strip()
+
+    def _extract_infobox_facts_from_html(self, html: str) -> dict[str, str]:
+        facts: dict[str, str] = {}
+        if not html:
+            return facts
+
+        druid_rows = re.findall(
+            r'<div class="[^"]*druid-row[^"]*druid-row-([A-Za-z]+)[^"]*"[^>]*>.*?'
+            r'<div class="[^"]*druid-data[^"]*"[^>]*>(.*?)</div>',
+            html,
+            flags=re.I | re.S,
+        )
+        for field_name, raw_value in druid_rows:
+            normalized = _normalize_infobox_field_name(field_name)
+            cleaned = self._clean_html_text(raw_value)
+            if normalized and cleaned and normalized not in facts:
+                facts[normalized] = cleaned
+
+        table_rows = re.findall(
+            r"<tr[^>]*>\s*<th[^>]*>(.*?)</th>\s*<td[^>]*>(.*?)</td>\s*</tr>",
+            html,
+            flags=re.I | re.S,
+        )
+        for field_name, raw_value in table_rows:
+            normalized = _normalize_infobox_field_name(self._clean_html_text(field_name))
+            cleaned = self._clean_html_text(raw_value)
+            if normalized and cleaned and normalized not in facts:
+                facts[normalized] = cleaned
+
+        return facts
+
     def fetch_wikitext_page(self, source: str, page: str) -> dict[str, Any]:
         cache_key = f"generic_page::{source}::{page}"
         if self.use_cache and cache_key in self._cache:
             return dict(self._cache[cache_key])
 
         session, api_url, _ = self._source_config(source)
-        params = {"action": "parse", "page": page, "format": "json", "prop": "wikitext"}
+        params = {"action": "parse", "page": page, "format": "json", "prop": "wikitext|text"}
         result: dict[str, Any] = {
             "source": source,
             "requested_title": page,
             "resolved_title": None,
             "wikitext": "",
+            "facts": {},
             "url": self.build_page_url(source, page),
             "status_code": None,
             "error": None,
@@ -188,6 +239,7 @@ class BilingualWikiScraper:
             parse_block = data["parse"]
             result["resolved_title"] = parse_block.get("title", page)
             result["wikitext"] = parse_block.get("wikitext", {}).get("*", "")
+            result["facts"] = self._extract_infobox_facts_from_html(parse_block.get("text", {}).get("*", ""))
             result["url"] = self.build_page_url(source, result["resolved_title"])
             if self.use_cache:
                 self._cache[cache_key] = dict(result)
@@ -230,7 +282,10 @@ class BilingualWikiScraper:
                     "resolved_title": page_result.get("resolved_title") or candidate,
                     "url": page_result.get("url") or self.build_page_url(source, candidate),
                     "summary": self._generic_summary_from_wikitext(page_result.get("wikitext", "")),
-                    "payload": page_result,
+                    "payload": {
+                        "wikitext": page_result.get("wikitext", ""),
+                        "facts": dict(page_result.get("facts") or {}),
+                    },
                     "attempts": attempts,
                     "error": None,
                 }
@@ -261,15 +316,16 @@ class BilingualWikiScraper:
             return {"error": result["error"], "name_en": name_en, "name_cn": name_cn}
         payload = dict(result.get("payload") or {})
         wikitext = str(payload.get("wikitext", "") or "")
+        facts = dict(payload.get("facts") or {})
         resolved_title = str(result.get("resolved_title") or name_en)
         return {
             "name": resolved_title,
             "name_en": resolved_title,
             "name_cn": name_cn,
-            "description": self._extract_field(wikitext, ["description", "card_text", "text", "effect"]) or result.get("summary", ""),
+            "description": str(facts.get("description") or self._extract_field(wikitext, ["description", "card_text", "text", "effect"]) or result.get("summary", "")),
             "upgrade_description": self._extract_field(wikitext, ["upgraded", "upgrade_description"]),
-            "rarity": self._extract_field(wikitext, ["rarity"]),
-            "class": self._extract_field(wikitext, ["class", "character"]),
+            "rarity": str(facts.get("rarity") or self._extract_field(wikitext, ["rarity"])),
+            "class": str(facts.get("character") or self._extract_field(wikitext, ["class", "character"])),
             "type": self._extract_field(wikitext, ["type"]),
             "flavor": self._extract_field(wikitext, ["flavor"]),
             "url": result.get("url"),
@@ -285,11 +341,12 @@ class BilingualWikiScraper:
             return {"error": result["error"], "name": name_cn, "name_en": name_en}
         payload = dict(result.get("payload") or {})
         wikitext = str(payload.get("wikitext", "") or "")
+        facts = dict(payload.get("facts") or {})
         resolved_title = str(result.get("resolved_title") or name_cn)
         return {
             "name": resolved_title,
             "name_en": name_en,
-            "description": self._extract_field(wikitext, ["description", "card_text", "text", "effect"]) or result.get("summary", ""),
+            "description": str(facts.get("description") or self._extract_field(wikitext, ["description", "card_text", "text", "effect"]) or result.get("summary", "")),
             "url": result.get("url"),
             "summary": result.get("summary", ""),
             "payload": payload,

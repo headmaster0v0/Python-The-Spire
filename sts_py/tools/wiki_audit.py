@@ -1360,13 +1360,38 @@ def _parse_relic_wiki_summary_facts(summary: str) -> dict[str, Any]:
     if not text:
         return {}
     facts: dict[str, Any] = {}
-    tier_match = re.search(r"\b(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\b(?:\s+Relic)?", text, re.I)
+    tier_match = re.search(
+        r"\bis\s+(?:an?|the)\s+(?:[\w-]+\s+){0,4}?(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\s+Relic\b",
+        text,
+        re.I,
+    )
     if tier_match:
         facts["tier"] = tier_match.group(1).upper()
-    class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b", text)
+    class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b(?:\s+Only)?", text)
     if class_match:
         facts["character_class"] = class_match.group(1).upper()
     return facts
+
+
+def _normalize_relic_wiki_infobox_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    normalized: dict[str, Any] = {}
+    rarity_text = str(facts.get("rarity") or facts.get("tier") or "").strip()
+    if rarity_text:
+        tier_match = re.search(r"\b(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\b", rarity_text, re.I)
+        if tier_match:
+            normalized["tier"] = tier_match.group(1).upper()
+
+    character_text = str(facts.get("character") or facts.get("class") or facts.get("character_class") or "").strip()
+    if character_text:
+        class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b", character_text, re.I)
+        if class_match:
+            normalized["character_class"] = class_match.group(1).upper()
+
+    description = str(facts.get("description") or facts.get("effect") or facts.get("text") or "").strip()
+    if description:
+        normalized["description"] = description
+
+    return normalized
 
 
 def _augment_relic_wiki_page(page: WikiPageSnapshot, *, source_lang: str) -> WikiPageSnapshot:
@@ -1374,8 +1399,10 @@ def _augment_relic_wiki_page(page: WikiPageSnapshot, *, source_lang: str) -> Wik
         return page
     payload = dict(page.payload or {})
     facts = dict(payload.get("facts") or {})
-    if source_lang == "en":
-        facts.update(_parse_relic_wiki_summary_facts(page.summary))
+    facts.update(_normalize_relic_wiki_infobox_facts(facts))
+    if source_lang == "en" and not {"tier", "character_class"} <= set(facts):
+        for key, value in _parse_relic_wiki_summary_facts(page.summary).items():
+            facts.setdefault(key, value)
     payload["facts"] = facts
     return WikiPageSnapshot(
         source=page.source,

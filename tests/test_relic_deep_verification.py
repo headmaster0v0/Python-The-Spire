@@ -22,7 +22,7 @@ class TestRelicDamageCalculation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["金刚杵"],
+            relics=["Vajra"],
         )
 
         initial_hp = combat.state.monsters[0].hp
@@ -49,7 +49,7 @@ class TestRelicDamageCalculation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["弹珠袋"],
+            relics=["BagOfMarbles"],
         )
 
         initial_hp = combat.state.monsters[0].hp
@@ -76,7 +76,7 @@ class TestRelicDamageCalculation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["金刚杵", "弹珠袋"],
+            relics=["Vajra", "BagOfMarbles"],
         )
 
         initial_hp = combat.state.monsters[0].hp
@@ -150,7 +150,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["金刚杵"],
+            relics=["Vajra"],
         )
 
         print(f"\n=== Multi-Turn Combat Test ===")
@@ -184,7 +184,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["赤牛"],
+            relics=["Akabeko"],
         )
 
         print(f"\n=== Akabeko First Attack Test ===")
@@ -220,7 +220,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["双截棍"],
+            relics=["Nunchaku"],
         )
 
         print(f"\n=== Nunchaku Energy Progression Test ===")
@@ -251,7 +251,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["奥利哈钢"],
+            relics=["Orichalcum"],
         )
 
         print(f"\n=== Orichalcum Block Test ===")
@@ -277,7 +277,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["孙子兵法"],
+            relics=["ArtOfWar"],
         )
 
         print(f"\n=== Art of War Energy Test ===")
@@ -305,7 +305,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["灯笼"],
+            relics=["Lantern"],
         )
 
         print(f"\n=== Lantern Energy Test ===")
@@ -322,7 +322,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["准备背包"],
+            relics=["BagOfPreparation"],
         )
 
         print(f"\n=== Bag of Preparation Draw Test ===")
@@ -339,7 +339,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=78, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["小血瓶"],
+            relics=["BloodVial"],
         )
 
         print(f"\n=== Blood Pot Heal Test ===")
@@ -355,7 +355,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["铁锚"],
+            relics=["Anchor"],
         )
 
         print(f"\n=== Iron Anchor Block Test ===")
@@ -371,7 +371,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["意外光滑的石头"],
+            relics=["OddlySmoothStone"],
         )
 
         print(f"\n=== Smooth Stone Dexterity Test ===")
@@ -387,7 +387,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["铜制鳞片"],
+            relics=["BronzeScales"],
         )
 
         print(f"\n=== Bronze Scales Thorns Test ===")
@@ -403,7 +403,7 @@ class TestRelicCombatEngineSimulation:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["数据磁盘"],
+            relics=["DataDisk"],
         )
 
         print(f"\n=== Data Disk Focus Test ===")
@@ -430,7 +430,7 @@ class TestRelicSynergy:
             encounter_name="Cultist",
             player_hp=78, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["灯笼", "铁锚", "金刚杵", "准备背包", "小血瓶"],
+            relics=["Lantern", "Anchor", "Vajra", "BagOfPreparation", "BloodVial"],
         )
 
         print(f"\n=== All Start Relics Test ===")
@@ -455,7 +455,7 @@ class TestRelicSynergy:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["金刚杵", "弹珠袋"],
+            relics=["Vajra", "BagOfMarbles"],
         )
 
         initial_hp = combat.state.monsters[0].hp
@@ -492,7 +492,7 @@ class TestRelicSynergy:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["意外光滑的石头", "铁锚"],
+            relics=["OddlySmoothStone", "Anchor"],
         )
 
         print(f"\n=== Block + Dexterity Test ===")
@@ -605,7 +605,7 @@ class TestEdgeCases:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["金刚杵", "铁锚"],
+            relics=["Vajra", "Anchor"],
         )
 
         print(f"\n=== Full Combat Victory Test ===")

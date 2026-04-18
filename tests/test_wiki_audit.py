@@ -63,6 +63,31 @@ def test_mechanics_audit_flags_runtime_source_mismatch_and_wiki_conflict() -> No
     assert ("event", "Big Fish", "choices", "en_wiki") in wiki_conflict_fields
 
 
+def test_augment_relic_wiki_page_prefers_infobox_facts_over_summary_guess() -> None:
+    page = wiki_audit.WikiPageSnapshot(
+        source="en_wikigg",
+        requested_title="Burning Blood",
+        resolved_title="Burning Blood",
+        url="https://example.invalid/Burning_Blood",
+        summary="This page mentions Boss relics elsewhere, but Burning Blood is the Starter Relic of the Ironclad.",
+        payload={
+            "wikitext": "{{Relic Infobox|Burning Blood}}",
+            "facts": {
+                "rarity": "Starter Relic",
+                "character": "Ironclad Only",
+                "description": "Heal 6 HP after combat.",
+            },
+        },
+    )
+
+    augmented = wiki_audit._augment_relic_wiki_page(page, source_lang="en")
+    facts = dict(augmented.payload.get("facts") or {})
+
+    assert facts["tier"] == "STARTER"
+    assert facts["character_class"] == "IRONCLAD"
+    assert facts["description"] == "Heal 6 HP after combat."
+
+
 def test_completeness_audit_reports_missing_runtime_catalog_gaps_and_orphan_overrides() -> None:
     completeness = wiki_audit.build_completeness_audit(_load_fixture())
 

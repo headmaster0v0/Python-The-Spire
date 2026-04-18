@@ -12,7 +12,7 @@ class TestLizardTailRelic:
 
     def test_lizard_tail_definition(self):
         """Lizard Tail should have ON_DEATH_SAVE effect."""
-        relic = get_relic_by_id("蜥蜴尾巴")
+        relic = get_relic_by_id("LizardTail")
         assert relic is not None
         effect = relic.effects[0]
         assert effect.effect_type == RelicEffectType.ON_DEATH_SAVE
@@ -27,7 +27,7 @@ class TestLizardTailRelic:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["蜥蜴尾巴"],
+            relics=["LizardTail"],
         )
 
         player = combat.state.player

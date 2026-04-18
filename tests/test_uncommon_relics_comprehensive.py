@@ -43,7 +43,7 @@ class TestAttackCounterRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["苦无"],
+            relics=["Kunai"],
         )
 
         print(f"\n=== Kunai Test ===")
@@ -70,7 +70,7 @@ class TestAttackCounterRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["精致折扇"],
+            relics=["OrnamentalFan"],
         )
 
         print(f"\n=== Ornamental Fan Test ===")
@@ -97,7 +97,7 @@ class TestAttackCounterRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["手里剑"],
+            relics=["Shuriken"],
         )
 
         print(f"\n=== Shuriken Test ===")
@@ -128,7 +128,7 @@ class TestCardCounterRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["墨水瓶"],
+            relics=["InkBottle"],
         )
 
         print(f"\n=== Ink Bottle Test ===")
@@ -165,7 +165,7 @@ class TestDamageModifierRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["纸鹤"],
+            relics=["PaperCrane"],
         )
 
         combat.state.player.powers.add_power(WeakPower(amount=1))
@@ -194,7 +194,7 @@ class TestDamageModifierRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["纸蛙"],
+            relics=["PaperFrog"],
         )
 
         monster = combat.state.monsters[0]
@@ -242,7 +242,7 @@ class TestBattleStartRelics:
             encounter_name="Cultist",
             player_hp=80, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["水银沙漏"],
+            relics=["MercuryHourglass"],
         )
 
         monster = combat.state.monsters[0]
@@ -294,14 +294,14 @@ class TestCombatEndRelics:
             encounter_name="Cultist",
             player_hp=40, player_max_hp=80,
             ai_rng=ai_rng, hp_rng=hp_rng,
-            relics=["带骨肉"],
+            relics=["MeatOnTheBone"],
         )
 
         print(f"\n=== Meat on the Bone Test ===")
         print(f"Player HP: {combat.state.player.hp}/{combat.state.player.max_hp}")
         print(f"HP percent: {combat.state.player.hp / combat.state.player.max_hp * 100:.1f}%")
 
-        relic = get_relic_by_id("带骨肉")
+        relic = get_relic_by_id("MeatOnTheBone")
         print(f"Relic effect type: {relic.effects[0].effect_type}")
         print(f"Effect value: {relic.effects[0].value}")
         print(f"Condition: {relic.effects[0].extra.get('condition')}")

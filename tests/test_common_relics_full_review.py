@@ -43,7 +43,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["铁锚"],
+            relics=["Anchor"],
         )
 
         print(f"\n[Iron Anchor] Block after battle start: {combat.state.player.block}")
@@ -60,7 +60,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["金刚杵"],
+            relics=["Vajra"],
         )
 
         print(f"\n[Vajra] Strength after battle start: {combat.state.player.strength}")
@@ -77,7 +77,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["弹珠袋"],
+            relics=["BagOfMarbles"],
         )
 
         for i, monster in enumerate(combat.state.monsters):
@@ -96,7 +96,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["意外光滑的石头"],
+            relics=["OddlySmoothStone"],
         )
 
         print(f"\n[Smooth Stone] Dexterity after battle start: {combat.state.player.dexterity}")
@@ -113,7 +113,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["灯笼"],
+            relics=["Lantern"],
         )
 
         print(f"\n[Lantern] Energy after battle start: {combat.state.player.energy}")
@@ -132,7 +132,7 @@ class TestBattleStartRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["准备背包"],
+            relics=["BagOfPreparation"],
         )
 
         hand_size = len(combat.state.card_manager.hand.cards)
@@ -154,7 +154,7 @@ class TestFirstAttackRelics:
             player_max_hp=80,
             ai_rng=ai_rng,
             hp_rng=hp_rng,
-            relics=["赤牛"],
+            relics=["Akabeko"],
         )
 
         initial_hp = combat.state.monsters[0].hp

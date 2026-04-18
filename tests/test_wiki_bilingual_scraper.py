@@ -44,6 +44,27 @@ def test_fetch_page_with_fallback_uses_fandom_when_wikigg_fails(monkeypatch) -> 
     assert result["attempts"][1]["source"] == scraper.SOURCE_EN_FANDOM
 
 
+def test_extract_infobox_facts_from_html_reads_relic_rarity_and_character() -> None:
+    scraper = BilingualWikiScraper(use_cache=False)
+    html = """
+    <div class="druid-row druid-row-Rarity">
+      <div class="druid-data druid-data-Rarity"><span>Starter Relic</span></div>
+    </div>
+    <div class="druid-row druid-row-Character">
+      <div class="druid-data druid-data-Character"><span>Ironclad Only</span></div>
+    </div>
+    <div class="druid-row druid-row-Description">
+      <div class="druid-data druid-data-Description">Heal 6 HP after combat.</div>
+    </div>
+    """
+
+    facts = scraper._extract_infobox_facts_from_html(html)
+
+    assert facts["rarity"] == "Starter Relic"
+    assert facts["character"] == "Ironclad Only"
+    assert facts["description"] == "Heal 6 HP after combat."
+
+
 def test_fetch_relic_cn_preserves_huiji_title_and_summary(monkeypatch) -> None:
     scraper = BilingualWikiScraper(use_cache=False)
 
