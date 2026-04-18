@@ -193,7 +193,7 @@ def test_phase272_bonfire_offers_card_and_applies_rarity_reward() -> None:
     assert third["rarity"] in {"BASIC", "COMMON", "UNCOMMON", "RARE", "SPECIAL", "CURSE"}
 
 
-def test_phase272_secret_portal_transitions_into_act3_boss_combat() -> None:
+def test_phase272_secret_portal_builds_a_direct_boss_node_jump() -> None:
     engine = RunEngine.create("PHASE272PORTAL", ascension=0)
     engine.transition_to_act_for_replay(3, floor=40)
     engine.state.phase = RunPhase.EVENT
@@ -204,8 +204,10 @@ def test_phase272_secret_portal_transitions_into_act3_boss_combat() -> None:
 
     assert first["event_continues"] is True
     assert second["action"] == "took_portal"
-    assert engine.state.phase == RunPhase.COMBAT
-    assert second["boss_encounter"] in {"Awakened One", "Time Eater", "Donu and Deca"}
+    assert second["target_floor"] == 50
+    assert engine.state.phase == RunPhase.MAP
+    assert len(engine.state.map_nodes) == 1
+    assert engine.state.map_nodes[0].room_type.value == "B"
 
 
 def test_phase272_mind_bloom_uses_floor_branch_and_real_rewards() -> None:

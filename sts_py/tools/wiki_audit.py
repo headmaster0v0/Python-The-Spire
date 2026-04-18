@@ -214,6 +214,46 @@ CLI_UI_TERMS = {
     "use": {"contexts": ["combat"]},
 }
 
+EVENT_WIKI_NAME_ALIASES = {
+    "NoteForYourself": {"en": ["A Note For Yourself"]},
+    "Fountain of Cleansing": {"en": ["The Divine Fountain"]},
+    "Bonfire Elementals": {"en": ["Bonfire Spirits"]},
+    "Accursed Blacksmith": {"en": ["Ominous Forge"]},
+    "Addict": {"en": ["Pleading Vagrant"]},
+    "Ghosts": {"en": ["Council of Ghosts"]},
+    "Nest": {"en": ["The Nest"]},
+    "Beggar": {"en": ["Old Beggar"]},
+    "Back to Basics": {"en": ["Ancient Writing"]},
+}
+
+EVENT_FLOW_FACTS_BY_KEY: dict[str, dict[str, Any]] = {
+    "Big Fish": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_immediate", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Cleric": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Beggar": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Liars Game": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Cursed Tome": {"flow_kind": "multi_screen", "stage_count": 6, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Forgotten Altar": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Ghosts": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Masked Bandits": {"flow_kind": "event_combat_or_multi_screen", "stage_count": 5, "reward_surface": "gold_and_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Nest": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_or_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Library": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "card_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Mausoleum": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Vampires": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Colosseum": {"flow_kind": "event_combat_reentry", "stage_count": 4, "reward_surface": "relics_and_gold", "event_combat_reentry": True, "dynamic_option_slots": 0},
+    "SensoryStone": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "colorless_cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Tomb of Lord Red Mask": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Winding Halls": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "cards_or_heal_or_max_hp", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Accursed Blacksmith": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "relic_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "FaceTrader": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Fountain of Cleansing": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Knowing Skull": {"flow_kind": "looping_menu", "stage_count": 3, "reward_surface": "gold_potion_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Match and Keep!": {"flow_kind": "memory_game", "stage_count": 4, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 12},
+    "NoteForYourself": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "stored_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Moai Head": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Wheel of Change": {"flow_kind": "spin_result", "stage_count": 3, "reward_surface": "mixed", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "SpireHeart": {"flow_kind": "terminal_transition", "stage_count": 4, "reward_surface": "act_transition_or_death", "event_combat_reentry": False, "dynamic_option_slots": 0},
+}
+
 CATALOG_OVERRIDE_SOURCES = {
     "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
     "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
@@ -863,14 +903,25 @@ def _event_choice_effect_kinds(choice: EventChoice) -> list[str]:
 
 
 def build_event_source_facts(event: Event) -> dict[str, Any]:
+    event_key = str(getattr(event, "event_key", "") or getattr(event, "name", "") or getattr(event, "id", ""))
+    source_descriptions = list(getattr(event, "source_descriptions", []) or [])
+    source_options = list(getattr(event, "source_options", []) or [])
+    flow = dict(EVENT_FLOW_FACTS_BY_KEY.get(event_key, {}))
     return {
         "source_kind": "python_run_source",
-        "event_key": str(getattr(event, "event_key", "") or getattr(event, "name", "") or getattr(event, "id", "")),
+        "event_key": event_key,
         "event_id": str(getattr(event, "event_id", getattr(event, "id", "")) or ""),
         "pool_bucket": str(getattr(event, "pool_bucket", "") or ""),
         "gating_flags": list(getattr(event, "gating_flags", []) or []),
         "act": int(event.act),
         "choice_count": len(event.choices),
+        "source_description_count": len(source_descriptions),
+        "source_option_count": len(source_options),
+        "flow_kind": str(flow.get("flow_kind", "single_screen" if len(source_descriptions) <= 1 else "multi_screen")),
+        "stage_count": int(flow.get("stage_count", max(1, len(source_descriptions)))),
+        "reward_surface": str(flow.get("reward_surface", "none")),
+        "event_combat_reentry": bool(flow.get("event_combat_reentry", False)),
+        "dynamic_option_slots": int(flow.get("dynamic_option_slots", max(0, len(source_options) - len(event.choices)))),
         "choice_effect_signatures": build_event_choice_effect_signatures(event),
         "choices": [
             {
@@ -906,6 +957,9 @@ def _card_page_candidates(card_id: str) -> list[str]:
 def _generic_en_page_candidates(entity_type: str, entity_id: str, runtime_name_en: str) -> list[str]:
     if entity_type == "card":
         return _card_page_candidates(entity_id)
+    if entity_type == "event":
+        aliases = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("en", []))
+        return _unique_nonempty([*aliases, runtime_name_en, _humanize_identifier(entity_id)])
     return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
 
 

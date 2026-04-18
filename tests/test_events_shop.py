@@ -427,8 +427,9 @@ class TestRunEngineEventIntegration:
 
         result = engine.choose_event_option(0)
 
-        assert "effects_applied" in result
-        assert engine.state.phase == RunPhase.MAP
+        assert result["success"] is True
+        assert result["event_continues"] is True
+        assert engine.state.phase == RunPhase.EVENT
 
     def test_generic_choose_card_upgrade_replaces_selected_card(self):
         engine = RunEngine.create(SEED_STRING, ascension=0)
