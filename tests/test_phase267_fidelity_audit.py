@@ -49,6 +49,7 @@ def test_phase267_fidelity_gate_requires_live_audit_green_plus_surface_green(
 ) -> None:
     summary = phase267_fidelity_bundle["summary"]
     wiki_summary = summary["wiki_audit"]
+    card_summary = phase267_fidelity_bundle["card_truth_audit"]["summary"]
     noncard_summary = phase267_fidelity_bundle["noncard_truth_audit"]["summary"]
     translation_summary = phase267_fidelity_bundle["translation_truth_audit"]["summary"]
 
@@ -56,6 +57,8 @@ def test_phase267_fidelity_gate_requires_live_audit_green_plus_surface_green(
     assert summary["surface_blocker_count"] == 0
     assert summary["translation_truth_blocker_count"] == 0
     assert summary["blocker_count"] == 0
+    assert summary["card_proof_uncovered"] == 0
+    assert summary["card_signature_mismatches"] == 0
     assert summary["noncard_proof_uncovered"] == 0
     assert summary["noncard_signature_mismatches"] == 0
     assert wiki_summary["missing_in_runtime"] == 0
@@ -63,6 +66,8 @@ def test_phase267_fidelity_gate_requires_live_audit_green_plus_surface_green(
     assert wiki_summary["runtime_name_issue_ok"] == wiki_summary["translation_total"]
     assert translation_summary["exact_match_count"] > 0
     assert translation_summary["blocker_count"] == 0
+    assert card_summary["card_count"] > 0
+    assert card_summary["card_proof_uncovered"] == 0
     assert noncard_summary["entity_count"] > 0
     assert noncard_summary["noncard_proof_uncovered"] == 0
 

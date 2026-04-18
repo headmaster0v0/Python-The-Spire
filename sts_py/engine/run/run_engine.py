@@ -4067,9 +4067,33 @@ class RunEngine:
             else:
                 effect_type = EventEffectType.CHOOSE_CARD_TO_UPGRADE.value
 
+            if effect_type == EventEffectType.CHOOSE_CARD_TO_REMOVE.value:
+                from sts_py.engine.run.events import _can_remove_card
+
+                deck_indexes = [
+                    idx for idx, card_id in enumerate(self.state.deck)
+                    if _can_remove_card(self.state, card_id)
+                ]
+            elif effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM.value:
+                deck_indexes = [
+                    idx for idx, card_id in enumerate(self.state.deck)
+                    if self._canonical_card_id(card_id) not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}
+                ]
+            else:
+                deck_indexes = [
+                    idx for idx, card_id in enumerate(self.state.deck)
+                    if self._upgrade_card(card_id) is not None
+                ]
+
+            if not deck_indexes:
+                if effect_type == EventEffectType.CHOOSE_CARD_TO_UPGRADE.value:
+                    return {"success": False, "reason": "no_upgradable_cards"}
+                return {"success": False, "reason": "no_removable_cards"}
+
             self.state.pending_card_choice = {
                 "choice_index": choice_index,
                 "effect_type": effect_type,
+                "deck_indexes": deck_indexes,
             }
             return {
                 "success": True,
@@ -4082,9 +4106,34 @@ class RunEngine:
             if effect.effect_type in (EventEffectType.CHOOSE_CARD_TO_REMOVE, EventEffectType.CHOOSE_CARD_TO_TRANSFORM, EventEffectType.CHOOSE_CARD_TO_UPGRADE):
                 if not self.state.deck:
                     return {"success": False, "reason": "no_cards_in_deck"}
+
+                if effect.effect_type == EventEffectType.CHOOSE_CARD_TO_REMOVE:
+                    from sts_py.engine.run.events import _can_remove_card
+
+                    deck_indexes = [
+                        idx for idx, card_id in enumerate(self.state.deck)
+                        if _can_remove_card(self.state, card_id)
+                    ]
+                elif effect.effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM:
+                    deck_indexes = [
+                        idx for idx, card_id in enumerate(self.state.deck)
+                        if self._canonical_card_id(card_id) not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}
+                    ]
+                else:
+                    deck_indexes = [
+                        idx for idx, card_id in enumerate(self.state.deck)
+                        if self._upgrade_card(card_id) is not None
+                    ]
+
+                if not deck_indexes:
+                    if effect.effect_type == EventEffectType.CHOOSE_CARD_TO_UPGRADE:
+                        return {"success": False, "reason": "no_upgradable_cards"}
+                    return {"success": False, "reason": "no_removable_cards"}
+
                 self.state.pending_card_choice = {
                     "choice_index": choice_index,
                     "effect_type": effect.effect_type.value,
+                    "deck_indexes": deck_indexes,
                 }
                 return {
                     "success": True,
@@ -4143,13 +4192,17 @@ class RunEngine:
             deck_index = card_index
             card_id = self.state.deck[deck_index]
 
-        from sts_py.engine.run.events import EventEffectType, _apply_parasite_penalty, _get_transformed_card
+        from sts_py.engine.run.events import EventEffectType, _apply_parasite_penalty, _can_remove_card, _get_transformed_card
 
         if effect_type == EventEffectType.CHOOSE_CARD_TO_REMOVE.value:
+            if not _can_remove_card(self.state, card_id):
+                return {"success": False, "reason": "card_cannot_be_removed", "card_id": card_id}
             _apply_parasite_penalty(self.state, card_id)
             self.state.deck.pop(deck_index)
             result = {"success": True, "action": "card_removed", "card_id": card_id}
         elif effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM.value:
+            if self._canonical_card_id(card_id) in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}:
+                return {"success": False, "reason": "card_cannot_be_removed", "card_id": card_id}
             _apply_parasite_penalty(self.state, card_id)
             handler_key = self._event_handler_key(event)
             if handler_key in {"Living Wall", "Transmorgrifier"}:

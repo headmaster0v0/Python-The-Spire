@@ -384,7 +384,10 @@ class CardInstance:
         elif self.card_id == "Brilliance":
             player = getattr(combat_state, "player", None)
             mantra_damage = max(0, int(getattr(player, "_mantra_gained_this_combat", 0) or 0))
-            self.base_damage = max(0, int(self._def.base_damage)) + mantra_damage
+            upgraded_static_damage = max(0, int(getattr(self._def, "base_damage", 0) or 0))
+            if self.upgraded:
+                upgraded_static_damage += max(0, int(getattr(self._def, "upgrade_damage", 0) or 0))
+            self.base_damage = upgraded_static_damage + mantra_damage
         elif self.card_id == "RitualDagger":
             self.base_damage = max(0, int(getattr(self, "misc", 0) or 0))
 

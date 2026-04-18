@@ -135,8 +135,8 @@ MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID = {
     "Tempest": "Tempest",
     "ThousandCuts": "AThousandCuts",
     "CripplingCloud": "CripplingPoison",
-    "Nightmare": "Night Terror",
-    "Foresight": "Wireheading",
+    "Nightmare": "Nightmare",
+    "Foresight": "Foresight",
     "Void": "VoidCard",
     "Bullseye": "LockOn",
 }

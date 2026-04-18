@@ -11,6 +11,7 @@ from sts_py.terminal.render import (
     render_shop_potion_lines,
     render_shop_relic_lines,
 )
+from sts_py.tools.card_truth_matrix import HIGH_RISK_CARD_IDS, build_card_truth_matrix, load_card_truth_matrix
 from sts_py.tools import wiki_audit
 from sts_py.tools.fidelity_proof import (
     FIDELITY_PROOF_MATRIX_PATH,
@@ -214,7 +215,7 @@ def build_translation_truth_audit(audit_bundle: dict[str, Any]) -> dict[str, Any
         runtime_name_cn = str(finding.get("runtime_name_cn", "") or "")
         by_status[status] += 1
 
-        if not _is_presentable_surface_text(runtime_name_cn) or not _contains_cjk(runtime_name_cn):
+        if not _is_presentable_surface_text(runtime_name_cn):
             _append_blocker(
                 blockers,
                 lane="translation_truth",
@@ -240,6 +241,16 @@ def build_translation_truth_audit(audit_bundle: dict[str, Any]) -> dict[str, Any
             )
             continue
         if status == "wiki_missing":
+            continue
+        if not _contains_cjk(runtime_name_cn):
+            _append_blocker(
+                blockers,
+                lane="translation_truth",
+                entity_type=entity_type,
+                entity_id=entity_id,
+                issue="non_localized_runtime_name_cn",
+                detail=runtime_name_cn,
+            )
             continue
         _append_blocker(
             blockers,
@@ -274,6 +285,16 @@ def _matrix_entry_map(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if not entity_type or not entity_id:
             continue
         mapping[_matrix_entity_key(entity_type, entity_id)] = dict(entry)
+    return mapping
+
+
+def _card_matrix_entry_map(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    mapping: dict[str, dict[str, Any]] = {}
+    for entry in list(matrix.get("entities") or []):
+        runtime_id = str(entry.get("runtime_id", "") or "")
+        if not runtime_id:
+            continue
+        mapping[runtime_id] = dict(entry)
     return mapping
 
 
@@ -403,6 +424,115 @@ def build_noncard_truth_audit(repo_root: Path | str, *, raw_snapshot: dict[str, 
     }
 
 
+def build_card_truth_audit(
+    repo_root: Path | str,
+    *,
+    raw_snapshot: dict[str, Any],
+    audit_bundle: dict[str, Any],
+) -> dict[str, Any]:
+    repo_root = Path(repo_root)
+    expected_matrix = build_card_truth_matrix(repo_root, raw_snapshot=raw_snapshot, audit_bundle=audit_bundle)
+    checked_in_matrix = load_card_truth_matrix(repo_root)
+    expected_entries = _card_matrix_entry_map(expected_matrix)
+    checked_in_entries = _card_matrix_entry_map(checked_in_matrix)
+
+    uncovered: list[dict[str, Any]] = []
+    signature_mismatches: list[dict[str, Any]] = []
+    stale_entries: list[dict[str, Any]] = []
+    missing_family_test_refs: list[dict[str, Any]] = []
+    missing_dedicated_test_refs: list[dict[str, Any]] = []
+
+    checked_in_family_tests = dict(checked_in_matrix.get("family_tests") or {})
+    checked_in_dedicated_tests = dict(checked_in_matrix.get("dedicated_tests") or {})
+    checked_in_high_risk = sorted(str(item) for item in checked_in_matrix.get("high_risk_card_ids") or [])
+    expected_high_risk = sorted(str(item) for item in expected_matrix.get("high_risk_card_ids") or [])
+
+    for card_id, expected_entry in sorted(expected_entries.items()):
+        checked_in_entry = checked_in_entries.get(card_id)
+        if checked_in_entry is None:
+            uncovered.append({"card_id": card_id, "issue": "missing_matrix_entry"})
+            continue
+
+        expected_family_ids = sorted(str(item) for item in expected_entry.get("family_ids") or [])
+        checked_in_family_ids = sorted(str(item) for item in checked_in_entry.get("family_ids") or [])
+        expected_runtime_truth_kind = str(expected_entry.get("runtime_truth_kind", "") or "")
+        checked_in_runtime_truth_kind = str(checked_in_entry.get("runtime_truth_kind", "") or "")
+        expected_data_truth_kind = str(expected_entry.get("data_truth_kind", "") or "")
+        checked_in_data_truth_kind = str(checked_in_entry.get("data_truth_kind", "") or "")
+
+        if not list(checked_in_entry.get("data_proof_nodeids") or []):
+            uncovered.append({"card_id": card_id, "issue": "missing_data_proof_nodeids"})
+        if checked_in_runtime_truth_kind != "none" and not list(checked_in_entry.get("runtime_proof_nodeids") or []):
+            uncovered.append({"card_id": card_id, "issue": "missing_runtime_proof_nodeids"})
+
+        if (
+            expected_family_ids != checked_in_family_ids
+            or expected_runtime_truth_kind != checked_in_runtime_truth_kind
+            or expected_data_truth_kind != checked_in_data_truth_kind
+        ):
+            signature_mismatches.append(
+                {
+                    "card_id": card_id,
+                    "expected_family_ids": expected_family_ids,
+                    "checked_in_family_ids": checked_in_family_ids,
+                    "expected_runtime_truth_kind": expected_runtime_truth_kind,
+                    "checked_in_runtime_truth_kind": checked_in_runtime_truth_kind,
+                    "expected_data_truth_kind": expected_data_truth_kind,
+                    "checked_in_data_truth_kind": checked_in_data_truth_kind,
+                }
+            )
+
+        for family_id in checked_in_family_ids:
+            if family_id not in checked_in_family_tests:
+                missing_family_test_refs.append({"card_id": card_id, "family_id": family_id})
+
+        if card_id in HIGH_RISK_CARD_IDS and f"card:{card_id}" not in checked_in_dedicated_tests:
+            missing_dedicated_test_refs.append({"card_id": card_id, "issue": "missing_high_risk_dedicated_test"})
+
+    for card_id in sorted(checked_in_entries):
+        if card_id in expected_entries:
+            continue
+        stale_entries.append({"card_id": card_id, "issue": "stale_matrix_entry"})
+
+    registry_mismatches = {
+        "scenario_nodeids": dict(checked_in_matrix.get("scenario_nodeids") or {}) != dict(expected_matrix.get("scenario_nodeids") or {}),
+        "family_tests": checked_in_family_tests != dict(expected_matrix.get("family_tests") or {}),
+        "dedicated_tests": checked_in_dedicated_tests != dict(expected_matrix.get("dedicated_tests") or {}),
+        "high_risk_card_ids": checked_in_high_risk != expected_high_risk,
+    }
+    uncovered_count = len(uncovered) + len(missing_family_test_refs) + len(missing_dedicated_test_refs)
+
+    return {
+        "summary": {
+            "card_count": len(expected_entries),
+            "matrix_entry_count": len(checked_in_entries),
+            "card_proof_uncovered": uncovered_count,
+            "signature_mismatches": len(signature_mismatches),
+            "stale_matrix_entries": len(stale_entries),
+            "scenario_registry_mismatch": int(registry_mismatches["scenario_nodeids"]),
+            "family_test_registry_mismatch": int(registry_mismatches["family_tests"]),
+            "dedicated_test_registry_mismatch": int(registry_mismatches["dedicated_tests"]),
+            "high_risk_registry_mismatch": int(registry_mismatches["high_risk_card_ids"]),
+            "blocker_count": uncovered_count
+            + len(signature_mismatches)
+            + len(stale_entries)
+            + int(registry_mismatches["scenario_nodeids"])
+            + int(registry_mismatches["family_tests"])
+            + int(registry_mismatches["dedicated_tests"])
+            + int(registry_mismatches["high_risk_card_ids"]),
+        },
+        "matrix_path": str((repo_root / "sts_py" / "data" / "card_truth_matrix.json").resolve()),
+        "expected_matrix": expected_matrix,
+        "checked_in_matrix": checked_in_matrix,
+        "uncovered": uncovered,
+        "signature_mismatches": signature_mismatches,
+        "stale_entries": stale_entries,
+        "missing_family_test_refs": missing_family_test_refs,
+        "missing_dedicated_test_refs": missing_dedicated_test_refs,
+        "registry_mismatches": registry_mismatches,
+    }
+
+
 def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
     repo_root = Path(repo_root)
     raw_snapshot = wiki_audit.build_cli_raw_snapshot(repo_root, enable_network=False)
@@ -410,6 +540,7 @@ def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
     known_approximations = load_known_approximations(repo_root)
     surface_audit = build_runtime_surface_audit(repo_root, raw_snapshot=raw_snapshot)
     translation_truth_audit = build_translation_truth_audit(audit_bundle)
+    card_truth_audit = build_card_truth_audit(repo_root, raw_snapshot=raw_snapshot, audit_bundle=audit_bundle)
     noncard_truth_audit = build_noncard_truth_audit(repo_root, raw_snapshot=raw_snapshot)
     blockers = list(surface_audit["blockers"])
     blockers.extend(list(translation_truth_audit["blockers"]))
@@ -454,6 +585,79 @@ def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
             entity_id="runtime_name_issue",
             issue="translation_runtime_name_issue",
             detail=str(translation_summary["runtime_name_issue"]),
+        )
+
+    for finding in list(card_truth_audit["uncovered"]):
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="card",
+            entity_id=str(finding.get("card_id", "unknown")),
+            issue=str(finding.get("issue", "card_proof_uncovered")),
+        )
+    for finding in list(card_truth_audit["missing_family_test_refs"]):
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="card",
+            entity_id=str(finding.get("card_id", "unknown")),
+            issue=f"missing_family_test_ref:{finding.get('family_id', '')}",
+        )
+    for finding in list(card_truth_audit["missing_dedicated_test_refs"]):
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="card",
+            entity_id=str(finding.get("card_id", "unknown")),
+            issue=str(finding.get("issue", "missing_dedicated_test_ref")),
+        )
+    for finding in list(card_truth_audit["signature_mismatches"]):
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="card",
+            entity_id=str(finding.get("card_id", "unknown")),
+            issue="proof_matrix_signature_mismatch",
+        )
+    for finding in list(card_truth_audit["stale_entries"]):
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="card",
+            entity_id=str(finding.get("card_id", "unknown")),
+            issue="stale_matrix_entry",
+        )
+    if card_truth_audit["registry_mismatches"]["scenario_nodeids"]:
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="proof_matrix",
+            entity_id="scenario_nodeids",
+            issue="scenario_registry_drift",
+        )
+    if card_truth_audit["registry_mismatches"]["family_tests"]:
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="proof_matrix",
+            entity_id="family_tests",
+            issue="family_test_registry_drift",
+        )
+    if card_truth_audit["registry_mismatches"]["dedicated_tests"]:
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="proof_matrix",
+            entity_id="dedicated_tests",
+            issue="dedicated_test_registry_drift",
+        )
+    if card_truth_audit["registry_mismatches"]["high_risk_card_ids"]:
+        _append_blocker(
+            blockers,
+            lane="card_truth",
+            entity_type="proof_matrix",
+            entity_id="high_risk_card_ids",
+            issue="high_risk_registry_drift",
         )
 
     for finding in list(noncard_truth_audit["uncovered"]):
@@ -521,6 +725,8 @@ def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
             "blocker_count": len(blockers),
             "surface_blocker_count": len(surface_audit["blockers"]),
             "translation_truth_blocker_count": len(translation_truth_audit["blockers"]),
+            "card_proof_uncovered": card_truth_audit["summary"]["card_proof_uncovered"],
+            "card_signature_mismatches": card_truth_audit["summary"]["signature_mismatches"],
             "noncard_proof_uncovered": noncard_truth_audit["summary"]["noncard_proof_uncovered"],
             "noncard_signature_mismatches": noncard_truth_audit["summary"]["signature_mismatches"],
             "wiki_audit": {
@@ -533,6 +739,7 @@ def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
         "known_approximations": known_approximations,
         "surface_audit": surface_audit,
         "translation_truth_audit": translation_truth_audit,
+        "card_truth_audit": card_truth_audit,
         "noncard_truth_audit": noncard_truth_audit,
         "wiki_audit": audit_bundle,
         "blockers": blockers,
@@ -541,6 +748,7 @@ def run_fidelity_audit(repo_root: Path | str) -> dict[str, Any]:
 
 __all__ = [
     "KNOWN_APPROXIMATIONS_PATH",
+    "build_card_truth_audit",
     "build_noncard_truth_audit",
     "build_translation_truth_audit",
     "build_runtime_surface_audit",
