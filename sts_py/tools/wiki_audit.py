@@ -15,6 +15,7 @@ import sts_py.engine.combat.powers as power_module
 import sts_py.terminal.catalog as terminal_catalog
 from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
+from sts_py.engine.content.official_card_strings import get_official_card_strings
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
@@ -137,6 +138,7 @@ MANUAL_JAVA_CARD_NAME_BY_RUNTIME_ID = {
     "Nightmare": "Night Terror",
     "Foresight": "Wireheading",
     "Void": "VoidCard",
+    "Bullseye": "LockOn",
 }
 
 ACT1_MONSTER_IDS = {
@@ -229,6 +231,13 @@ CLI_UI_TERMS = {
     "end": {"contexts": ["combat"]},
     "use": {"contexts": ["combat"]},
 }
+
+
+def _canonical_card_catalog_override_keys() -> set[str]:
+    keys = set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys())
+    keys.update(getattr(terminal_catalog, "CARD_DESCRIPTION_OVERRIDES", {}).keys())
+    return {CARD_ID_ALIASES.get(str(key), str(key)) for key in keys}
+
 
 EVENT_WIKI_NAME_ALIASES = {
     "NoteForYourself": {"en": ["A Note For Yourself"]},
@@ -324,7 +333,7 @@ EVENT_FLOW_FACTS_BY_KEY = RUNTIME_EVENT_FLOW_FACTS_BY_KEY
 EVENT_RNG_STREAMS_BY_KEY = RUNTIME_EVENT_RNG_STREAMS_BY_KEY
 
 CATALOG_OVERRIDE_SOURCES = {
-    "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
+    "card": lambda: _canonical_card_catalog_override_keys() | set(translation_policy_entity_ids_by_type().get("card", [])),
     "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
     "potion": lambda: set(getattr(terminal_catalog, "POTION_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("potion", [])),
     "monster": lambda: set(getattr(terminal_catalog, "MONSTER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("monster", [])),
@@ -786,6 +795,8 @@ def _resolve_java_card_class_name(card_id: str) -> str:
 
 
 def _java_card_file(repo_root: Path, card_id: str) -> Path | None:
+    if card_id == "Burn+":
+        card_id = "Burn"
     java_name = _resolve_java_card_class_name(card_id)
     for relative_dir in (
         "decompiled_src/com/megacrit/cardcrawl/cards/red",
@@ -823,6 +834,10 @@ def _decompiled_card_runtime_inventory(repo_root: Path) -> set[str]:
             class_name = java_file.stem
             runtime_id = inverse_manual.get(class_name) or CARD_ID_ALIASES.get(class_name) or class_name
             inventory.add(str(runtime_id))
+            if class_name == "LockOn":
+                inventory.add("Lockon")
+    if "Burn" in inventory:
+        inventory.add("Burn+")
     return inventory
 
 
@@ -915,8 +930,17 @@ _JAVA_CARD_FACT_OVERRIDES: dict[str, dict[str, Any]] = {
 
 def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
     java_file = _java_card_file(repo_root, card_id)
+    official = get_official_card_strings(card_id)
     if java_file is None:
-        return {"source_kind": "decompiled_java_card", "missing": True}
+        return {
+            "source_kind": "decompiled_java_card",
+            "missing": True,
+            "official_key": str(getattr(official, "official_key", "") or ""),
+            "official_name_en": str(getattr(official, "name_en", "") or ""),
+            "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+            "translation_source": str(getattr(official, "translation_source", "") or ""),
+            "description_source": str(getattr(official, "description_source", "") or ""),
+        }
     text = java_file.read_text(encoding="utf-8", errors="ignore")
     super_fields = _extract_java_card_super_fields(text)
     path_text = str(java_file).replace("\\", "/")
@@ -929,6 +953,11 @@ def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
         "source_kind": "decompiled_java_card",
         "java_class": java_file.stem,
         "java_path": str(java_file),
+        "official_key": str(getattr(official, "official_key", "") or ""),
+        "official_name_en": str(getattr(official, "name_en", "") or ""),
+        "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+        "translation_source": str(getattr(official, "translation_source", "") or ""),
+        "description_source": str(getattr(official, "description_source", "") or ""),
         **super_fields,
         "rarity": normalized_rarity,
         "damage": _first_int(r"baseDamage\s*=\s*(\d+)", text) or 0,
@@ -947,6 +976,7 @@ def build_card_java_facts(repo_root: Path, card_id: str) -> dict[str, Any]:
 
 def build_card_runtime_facts(card_id: str) -> dict[str, Any]:
     card = CardInstance(card_id)
+    official = get_official_card_strings(card_id)
     return {
         "source_kind": "runtime_card_def",
         "cost": int(card.cost),
@@ -960,6 +990,17 @@ def build_card_runtime_facts(card_id: str) -> dict[str, Any]:
         "ethereal": bool(card.is_ethereal),
         "retain": bool(card.retain or card.self_retain),
         "innate": bool(card.is_innate),
+        "official_key": str(getattr(official, "official_key", "") or ""),
+        "official_name_en": str(getattr(official, "name_en", "") or ""),
+        "official_name_zhs": str(getattr(official, "name_zhs", "") or ""),
+        "official_desc_en": str(getattr(official, "description_en", "") or ""),
+        "official_desc_zhs": str(getattr(official, "description_zhs", "") or ""),
+        "official_upgrade_desc_en": str(getattr(official, "upgrade_description_en", "") or ""),
+        "official_upgrade_desc_zhs": str(getattr(official, "upgrade_description_zhs", "") or ""),
+        "translation_source": str(getattr(official, "translation_source", "") or ""),
+        "description_source": str(getattr(official, "description_source", "") or ""),
+        "official_name_cn_available": bool(str(getattr(official, "name_zhs", "") or "").strip()),
+        "official_description_cn_available": bool(str(getattr(official, "description_zhs", "") or "").strip()),
     }
 
 
@@ -1499,7 +1540,8 @@ def build_cli_raw_snapshot(
     if entity_type_filter is None or "card" in entity_type_filter:
         for card_id in sorted(ALL_CARD_DEFS):
             runtime_name_cn, runtime_desc = get_card_info(card_id)
-            runtime_name_en = _humanize_identifier(_resolve_java_card_class_name(card_id))
+            official = get_official_card_strings(card_id)
+            runtime_name_en = str(getattr(official, "name_en", "") or _humanize_identifier(_resolve_java_card_class_name(card_id)))
             runtime_facts = build_card_runtime_facts(card_id)
             java_facts = build_card_java_facts(repo_root, card_id)
             en_wiki, cn_wiki = (
@@ -1802,6 +1844,14 @@ def normalize_raw_snapshot(raw_snapshot: dict[str, Any]) -> dict[str, Any]:
         audit_status.setdefault("cn_wiki_match", cn_match)
         audit_status.setdefault("translation_reference_source", policy["reference_source"])
         audit_status.setdefault("translation_alignment_status", policy["alignment_status"])
+        reference_source = str(policy["reference_source"] or record.runtime_facts.get("translation_source") or "")
+        alignment_status = str(policy["alignment_status"] or "")
+        if (
+            not alignment_status
+            and record.entity_type == "card"
+            and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        ):
+            alignment_status = "exact_match"
 
         normalized_records.append(
             NormalizedEntitySnapshot(
@@ -1826,8 +1876,8 @@ def normalize_raw_snapshot(raw_snapshot: dict[str, Any]) -> dict[str, Any]:
                     "en_source": record.en_wiki.source,
                     "cn_source": record.cn_wiki.source,
                 },
-                reference_source=policy["reference_source"],
-                alignment_status=policy["alignment_status"],
+                reference_source=reference_source,
+                alignment_status=alignment_status,
                 huiji_page_or_title=policy["huiji_page_or_title"],
                 approved_alias_note=policy["approved_alias_note"],
             )
@@ -1917,6 +1967,13 @@ def _runtime_name_issue(record: NormalizedEntitySnapshot) -> str:
     runtime_name_cn = str(record.runtime_name_cn or "").strip()
     if _looks_mojibake(runtime_name_cn):
         return "mojibake_or_corrupt"
+    if (
+        record.entity_type == "card"
+        and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        and _normalize_lookup_key(runtime_name_cn)
+        == _normalize_lookup_key(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+    ):
+        return "ok"
     if not _looks_cataloged_cn(runtime_name_cn):
         return "missing_cn"
     return "ok"
@@ -1938,6 +1995,17 @@ def _translation_status_note(status: str) -> str:
 
 def _resolve_translation_status(record: NormalizedEntitySnapshot) -> tuple[str, str]:
     policy_status = str(record.alignment_status or "").strip()
+    if (
+        record.entity_type == "card"
+        and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+    ):
+        official_name_cn = str(record.runtime_facts.get("official_name_zhs", "") or "").strip()
+        if policy_status == "approved_alias":
+            return "approved_alias", record.approved_alias_note or "官方卡牌简中保留，Huiji 页名差异已登记为批准别名。"
+        if _normalize_lookup_key(record.runtime_name_cn) == _normalize_lookup_key(official_name_cn):
+            return "exact_match", "CLI 中文名与官方卡牌简中资源一致。"
+        return "likely_wrong_translation", "CLI 中文名与官方卡牌简中资源不一致。"
+
     if policy_status in ALIGNMENT_STATUSES:
         return policy_status, _translation_status_note(policy_status)
 
@@ -2099,6 +2167,13 @@ def build_completeness_audit(records: Any, *, repo_root: Path | None = None) -> 
 
     present_but_not_cataloged: list[dict[str, Any]] = []
     for record in normalized_records:
+        if (
+            record.entity_type == "card"
+            and bool(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+            and _normalize_lookup_key(record.runtime_name_cn)
+            == _normalize_lookup_key(str(record.runtime_facts.get("official_name_zhs", "") or "").strip())
+        ):
+            continue
         if not _looks_cataloged_cn(record.runtime_name_cn):
             present_but_not_cataloged.append(
                 {

@@ -7,6 +7,7 @@ from typing import Any
 from sts_py.engine.combat.card_effects import get_card_effects
 from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+from sts_py.engine.content.official_card_strings import get_official_card_strings
 from sts_py.engine.content.official_relic_manifest import get_runtime_relic_manifest
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import get_relic_by_id
@@ -712,6 +713,54 @@ def _definition_card_name(card: CardInstance) -> str | None:
     return None
 
 
+def _official_card_name(card: CardInstance) -> str | None:
+    official = get_official_card_strings(card.runtime_card_id)
+    if official is None:
+        return None
+    if str(official.name_zhs or "").strip() and str(official.name_zhs or "").strip().upper() != "DEPRECATED":
+        return official.name_zhs
+    return None
+
+
+def _normalize_official_card_description(text: str) -> str:
+    normalized = str(text or "").replace("NL", " ")
+    normalized = normalized.replace("*", "")
+    normalized = normalized.replace("获得 [W]", "获得 1 点能量")
+    normalized = normalized.replace("少获得1 [W]", "少获得1点能量")
+    normalized = normalized.replace("少获得 1 [W]", "少获得 1 点能量")
+    normalized = normalized.replace("[W]", "能量")
+    normalized = normalized.replace("[E]", "能量")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    normalized = re.sub(r"\s*([，。！？；：、）])", r"\1", normalized)
+    normalized = re.sub(r"([（])\s*", r"\1", normalized)
+    return normalized.strip()
+
+
+def _official_card_description(card: CardInstance) -> str | None:
+    official = get_official_card_strings(card.runtime_card_id)
+    if official is None:
+        return None
+
+    description = official.description_zhs
+    if official.variant_kind == "upgrade_variant" and official.upgrade_description_zhs:
+        description = official.upgrade_description_zhs
+    elif card.upgraded and official.upgrade_description_zhs:
+        description = official.upgrade_description_zhs
+
+    if not _looks_presentable_text(description):
+        return None
+
+    substitutions = {
+        "!D!": str(max(0, int(getattr(card, "base_damage", 0) or 0))),
+        "!B!": str(max(0, int(getattr(card, "base_block", 0) or 0))),
+        "!M!": str(max(0, int(getattr(card, "base_magic_number", 0) or 0))),
+    }
+    for token, value in substitutions.items():
+        description = description.replace(token, value)
+    description = _normalize_official_card_description(description)
+    return description if _looks_presentable_text(description) else None
+
+
 def _policy_translation(entity_type: str, entity_id: str) -> str | None:
     entry = get_translation_policy_entry(entity_type, entity_id)
     if entry is None:
@@ -726,7 +775,12 @@ def _policy_translation(entity_type: str, entity_id: str) -> str | None:
 def translate_card_name(card_id: str) -> str:
     card = _canonical_card(card_id)
     base_id = card.card_id
-    name = _policy_translation("card", base_id) or CARD_NAME_OVERRIDES.get(base_id) or _definition_card_name(card)
+    name = (
+        _official_card_name(card)
+        or _policy_translation("card", base_id)
+        or CARD_NAME_OVERRIDES.get(base_id)
+        or _definition_card_name(card)
+    )
     if name is None:
         name = _humanize_identifier(base_id)
     return f"{name}{_format_upgrade_suffix(card)}"
@@ -942,7 +996,12 @@ def get_relic_info(relic_id: str, relic_context: dict[str, Any] | None = None) -
 
 
 def translate_power(power_id: str) -> str:
-    return _policy_translation("power", power_id) or POWER_NAME_OVERRIDES.get(power_id, _humanize_identifier(power_id))
+    card_like_name = None
+    if power_id in ALL_CARD_DEFS:
+        card_like_name = translate_card_name(power_id)
+    if power_id == "Mark":
+        return "印记"
+    return _policy_translation("power", power_id) or card_like_name or POWER_NAME_OVERRIDES.get(power_id, _humanize_identifier(power_id))
 
 
 def translate_room_type(room_type: RoomType) -> str:
@@ -1002,7 +1061,7 @@ def _generic_card_summary(card: CardInstance) -> str:
 def get_card_info(card_id: str) -> tuple[str, str]:
     card = _canonical_card(card_id)
     name = translate_card_name(card_id)
-    description = CARD_DESCRIPTION_OVERRIDES.get(card.card_id)
+    description = _official_card_description(card) or CARD_DESCRIPTION_OVERRIDES.get(card.card_id)
     if description is None:
         description = _generic_card_summary(card)
     return name, description

@@ -320,6 +320,17 @@ class CardInstance:
             if card_manager is not None and getattr(card_manager, "get_draw_pile_size", None) is not None:
                 if card_manager.get_draw_pile_size() > 0:
                     return False
+        if self.card_id == "SignatureMove":
+            combat_state = getattr(self, "_combat_state", None)
+            card_manager = getattr(combat_state, "card_manager", None)
+            if card_manager is not None:
+                other_attacks = [
+                    hand_card
+                    for hand_card in getattr(card_manager.hand, "cards", []) or []
+                    if hand_card is not self and hasattr(hand_card, "is_attack") and hand_card.is_attack()
+                ]
+                if other_attacks:
+                    return False
         if self.card_id in {"SecretTechnique", "SecretWeapon"}:
             combat_state = getattr(self, "_combat_state", None)
             card_manager = getattr(combat_state, "card_manager", None)
@@ -356,6 +367,11 @@ class CardInstance:
         if self.card_id == "GeneticAlgorithm":
             default_misc = int(get_default_misc_for_card(self.card_id) or 0)
             self.base_block = max(0, int(getattr(self, "misc", 0) or default_misc))
+        elif self.card_id == "SpiritShield":
+            combat_state = getattr(self, "_combat_state", None)
+            card_manager = getattr(combat_state, "card_manager", None)
+            hand_cards = getattr(getattr(card_manager, "hand", None), "cards", []) or []
+            self.base_block = max(0, len(hand_cards) * max(0, int(getattr(self, "magic_number", 0) or 0)))
 
     def _refresh_dynamic_base_damage(self, combat_state: CombatState) -> None:
         if self.card_id == "MindBlast":
@@ -365,6 +381,10 @@ class CardInstance:
             player = getattr(combat_state, "player", None)
             frost_channels = max(0, int(getattr(player, "_frost_orbs_channeled_this_combat", 0) or 0))
             self.base_damage = frost_channels * max(0, int(getattr(self, "magic_number", 0) or 0))
+        elif self.card_id == "Brilliance":
+            player = getattr(combat_state, "player", None)
+            mantra_damage = max(0, int(getattr(player, "_mantra_gained_this_combat", 0) or 0))
+            self.base_damage = max(0, int(self._def.base_damage)) + mantra_damage
         elif self.card_id == "RitualDagger":
             self.base_damage = max(0, int(getattr(self, "misc", 0) or 0))
 
@@ -613,7 +633,27 @@ class CardInstance:
     
     def on_retain(self) -> None:
         """Called when card is retained at end of turn."""
-        pass
+        if self.card_id == "Perseverance":
+            self.base_block = max(0, int(getattr(self, "base_block", 0) or 0) + int(getattr(self, "magic_number", 0) or 0))
+            self.block = self.base_block
+        elif self.card_id == "WindmillStrike":
+            self.base_damage = max(0, int(getattr(self, "base_damage", 0) or 0) + int(getattr(self, "magic_number", 0) or 0))
+            self.damage = self.base_damage
+        elif self.card_id == "SandsOfTime":
+            self.combat_cost_reduction = max(0, int(getattr(self, "combat_cost_reduction", 0) or 0) + 1)
+
+        player = self._resolve_combat_player()
+        if player is None:
+            return
+
+        establishment_discount = max(0, int(player.powers.get_power_amount("Establishment") or 0))
+        if establishment_discount > 0 and int(getattr(self, "cost", -1) or -1) >= 0:
+            self.combat_cost_reduction = max(
+                0,
+                int(getattr(self, "combat_cost_reduction", 0) or 0) + establishment_discount,
+            )
+
+        self.apply_combat_cost_modifiers()
 
     def _resolve_combat_player(self):
         if not hasattr(self, '_combat_state') or not self._combat_state:
@@ -642,7 +682,7 @@ class CardInstance:
 
         from sts_py.engine.combat.powers import CorruptionPower
 
-        if self.card_id in {"BloodforBlood", "Eviscerate", "Streamline", "ForceField", "MasterfulStab"} and self.cost >= 0:
+        if self.card_id in {"BloodforBlood", "Eviscerate", "Streamline", "ForceField", "MasterfulStab", "SandsOfTime"} and self.cost >= 0:
             reduction = max(0, int(self.combat_cost_reduction))
             increase = max(0, int(self.combat_cost_increase))
             if self.card_id == "ForceField":
@@ -655,6 +695,9 @@ class CardInstance:
 
         has_corruption = any(isinstance(p, CorruptionPower) for p in player.powers.powers)
         if self.card_type.value == "SKILL" and has_corruption:
+            self.cost_for_turn = 0
+            self.is_cost_modified_for_turn = True
+        elif self.card_type.value == "ATTACK" and player.powers.get_power_amount("Swivel") > 0 and self.cost >= 0:
             self.cost_for_turn = 0
             self.is_cost_modified_for_turn = True
 

@@ -505,11 +505,17 @@ class PowerContainer:
         Returns block to gain.
         """
         total_block = 0
-        for power in self.powers:
+        for power in list(self.powers):
+            if not hasattr(power, "on_attacked"):
+                continue
             if isinstance(power, CurlUpPower):
-                total_block += power.on_attacked(actual_damage)
+                result = power.on_attacked(actual_damage)
             elif isinstance(power, AngryPower):
-                power.on_attacked(actual_damage, monster)
+                result = power.on_attacked(actual_damage, monster)
+            else:
+                result = power.on_attacked(actual_damage, monster)
+            if isinstance(result, int):
+                total_block += result
         return total_block
     
     def get_ritual_strength_gain(self) -> int:

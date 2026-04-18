@@ -1994,6 +1994,7 @@ def gain_mantra(player: Any, amount: int) -> dict[str, int | bool]:
         player.add_power(mantra_power)
 
     mantra_power.stack_power(amount)
+    player._mantra_gained_this_combat = int(getattr(player, "_mantra_gained_this_combat", 0) or 0) + max(0, int(amount))
     entered_divinity = False
     energy_gain = 0
 
@@ -2508,6 +2509,419 @@ class LikeWaterPower:
 
     def reduce_power(self, amount: int) -> None:
         self.amount -= amount
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class CollectPower:
+    id: str = "Collect"
+    name: str = "Collect"
+    amount: int = 0
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+    is_turn_based: bool = True
+
+    def stack_power(self, amount: int) -> None:
+        self.amount = min(999, self.amount + amount)
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def on_energy_recharge(self, owner: Any | None = None) -> dict[str, int] | None:
+        if owner is None or self.amount <= 0:
+            return None
+        combat_state = getattr(owner, "_combat_state", None)
+        card_manager = getattr(combat_state, "card_manager", None)
+        if card_manager is None:
+            return None
+
+        def _configure_miracle(card: CardInstance) -> None:
+            card.upgrade()
+
+        generated = card_manager.generate_cards_to_hand("Miracle", 1, configure_card=_configure_miracle)
+        self.amount = max(0, self.amount - 1)
+        if self.amount <= 0 and hasattr(owner, "remove_power"):
+            owner.remove_power(self.id)
+        return {"type": "collect_generate", "count": len(generated), "remaining": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class DisciplinePower:
+    id: str = "Discipline"
+    name: str = "Discipline"
+    amount: int = 0
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_end_of_turn(self, owner: Any | None = None, is_player: bool = True) -> dict[str, int] | None:
+        if owner is None or not is_player:
+            return None
+        self.amount = max(0, int(getattr(owner, "energy", 0) or 0))
+        if self.amount <= 0:
+            return None
+        return {"type": "discipline_store", "amount": self.amount}
+
+    def at_start_of_turn_post_draw(self, owner: Any | None) -> dict[str, int] | None:
+        if owner is None or self.amount <= 0:
+            return None
+        card_manager = _resolve_owner_card_manager(owner)
+        if card_manager is None:
+            return None
+        draw_amount = self.amount
+        card_manager.draw_cards(draw_amount)
+        self.amount = 0
+        return {"type": "discipline_draw", "amount": draw_amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class EstablishmentPower:
+    id: str = "Establishment"
+    name: str = "Establishment"
+    amount: int = 1
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class FastingPower:
+    id: str = "Fasting"
+    name: str = "Fasting"
+    amount: int = 1
+    owner: str = "player"
+    power_type: PowerType = PowerType.DEBUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_start_of_turn(self, owner: Any | None) -> dict[str, int] | None:
+        if owner is None or self.amount <= 0:
+            return None
+        owner.energy = max(0, int(getattr(owner, "energy", 0) or 0) - self.amount)
+        card_manager = _resolve_owner_card_manager(owner)
+        if card_manager is not None:
+            card_manager.set_energy(owner.energy)
+        return {"type": "fasting_energy_down", "amount": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class MarkPower:
+    id: str = "Mark"
+    name: str = "Mark"
+    amount: int = 0
+    owner: str = "monster"
+    power_type: PowerType = PowerType.DEBUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class MentalFortressPower:
+    id: str = "MentalFortress"
+    name: str = "Mental Fortress"
+    amount: int = 0
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount -= amount
+
+    def on_change_stance(self, owner: Any, old_stance: Any, new_stance: Any) -> dict[str, int] | None:
+        if owner is None:
+            return None
+        old_type = getattr(old_stance, "stance_type", None)
+        new_type = getattr(new_stance, "stance_type", None)
+        if old_type == new_type:
+            return None
+        owner.gain_block(self.amount)
+        return {"type": "mental_fortress_block", "amount": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class SimmeringFuryPower:
+    id: str = "SimmeringFury"
+    name: str = "Simmering Fury"
+    amount: int = 2
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+    is_turn_based: bool = True
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_start_of_turn_post_draw(self, owner: Any | None) -> dict[str, int] | None:
+        if owner is None:
+            return None
+        from sts_py.engine.combat.stance import StanceType, change_stance
+
+        change_stance(owner, StanceType.WRATH)
+        card_manager = _resolve_owner_card_manager(owner)
+        if card_manager is not None and self.amount > 0:
+            card_manager.draw_cards(self.amount)
+        if hasattr(owner, "remove_power"):
+            owner.remove_power(self.id)
+        return {"type": "simmering_fury", "draw_amount": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class SwivelPower:
+    id: str = "Swivel"
+    name: str = "Swivel"
+    amount: int = 1
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def on_player_card_played(self, owner: Any | None = None, card: Any | None = None) -> dict[str, Any] | None:
+        if owner is None or card is None or self.amount <= 0:
+            return None
+        if not hasattr(card, "is_attack") or not card.is_attack():
+            return None
+        self.amount = max(0, self.amount - 1)
+        if self.amount <= 0 and hasattr(owner, "remove_power"):
+            owner.remove_power(self.id)
+        return {"type": "swivel_consume", "remaining": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class TalkToTheHandPower:
+    id: str = "TalkToTheHand"
+    name: str = "Talk to the Hand"
+    amount: int = 0
+    owner: str = "monster"
+    power_type: PowerType = PowerType.DEBUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def on_attacked(self, actual_damage: int, monster: Any = None) -> dict[str, int] | None:
+        if monster is None or self.amount <= 0:
+            return None
+        combat_state = getattr(monster, "_combat_state", None)
+        player = getattr(combat_state, "player", None)
+        if player is None:
+            return None
+        player.gain_block(self.amount)
+        return {"type": "talk_to_the_hand_block", "amount": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class WaveOfTheHandPower:
+    id: str = "WaveOfTheHand"
+    name: str = "Wave of the Hand"
+    amount: int = 1
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def on_gain_block(self, owner: Any | None, block_amount: int) -> dict[str, Any] | None:
+        if owner is None or block_amount <= 0:
+            return None
+        combat_state = getattr(owner, "_combat_state", None)
+        monsters = getattr(combat_state, "monsters", []) if combat_state is not None else []
+        for monster in monsters:
+            if monster.is_dead():
+                continue
+            monster.add_power(create_power("Weak", self.amount, monster.id))
+            monster.weak = max(0, int(getattr(monster, "weak", 0) or 0) + self.amount)
+        return {"type": "wave_of_the_hand", "amount": self.amount}
+
+    def at_end_of_round(self) -> bool:
+        return True
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "owner": self.owner,
+            "power_type": self.power_type.name,
+        }
+
+
+@dataclass
+class WreathOfFlamePower:
+    id: str = "WreathOfFlame"
+    name: str = "Wreath of Flame"
+    amount: int = 0
+    owner: str = "player"
+    power_type: PowerType = PowerType.BUFF
+
+    def stack_power(self, amount: int) -> None:
+        self.amount += amount
+
+    def reduce_power(self, amount: int) -> None:
+        self.amount = max(0, self.amount - amount)
+
+    def at_damage_give(self, damage: float, damage_type: str = "NORMAL") -> float:
+        return damage + self.amount if damage_type == "NORMAL" else damage
+
+    def on_player_card_played(self, owner: Any | None = None, card: Any | None = None) -> dict[str, Any] | None:
+        if owner is None or card is None or self.amount <= 0:
+            return None
+        if not hasattr(card, "is_attack") or not card.is_attack():
+            return None
+        applied = self.amount
+        self.amount = 0
+        if hasattr(owner, "remove_power"):
+            owner.remove_power(self.id)
+        return {"type": "wreath_of_flame", "amount": applied}
 
     def at_end_of_round(self) -> bool:
         return False
@@ -4060,6 +4474,8 @@ POWER_CLASSES = {
     "Draw Card": DrawCardNextTurnPower,
     "Nightmare": NightmarePower,
     "Doppelganger": DoppelgangerPower,
+    "Collect": CollectPower,
+    "Discipline": DisciplinePower,
     "Next Turn Block": NextTurnBlockPower,
     "Devotion": DevotionPower,
     "Study": StudyPower,
@@ -4069,6 +4485,18 @@ POWER_CLASSES = {
     "Nirvana": NirvanaPower,
     "Rushdown": RushdownPower,
     "LikeWater": LikeWaterPower,
+    "Establishment": EstablishmentPower,
+    "Fasting": FastingPower,
+    "Mark": MarkPower,
+    "PathToVictoryPower": MarkPower,
+    "MentalFortress": MentalFortressPower,
+    "Controlled": MentalFortressPower,
+    "SimmeringFury": SimmeringFuryPower,
+    "Swivel": SwivelPower,
+    "TalkToTheHand": TalkToTheHandPower,
+    "WaveOfTheHand": WaveOfTheHandPower,
+    "WaveOfTheHandPower": WaveOfTheHandPower,
+    "WreathOfFlame": WreathOfFlamePower,
     "EndTurnDeath": EndTurnDeathPower,
     "Intangible": IntangiblePower,
     "Focus": FocusPower,

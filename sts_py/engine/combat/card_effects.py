@@ -354,6 +354,70 @@ def _combat_rng(combat_state: Any):
     return getattr(combat_state, "rng", None)
 
 
+def _last_played_card_type_matches(combat_state: Any, card_type: CardType) -> bool:
+    return str(getattr(combat_state, "_last_card_played_type", "") or "") == card_type.value
+
+
+def _monster_intends_attack(monster: Any) -> bool:
+    move = getattr(monster, "move", None)
+    intent = getattr(move, "intent", None)
+    if intent is None:
+        intent = getattr(monster, "intent", None)
+    if intent is None:
+        return False
+    intent_name = str(getattr(intent, "name", intent) or "")
+    return "ATTACK" in intent_name
+
+
+def _living_monsters(combat_state: Any) -> list[Any]:
+    return [monster for monster in getattr(combat_state, "monsters", []) or [] if not monster.is_dead()]
+
+
+def _lose_hp_direct(monster: Any, amount: int) -> int:
+    hp_loss = max(0, int(amount or 0))
+    if hp_loss <= 0 or monster is None or monster.is_dead():
+        return 0
+    current_hp = max(0, int(getattr(monster, "hp", 0) or 0))
+    monster.hp = max(0, current_hp - hp_loss)
+    if monster.hp <= 0:
+        monster.is_dying = True
+    return hp_loss
+
+
+def _upgrade_first_upgradeable_card(combat_state: Any, source_card: CardInstance | None = None) -> str | None:
+    card_manager = getattr(combat_state, "card_manager", None)
+    seen_runtime_ids: set[str] = set()
+    if card_manager is not None:
+        for pile in (
+            getattr(card_manager, "hand", None),
+            getattr(card_manager, "draw_pile", None),
+            getattr(card_manager, "discard_pile", None),
+            getattr(card_manager, "exhaust_pile", None),
+        ):
+            for candidate in getattr(pile, "cards", []) or []:
+                if candidate is source_card:
+                    continue
+                if getattr(candidate, "upgraded", False):
+                    continue
+                candidate.upgrade()
+                seen_runtime_ids.add(str(getattr(candidate, "runtime_card_id", "") or ""))
+                return str(getattr(candidate, "runtime_card_id", "") or "")
+
+    run_engine = getattr(combat_state, "run_engine", None)
+    run_state = getattr(run_engine, "state", None) if run_engine is not None else None
+    deck = getattr(run_state, "deck", None)
+    if not isinstance(deck, list):
+        return None
+    for index, card_id in enumerate(deck):
+        candidate = CardInstance(str(card_id))
+        if candidate.upgraded:
+            continue
+        candidate.upgrade()
+        deck[index] = candidate.runtime_card_id
+        return candidate.runtime_card_id
+    return None
+
+
 def _implemented_power_card_ids() -> list[str]:
     power_ids: list[str] = []
     for card_id, card_def in ALL_CARD_DEFS.items():
@@ -803,6 +867,25 @@ def _resolve_discovery_choice(combat_state: Any, selected_card: CardInstance, *,
     _add_card_to_hand_or_discard(card_manager, chosen_copy, hand_limit_offset=hand_limit_offset)
 
 
+def _resolve_generated_choice_to_hand(
+    combat_state: Any,
+    selected_card: CardInstance,
+    *,
+    source_card: CardInstance | None = None,
+    zero_cost_this_turn: bool = False,
+) -> None:
+    card_manager = getattr(combat_state, "card_manager", None)
+    if card_manager is None:
+        return
+    hand_limit_offset = _hand_limit_offset_for_played_card(card_manager, source_card) if source_card is not None else 0
+    chosen_copy = selected_card.make_stat_equivalent_copy()
+    _apply_master_reality_if_needed(card_manager, chosen_copy)
+    if zero_cost_this_turn and int(getattr(chosen_copy, "cost", -1) or -1) > 0:
+        chosen_copy.cost_for_turn = 0
+        chosen_copy.is_cost_modified_for_turn = True
+    _add_card_to_hand_or_discard(card_manager, chosen_copy, hand_limit_offset=hand_limit_offset)
+
+
 def _resolve_draw_pile_card_to_hand_or_discard(
     combat_state: Any,
     selected_card: CardInstance,
@@ -1066,7 +1149,7 @@ class ApplyPowerEffect:
     
     def _apply_to_player(self, player: Player) -> None:
         from sts_py.engine.combat.powers import create_power
-        if self.power_type in ["Strength", "Dexterity", "DemonForm", "Enrage", "Evolve", "FeelNoPain", "DarkEmbrace", "Thorns", "Regen", "Metallicize", "Combust", "FireBreathing", "BattleHymn", "Vulnerable", "DoubleTap", "Juggernaut", "Rage", "Rupture", "Brutality", "Corruption", "NoDraw", "NoBlock", "DevaPower", "Devotion", "Study", "MasterReality", "OmegaPower", "Foresight", "LikeWater", "Nirvana", "Rushdown", "EndTurnDeath", "NoxiousFumes", "InfiniteBlades", "Accuracy", "ThousandCuts", "AfterImage", "Blur", "Focus", "Artifact", "Buffer", "Loop", "Rebound", "CreativeAI", "Amplify", "Burst", "EchoForm", "Electro", "StaticDischarge", "Bias", "Storm", "Heatsinks", "MachineLearning", "Hello", "Repair", "Energized", "EnergizedBlue", "Equilibrium", "Tools Of The Trade", "Retain Cards", "WraithForm", "Intangible", "Draw Card", "Next Turn Block", "Envenom", "Phantasmal", "Magnetism", "Mayhem", "Panache", "Sadistic"]:
+        if self.power_type in ["Strength", "Dexterity", "DemonForm", "Enrage", "Evolve", "FeelNoPain", "DarkEmbrace", "Thorns", "Regen", "Metallicize", "Combust", "FireBreathing", "BattleHymn", "Vulnerable", "DoubleTap", "Juggernaut", "Rage", "Rupture", "Brutality", "Corruption", "NoDraw", "NoBlock", "DevaPower", "Devotion", "Study", "MasterReality", "OmegaPower", "Foresight", "LikeWater", "Nirvana", "Rushdown", "EndTurnDeath", "NoxiousFumes", "InfiniteBlades", "Accuracy", "ThousandCuts", "AfterImage", "Blur", "Focus", "Artifact", "Buffer", "Loop", "Rebound", "CreativeAI", "Amplify", "Burst", "EchoForm", "Electro", "StaticDischarge", "Bias", "Storm", "Heatsinks", "MachineLearning", "Hello", "Repair", "Energized", "EnergizedBlue", "Equilibrium", "Tools Of The Trade", "Retain Cards", "WraithForm", "Intangible", "Draw Card", "Next Turn Block", "Envenom", "Phantasmal", "Magnetism", "Mayhem", "Panache", "Sadistic", "Collect", "Discipline", "Establishment", "Fasting", "MentalFortress", "SimmeringFury", "Swivel", "WaveOfTheHand", "WreathOfFlame"]:
             if self.power_type == "DemonForm": name = "DemonForm"
             elif self.power_type == "FeelNoPain": name = "FeelNoPain"
             elif self.power_type == "DarkEmbrace": name = "DarkEmbrace"
@@ -1101,6 +1184,8 @@ class ApplyPowerEffect:
     
     def _apply_to_monster(self, monster: MonsterBase, source: Player | None = None) -> None:
         if self.power_type in {"Vulnerable", "Weak", "Strength", "StrengthDown", "Lockon"}:
+            _apply_power_to_enemy_from_player(source, monster, self.power_type, self.amount)
+        elif self.power_type in {"TalkToTheHand", "Mark"}:
             _apply_power_to_enemy_from_player(source, monster, self.power_type, self.amount)
 
 
@@ -3802,6 +3887,287 @@ class DealDamageWithStrengthEffect:
         source._last_damage_dealt = actual_damage
         return []
 
+
+@dataclass
+class BowlingBashEffect:
+    target_idx: int
+    damage: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        hit_count = max(1, len(_living_monsters(combat_state)))
+        for _ in range(hit_count):
+            if monster.is_dead():
+                break
+            actual_damage = monster.take_damage(self.damage)
+            _trigger_player_attack_damage_hooks(combat_state, source, monster, actual_damage, damage_type="NORMAL")
+        return []
+
+
+@dataclass
+class DealDamageRepeatedEffect:
+    target_idx: int
+    damage: int
+    hit_count: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        for _ in range(max(0, int(self.hit_count or 0))):
+            if monster.is_dead():
+                break
+            actual_damage = monster.take_damage(self.damage)
+            _trigger_player_attack_damage_hooks(combat_state, source, monster, actual_damage, damage_type="NORMAL")
+        return []
+
+
+@dataclass
+class DealDamageRandomEnemyRepeatedEffect:
+    damage: int
+    hit_count: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        rng = _combat_rng(combat_state)
+        for _ in range(max(0, int(self.hit_count or 0))):
+            living = _living_monsters(combat_state)
+            if not living:
+                break
+            if rng is not None and len(living) > 1:
+                monster = living[rng.random_int(len(living) - 1)]
+            else:
+                monster = living[0]
+            actual_damage = monster.take_damage(self.damage)
+            _trigger_player_attack_damage_hooks(combat_state, source, monster, actual_damage, damage_type="NORMAL")
+        return []
+
+
+@dataclass
+class ConditionalLastCardTypeGainEnergyEffect:
+    required_type: CardType
+    amount: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if not _last_played_card_type_matches(combat_state, self.required_type):
+            return []
+        source.energy += self.amount
+        if combat_state.card_manager is not None:
+            combat_state.card_manager.set_energy(source.energy)
+        return []
+
+
+@dataclass
+class ConditionalLastCardTypeDrawEffect:
+    required_type: CardType
+    amount: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if not _last_played_card_type_matches(combat_state, self.required_type):
+            return []
+        if combat_state.card_manager is not None:
+            combat_state.card_manager.draw_cards(
+                self.amount,
+                hand_limit_offset=_hand_limit_offset_for_played_card(combat_state.card_manager, card),
+            )
+        return []
+
+
+@dataclass
+class ConditionalLastCardTypeApplyMonsterPowerEffect:
+    required_type: CardType
+    target_idx: int
+    power_type: str
+    amount: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if not _last_played_card_type_matches(combat_state, self.required_type):
+            return []
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        _apply_power_to_enemy_from_player(source, monster, self.power_type, self.amount)
+        return []
+
+
+@dataclass
+class HaltEffect:
+    base_block: int
+    wrath_bonus_block: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        total_block = self.base_block
+        if getattr(getattr(source, "stance", None), "stance_type", None) == StanceType.WRATH:
+            total_block += self.wrath_bonus_block
+        source.gain_block(total_block)
+        return []
+
+
+@dataclass
+class ConditionalAttackIntentChangeStanceEffect:
+    target_idx: int
+    stance_type: StanceType
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead() or not _monster_intends_attack(monster):
+            return []
+        return ChangeStanceEffect(self.stance_type).execute(combat_state, card, source, target)
+
+
+@dataclass
+class IndignationEffect:
+    amount: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if getattr(getattr(source, "stance", None), "stance_type", None) == StanceType.WRATH:
+            for monster in _living_monsters(combat_state):
+                _apply_power_to_enemy_from_player(source, monster, "Vulnerable", self.amount)
+            return []
+        return ChangeStanceEffect(StanceType.WRATH).execute(combat_state, card, source, target)
+
+
+@dataclass
+class PressurePointsEffect:
+    target_idx: int
+    amount: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        _apply_power_to_enemy_from_player(source, monster, "Mark", self.amount)
+        for current_monster in _living_monsters(combat_state):
+            mark_amount = int(getattr(current_monster.powers.get_power("Mark"), "amount", 0) or 0)
+            _lose_hp_direct(current_monster, mark_amount)
+        return []
+
+
+@dataclass
+class JudgementEffect:
+    target_idx: int
+    threshold: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        if int(getattr(monster, "hp", 0) or 0) <= self.threshold:
+            monster.hp = 0
+            monster.is_dying = True
+        return []
+
+
+@dataclass
+class LessonLearnedEffect:
+    target_idx: int
+    damage: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        if target is None or self.target_idx >= len(combat_state.monsters):
+            return []
+        monster = combat_state.monsters[self.target_idx]
+        if monster.is_dead():
+            return []
+        actual_damage = monster.take_damage(self.damage)
+        _trigger_player_attack_damage_hooks(combat_state, source, monster, actual_damage, damage_type="NORMAL")
+        if _is_true_kill_reward_target(monster):
+            upgraded_card = _upgrade_first_upgradeable_card(combat_state, source_card=card)
+            if upgraded_card is not None:
+                card._upgraded_card_from_lesson_learned = upgraded_card
+        return []
+
+
+@dataclass
+class ForeignInfluenceEffect:
+    upgraded: bool = False
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        pool = [card_id for card_id in _implemented_attack_card_ids() if card_id != card.card_id]
+        if not pool:
+            return []
+        rng = _combat_rng(combat_state)
+        available = pool[:]
+        candidate_ids: list[str] = []
+        while available and len(candidate_ids) < 3:
+            selected_index = rng.random_int(len(available) - 1) if rng is not None and len(available) > 1 else 0
+            candidate_ids.append(available.pop(selected_index))
+        generated_cards = [CardInstance(card_id) for card_id in candidate_ids]
+        if len(generated_cards) == 1:
+            _resolve_generated_choice_to_hand(
+                combat_state,
+                generated_cards[0],
+                source_card=card,
+                zero_cost_this_turn=self.upgraded,
+            )
+            return []
+        _open_generated_single_pick(
+            combat_state,
+            card,
+            choice_type="generated_single_pick",
+            generated_cards=generated_cards,
+            selection_action="foreign_influence_upgraded" if self.upgraded else "foreign_influence",
+        )
+        return []
+
+
+@dataclass
+class SpiritShieldEffect:
+    block_per_card: int
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        card_manager = getattr(combat_state, "card_manager", None)
+        hand_size = len(getattr(getattr(card_manager, "hand", None), "cards", []) or [])
+        source.gain_block(max(0, hand_size * self.block_per_card))
+        return []
+
+
+@dataclass
+class CollectEffect:
+    upgraded: bool = False
+
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        effect_turns = max(0, int(getattr(card, "_resolved_x_cost", 0) or 0)) + (1 if self.upgraded else 0)
+        if effect_turns > 0:
+            source.add_power(create_power("Collect", effect_turns, "player"))
+        return []
+
+
+@dataclass
+class UnravelingEffect:
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        engine = getattr(combat_state, "engine", None)
+        card_manager = getattr(combat_state, "card_manager", None)
+        if engine is None or card_manager is None:
+            return []
+        queued_cards = [hand_card for hand_card in list(card_manager.hand.cards) if hand_card is not card]
+        for queued_card in queued_cards:
+            if queued_card not in card_manager.hand.cards:
+                continue
+            queued_card.free_to_play_once = True
+            preferred_target_idx = engine._resolve_autoplay_target_idx(queued_card)
+            engine.autoplay_card_instance(queued_card, preferred_target_idx)
+        return []
+
+
+@dataclass
+class NoOpEffect:
+    def execute(self, combat_state: CombatState, card: CardInstance, source: Player, target: MonsterBase | None) -> list[CardEffect]:
+        return []
+
 def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[CardEffect]:
     """Get the effects for playing a card.
     
@@ -3835,6 +4201,75 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
         effects.append(GainBlockEffect(amount=card.block))
         effects.append(ChangeStanceEffect(stance_type=StanceType.CALM))
 
+    elif card_id == "BowlingBash":
+        if target_idx is not None:
+            effects.append(BowlingBashEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "Consecrate":
+        effects.append(DealDamageAllEffect(damage=card.damage))
+
+    elif card_id == "Crescendo":
+        effects.append(ChangeStanceEffect(stance_type=StanceType.WRATH))
+
+    elif card_id == "CrushJoints":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+            effects.append(
+                ConditionalLastCardTypeApplyMonsterPowerEffect(
+                    required_type=CardType.SKILL,
+                    target_idx=target_idx,
+                    power_type="Vulnerable",
+                    amount=card.magic_number,
+                )
+            )
+
+    elif card_id == "EmptyBody":
+        effects.append(GainBlockEffect(amount=card.block))
+        effects.append(ChangeStanceEffect(stance_type=StanceType.NEUTRAL))
+
+    elif card_id == "EmptyFist":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+        effects.append(ChangeStanceEffect(stance_type=StanceType.NEUTRAL))
+
+    elif card_id == "FlurryOfBlows":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "FlyingSleeves":
+        if target_idx is not None:
+            effects.append(DealDamageRepeatedEffect(target_idx=target_idx, damage=card.damage, hit_count=2))
+
+    elif card_id == "FollowUp":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+        effects.append(ConditionalLastCardTypeGainEnergyEffect(required_type=CardType.ATTACK, amount=1))
+
+    elif card_id == "Halt":
+        effects.append(HaltEffect(base_block=card.block, wrath_bonus_block=card.magic_number))
+
+    elif card_id == "PressurePoints":
+        if target_idx is not None:
+            effects.append(PressurePointsEffect(target_idx=target_idx, amount=card.magic_number))
+
+    elif card_id == "Protect":
+        effects.append(GainBlockEffect(amount=card.block))
+
+    elif card_id == "SashWhip":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+            effects.append(
+                ConditionalLastCardTypeApplyMonsterPowerEffect(
+                    required_type=CardType.ATTACK,
+                    target_idx=target_idx,
+                    power_type="Weak",
+                    amount=card.magic_number,
+                )
+            )
+
+    elif card_id == "Tranquility":
+        effects.append(ChangeStanceEffect(stance_type=StanceType.CALM))
+
     elif card_id == "Wallop":
         if target_idx is not None:
             effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
@@ -3844,11 +4279,41 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
         effects.append(GainBlockEffect(amount=card.block))
         effects.append(GainMantraEffect(amount=card.magic_number))
 
+    elif card_id == "Collect":
+        effects.append(CollectEffect(upgraded=card.upgraded))
+
+    elif card_id == "Conclude":
+        effects.append(DealDamageAllEffect(damage=card.damage))
+        effects.append(EndTurnEffect())
+
     elif card_id == "Devotion":
         effects.append(ApplyPowerEffect(power_type="Devotion", amount=card.magic_number, target_type="player"))
 
     elif card_id == "DevaForm":
         effects.append(ApplyPowerEffect(power_type="DevaPower", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "Discipline":
+        effects.append(ApplyPowerEffect(power_type="Discipline", amount=1, target_type="player"))
+
+    elif card_id == "EmptyMind":
+        effects.append(DrawCardsEffect(count=card.magic_number))
+        effects.append(ChangeStanceEffect(stance_type=StanceType.NEUTRAL))
+
+    elif card_id == "Establishment":
+        effects.append(ApplyPowerEffect(power_type="Establishment", amount=card.magic_number if card.magic_number > 0 else 1, target_type="player"))
+
+    elif card_id == "Fasting":
+        effects.append(ApplyPowerEffect(power_type="Strength", amount=card.magic_number, target_type="player"))
+        effects.append(ApplyPowerEffect(power_type="Dexterity", amount=card.magic_number, target_type="player"))
+        effects.append(ApplyPowerEffect(power_type="Fasting", amount=1, target_type="player"))
+
+    elif card_id == "FearNoEvil":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+            effects.append(ConditionalAttackIntentChangeStanceEffect(target_idx=target_idx, stance_type=StanceType.CALM))
+
+    elif card_id == "ForeignInfluence":
+        effects.append(ForeignInfluenceEffect(upgraded=card.upgraded))
 
     elif card_id == "Insight":
         effects.append(DrawCardsEffect(count=card.magic_number))
@@ -3930,14 +4395,53 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
     elif card_id == "InnerPeace":
         effects.append(InnerPeaceEffect(draw_count=card.magic_number))
 
+    elif card_id == "Indignation":
+        effects.append(IndignationEffect(amount=card.magic_number))
+
+    elif card_id == "Judgement":
+        if target_idx is not None:
+            effects.append(JudgementEffect(target_idx=target_idx, threshold=card.magic_number))
+
+    elif card_id == "LessonLearned":
+        if target_idx is not None:
+            effects.append(LessonLearnedEffect(target_idx=target_idx, damage=card.damage))
+
     elif card_id == "LikeWater":
         effects.append(ApplyPowerEffect(power_type="LikeWater", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "MentalFortress":
+        effects.append(ApplyPowerEffect(power_type="MentalFortress", amount=card.magic_number, target_type="player"))
 
     elif card_id == "Nirvana":
         effects.append(ApplyPowerEffect(power_type="Nirvana", amount=card.magic_number, target_type="player"))
 
     elif card_id == "Rushdown":
         effects.append(ApplyPowerEffect(power_type="Rushdown", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "Perseverance":
+        effects.append(GainBlockEffect(amount=card.block))
+
+    elif card_id == "Sanctity":
+        effects.append(GainBlockEffect(amount=card.block))
+        effects.append(ConditionalLastCardTypeDrawEffect(required_type=CardType.SKILL, amount=card.magic_number))
+
+    elif card_id == "SandsOfTime":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "SignatureMove":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "SimmeringFury":
+        effects.append(ApplyPowerEffect(power_type="SimmeringFury", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "SpiritShield":
+        effects.append(SpiritShieldEffect(block_per_card=card.magic_number))
+
+    elif card_id == "Swivel":
+        effects.append(GainBlockEffect(amount=card.block))
+        effects.append(ApplyPowerEffect(power_type="Swivel", amount=1, target_type="player"))
 
     elif card_id == "Blasphemy":
         effects.append(ChangeStanceEffect(stance_type=StanceType.DIVINITY))
@@ -3956,6 +4460,17 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
     elif card_id == "Scrawl":
         effects.append(DrawToHandLimitEffect())
 
+    elif card_id == "TalkToTheHand":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+            effects.append(ApplyPowerEffect(power_type="TalkToTheHand", amount=card.magic_number, target_type="monster", target_idx=target_idx))
+
+    elif card_id == "Tantrum":
+        if target_idx is not None:
+            effects.append(DealDamageRepeatedEffect(target_idx=target_idx, damage=card.damage, hit_count=card.magic_number))
+        effects.append(ChangeStanceEffect(stance_type=StanceType.WRATH))
+        card.shuffle_back_into_draw_pile = True
+
     elif card_id == "Safety":
         effects.append(GainBlockEffect(amount=card.block))
 
@@ -3966,6 +4481,34 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
     elif card_id == "ThroughViolence":
         if target_idx is not None:
             effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "Unraveling":
+        effects.append(UnravelingEffect())
+
+    elif card_id == "WaveOfTheHand":
+        effects.append(ApplyPowerEffect(power_type="WaveOfTheHand", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "WheelKick":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+        effects.append(DrawCardsEffect(count=card.magic_number))
+
+    elif card_id == "WindmillStrike":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "Worship":
+        effects.append(GainMantraEffect(amount=card.magic_number))
+
+    elif card_id == "WreathOfFlame":
+        effects.append(ApplyPowerEffect(power_type="WreathOfFlame", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "Brilliance":
+        if target_idx is not None:
+            effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "Ragnarok":
+        effects.append(DealDamageRandomEnemyRepeatedEffect(damage=card.damage, hit_count=card.magic_number))
 
     elif card_id == "Madness":
         effects.append(MadnessEffect())
@@ -4068,6 +4611,9 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
     elif card_id == "PanicButton":
         effects.append(GainBlockEffect(amount=card.block))
         effects.append(ApplyPowerEffect(power_type="NoBlock", amount=card.magic_number, target_type="player"))
+
+    elif card_id == "Pride":
+        effects.append(NoOpEffect())
 
     elif card_id == "RitualDagger":
         if target_idx is not None:
@@ -4542,6 +5088,9 @@ def get_card_effects(card: CardInstance, target_idx: int | None = None) -> list[
     elif card_id == "Slice":
         if target_idx is not None:
             effects.append(DealDamageEffect(target_idx=target_idx, damage=card.damage))
+
+    elif card_id == "Slimed":
+        effects.append(NoOpEffect())
 
     elif card_id == "QuickSlash":
         if target_idx is not None:

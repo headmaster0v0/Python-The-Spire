@@ -17,6 +17,7 @@ from sts_py.engine.combat.card_effects import (
     _find_card_by_uuid,
     get_card_effects,
     _move_hand_card_to_exhaust,
+    _resolve_generated_choice_to_hand,
     _move_selected_hand_card_to_draw_pile,
     _refresh_hand_multi_pick_options,
     _resolve_discovery_choice,
@@ -351,6 +352,7 @@ class CombatEngine:
         state.rng = hp_rng
         for monster in monsters:
             monster.state = state
+            monster._combat_state = state
 
         engine = cls(state=state, ai_rng=ai_rng, hp_rng=hp_rng, relics=relics or [], neow_blessing=neow_blessing)
         state.engine = engine
@@ -396,6 +398,7 @@ class CombatEngine:
         state.rng = hp_rng
         for monster in monsters:
             monster.state = state
+            monster._combat_state = state
 
         engine = cls(state=state, ai_rng=ai_rng, hp_rng=hp_rng, relics=relics or [])
         state.engine = engine
@@ -672,6 +675,8 @@ class CombatEngine:
         self.state.player.energy = max(0, self.state.player.energy - energy_cost)
         self.state.card_manager.set_energy(self.state.player.energy)
         self.state.cards_played_this_turn.append(card.card_id)
+        self.state._last_card_played_type = card.card_type.value
+        self.state._last_card_played_id = card.card_id
         self._trigger_relic_effects("on_card_played")
         if card.is_skill():
             self._trigger_relic_effects("on_skill_played")
@@ -755,7 +760,17 @@ class CombatEngine:
         selected_card = _find_card_by_uuid(pending.get("generated_cards", []) or [], option.get("uuid"))
         if selected_card is None:
             return False
-        _resolve_discovery_choice(self.state, selected_card)
+        selection_action = str(pending.get("selection_action", "") or "")
+        if selection_action == "discovery":
+            _resolve_discovery_choice(self.state, selected_card)
+        elif selection_action in {"foreign_influence", "foreign_influence_upgraded"}:
+            _resolve_generated_choice_to_hand(
+                self.state,
+                selected_card,
+                zero_cost_this_turn=selection_action.endswith("_upgraded"),
+            )
+        else:
+            return False
         self.state.pending_combat_choice = None
         pending["resolved"] = True
         return True
@@ -1120,6 +1135,8 @@ class CombatEngine:
         self.state.player.energy = max(0, self.state.player.energy - energy_cost)
         self.state.card_manager.set_energy(self.state.player.energy)
         self.state.cards_played_this_turn.append(card.card_id)
+        self.state._last_card_played_type = card.card_type.value
+        self.state._last_card_played_id = card.card_id
         self._trigger_relic_effects("on_card_played")
         if card.is_skill():
             self._trigger_relic_effects("on_skill_played")
