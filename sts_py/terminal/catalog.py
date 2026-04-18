@@ -771,7 +771,7 @@ def translate_relic(relic_id: str) -> str:
         return override
     relic_def = get_relic_by_id(relic_id)
     if relic_def is not None:
-        localized = getattr(relic_def, "name_cn", None)
+        localized = getattr(relic_def, "name_zhs", None) or getattr(relic_def, "name_cn", None)
         if _looks_sane_translation(localized):
             return str(localized)
         name = getattr(relic_def, "name", None)
@@ -783,7 +783,9 @@ def translate_relic(relic_id: str) -> str:
 def get_relic_info(relic_id: str) -> tuple[str, str]:
     name = translate_relic(relic_id)
     relic_def = get_relic_by_id(relic_id)
-    description = getattr(relic_def, "description", None) if relic_def is not None else None
+    description = getattr(relic_def, "description_zhs", None) if relic_def is not None else None
+    if not _looks_presentable_text(description):
+        description = getattr(relic_def, "description", None) if relic_def is not None else None
     return name, str(description).strip() if _looks_presentable_text(description) else ""
 
 

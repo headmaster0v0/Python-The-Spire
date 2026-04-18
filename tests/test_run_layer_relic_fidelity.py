@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sts_py.engine.content.relics import RelicSource, get_relic_by_id
+from sts_py.engine.content.relics import RelicSource, get_relic_by_id, normalize_relic_id
 from sts_py.engine.run.run_engine import MapNode, RoomType, RunEngine, RunPhase
 from sts_py.engine.run.shop import ShopEngine, ShopItem, ShopItemType, ShopState
 
@@ -17,6 +17,14 @@ def _start_room_combat(engine: RunEngine, room_type: RoomType, encounter: str) -
     engine.state.map_nodes = [MapNode(floor=1, room_type=room_type, node_id=0)]
     engine.state.current_node_idx = 0
     engine._start_combat(encounter)
+
+
+def _canon(relic_id: str | None) -> str | None:
+    return normalize_relic_id(relic_id) if relic_id is not None else None
+
+
+def _canon_list(relic_ids: list[str]) -> list[str]:
+    return [str(_canon(relic_id) or relic_id) for relic_id in relic_ids]
 
 
 def test_normal_combat_generates_card_reward_candidates() -> None:
@@ -79,7 +87,7 @@ def test_boss_combat_generates_boss_relic_choices_before_transition() -> None:
     assert engine.state.phase == RunPhase.VICTORY
     assert len(engine.state.pending_boss_relic_choices) == 3
     assert len(set(engine.state.pending_boss_relic_choices)) == 3
-    assert set(engine.state.pending_boss_relic_choices).issubset(set(engine.state.relic_pool_consumed["boss"]))
+    assert set(_canon_list(engine.state.pending_boss_relic_choices)).issubset(set(engine.state.relic_pool_consumed["boss"]))
 
 
 def test_transition_to_next_act_is_blocked_until_boss_relic_resolves() -> None:
@@ -108,7 +116,7 @@ def test_choose_boss_relic_replaces_starter_and_allows_transition() -> None:
     assert engine.state.pending_boss_relic_choices == []
     assert engine.state.relic_history[-1] == {
         "floor": 0,
-        "relic_id": "BlackBlood",
+        "relic_id": "Black Blood",
         "source": "boss",
     }
 
@@ -148,8 +156,8 @@ def test_skipped_act1_boss_relic_offer_is_consumed_for_act2_offer() -> None:
     _force_win_current_combat(engine)
     act2_choices = list(engine.state.pending_boss_relic_choices)
 
-    assert not (set(act1_choices) & set(act2_choices))
-    assert set(act1_choices + act2_choices).issubset(set(engine.state.relic_pool_consumed["boss"]))
+    assert not (set(_canon_list(act1_choices)) & set(_canon_list(act2_choices)))
+    assert set(_canon_list(act1_choices + act2_choices)).issubset(set(engine.state.relic_pool_consumed["boss"]))
 
 
 def test_meal_ticket_heals_on_shop_enter() -> None:
@@ -179,8 +187,8 @@ def test_shop_entry_surfaces_relics_and_records_shop_history() -> None:
     assert shop.shop.relics[2].tier == "shop"
     shop_history = engine.state.shop_history[-1]
     assert shop_history["floor"] == 12
-    assert shop_history["surfaced_relic_ids"] == offer_ids
-    assert shop_history["current_relic_ids"] == offer_ids
+    assert shop_history["surfaced_relic_ids"] == _canon_list(offer_ids)
+    assert shop_history["current_relic_ids"] == _canon_list(offer_ids)
     assert shop_history["purchased_relic_ids"] == []
     assert shop_history["initial_colored_card_ids"] == colored_ids
     assert shop_history["current_colored_card_ids"] == colored_ids
@@ -193,7 +201,7 @@ def test_shop_entry_surfaces_relics_and_records_shop_history() -> None:
     assert shop_history["surfaced_potion_ids"] == potion_ids
     for item in shop.shop.relics:
         assert item.tier is not None
-        assert item.item_id in engine.state.relic_pool_consumed[item.tier]
+        assert _canon(item.item_id) in engine.state.relic_pool_consumed[item.tier]
 
 
 def test_shop_surface_does_not_repeat_between_visits() -> None:
@@ -262,15 +270,15 @@ def test_courier_relic_purchase_replaces_slot_and_records_shop_history() -> None
     assert result["replacement_relic"] != purchased_relic
     assert result["replacement_relic"] not in initial_offers
     assert len(shop.get_available_relics()) == 3
-    assert engine.state.shop_history[-1]["purchased_relic_ids"] == [purchased_relic]
-    assert engine.state.shop_history[-1]["surfaced_relic_ids"] == [*initial_offers, result["replacement_relic"]]
-    assert engine.state.shop_history[-1]["current_relic_ids"] == [
-        item["relic_id"] for item in shop.get_available_relics()
-    ]
+    assert engine.state.shop_history[-1]["purchased_relic_ids"] == _canon_list([purchased_relic])
+    assert engine.state.shop_history[-1]["surfaced_relic_ids"] == _canon_list([*initial_offers, result["replacement_relic"]])
+    assert engine.state.shop_history[-1]["current_relic_ids"] == _canon_list(
+        [item["relic_id"] for item in shop.get_available_relics()]
+    )
 
     replacement_item = next(item for item in shop.shop.relics if item.item_id == result["replacement_relic"])
     assert replacement_item.tier in {"common", "uncommon", "rare"}
-    assert replacement_item.item_id in engine.state.relic_pool_consumed[replacement_item.tier]
+    assert _canon(replacement_item.item_id) in engine.state.relic_pool_consumed[replacement_item.tier]
 
 
 def test_courier_keeps_colorless_relic_and_potion_slots_available() -> None:
@@ -417,7 +425,7 @@ def test_skipped_main_chest_relic_is_still_consumed_for_future_chests() -> None:
         engine.take_treasure_relic(0)
 
     first_main_tier = get_relic_by_id(first_main).tier.value.lower()
-    assert first_main in engine.state.relic_pool_consumed[first_main_tier]
+    assert _canon(first_main) in engine.state.relic_pool_consumed[first_main_tier]
 
     engine.state.phase = RunPhase.MAP
     engine.state.floor = 10
@@ -569,7 +577,7 @@ def test_calling_bell_adds_curse_and_three_extra_relics() -> None:
     assert len(pending["relics"]) == 4
     assert engine.state.relic_history[0] == {
         "floor": 0,
-        "relic_id": "CallingBell",
+        "relic_id": "Calling Bell",
         "source": "boss",
     }
     assert [entry["source"] for entry in engine.state.relic_history[1:]] == [

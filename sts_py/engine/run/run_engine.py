@@ -2090,7 +2090,11 @@ class RunEngine:
         tier = RelicTier(tier_name)
         exclude = self._current_relic_ids()
         exclude.update(self._consumed_relic_ids([tier_name.lower()]))
-        chosen = self._choose_random_relic_offer(get_relic_pool(tier), exclude=exclude, rng=self._neow_rng)
+        chosen = self._choose_random_relic_offer(
+            get_relic_pool(tier, floor=self.state.floor, context="reward"),
+            exclude=exclude,
+            rng=self._neow_rng,
+        )
         if chosen is None:
             return None
         self._mark_relic_consumed(chosen.id, tier_name.lower())
@@ -2651,7 +2655,11 @@ class RunEngine:
                 details["replaced_relic"] = replaced
             exclude = self._current_relic_ids()
             exclude.update(self._consumed_relic_ids(["boss"]))
-            chosen = self._choose_random_relic_offer(get_relic_pool(RelicTier.BOSS), exclude=exclude, rng=self._neow_rng)
+            chosen = self._choose_random_relic_offer(
+                get_relic_pool(RelicTier.BOSS, floor=self.state.floor, context="reward"),
+                exclude=exclude,
+                rng=self._neow_rng,
+            )
             if chosen is not None:
                 self._mark_relic_consumed(chosen.id, "boss")
                 details["relic_id"] = self._acquire_relic(chosen.id, source=RelicSource.NEOW, record_pending=False)
@@ -3334,10 +3342,9 @@ class RunEngine:
         self._pending_relic_reward = self._pending_relic_rewards[0] if self._pending_relic_rewards else None
 
     def _canonical_relic_id(self, relic_id: str) -> str:
-        from sts_py.engine.content.relics import get_relic_by_id
+        from sts_py.engine.content.relics import normalize_relic_id
 
-        relic_def = get_relic_by_id(relic_id)
-        return relic_def.id if relic_def is not None else str(relic_id)
+        return str(normalize_relic_id(relic_id) or relic_id)
 
     def _canonical_card_id(self, card_id: str) -> str:
         from sts_py.engine.content.card_instance import _canonicalize_runtime_card_id
@@ -3687,8 +3694,12 @@ class RunEngine:
         for effect in relic_def.effects:
             if effect.effect_type == RelicEffectType.REPLACE_STARTER_RELIC:
                 replaced = self._canonical_relic_id(str(effect.extra.get("replaced") or ""))
-                if replaced and replaced in self.state.relics:
-                    self.state.relics.remove(replaced)
+                if replaced:
+                    self.state.relics = [
+                        owned_relic
+                        for owned_relic in self.state.relics
+                        if self._canonical_relic_id(owned_relic) != replaced
+                    ]
                     applied.append({"type": "replace_starter_relic", "replaced": replaced})
             elif effect.effect_type == RelicEffectType.ON_PICKUP:
                 pickup_result = self._apply_relic_pickup_effect(relic_def.id, effect)
@@ -3842,6 +3853,32 @@ class RunEngine:
                     elif extra_type == "heal":
                         heal = min(effect.value, self.state.player_max_hp - self.state.player_hp)
                         self.state.player_hp += heal
+
+    def _apply_post_combat_relic_effects(self) -> list[dict[str, Any]]:
+        from sts_py.engine.content.relics import RelicEffectType, get_relic_by_id
+
+        applied: list[dict[str, Any]] = []
+        for relic_id in self.state.relics:
+            relic_def = get_relic_by_id(relic_id)
+            if relic_def is None:
+                continue
+            for effect in relic_def.effects:
+                if effect.effect_type != RelicEffectType.ON_COMBAT_END:
+                    continue
+                extra_type = str(effect.extra.get("type", "") or "")
+                condition = str(effect.extra.get("condition", "") or "")
+                if extra_type != "heal":
+                    continue
+                if condition == "hp_below_50" and not (
+                    self.state.player_hp > 0 and self.state.player_hp <= (self.state.player_max_hp / 2)
+                ):
+                    continue
+                heal = min(int(effect.value or 0), self.state.player_max_hp - self.state.player_hp)
+                if heal <= 0:
+                    continue
+                self.state.player_hp += heal
+                applied.append({"type": "heal", "amount": heal, "relic_id": self._canonical_relic_id(relic_def.id)})
+        return applied
 
     def is_run_over(self) -> bool:
         return self.state.phase in (RunPhase.GAME_OVER, RunPhase.VICTORY)
@@ -6812,11 +6849,11 @@ class RunEngine:
         return round(amplified)
 
     def _has_relic(self, canonical_id: str) -> bool:
-        from sts_py.engine.content.relics import get_relic_by_id
+        from sts_py.engine.content.relics import normalize_relic_id
 
+        target = str(normalize_relic_id(canonical_id) or canonical_id)
         for relic_id in self.state.relics:
-            relic_def = get_relic_by_id(relic_id)
-            if relic_def is not None and relic_def.id == canonical_id:
+            if str(normalize_relic_id(relic_id) or relic_id) == target:
                 return True
         return False
 
@@ -6909,13 +6946,7 @@ class RunEngine:
         )
 
     def _current_relic_ids(self) -> set[str]:
-        from sts_py.engine.content.relics import get_relic_by_id
-
-        current: set[str] = set()
-        for relic_id in self.state.relics:
-            relic_def = get_relic_by_id(relic_id)
-            current.add(relic_def.id if relic_def is not None else str(relic_id))
-        return current
+        return {self._canonical_relic_id(relic_id) for relic_id in self.state.relics}
 
     def _ensure_relic_pool_consumed(self) -> dict[str, list[str]]:
         pools = getattr(self.state, "relic_pool_consumed", None)
@@ -6938,8 +6969,9 @@ class RunEngine:
     def _mark_relic_consumed(self, relic_id: str, tier_key: str) -> None:
         pools = self._ensure_relic_pool_consumed()
         bucket = pools.setdefault(tier_key, [])
-        if relic_id not in bucket:
-            bucket.append(relic_id)
+        canonical_id = self._canonical_relic_id(relic_id)
+        if canonical_id not in bucket:
+            bucket.append(canonical_id)
 
     def _generate_shop_relic_item(self, *, tier_key: str, exclude: set[str]) -> Any | None:
         from sts_py.engine.content.relics import RelicTier, get_relic_pool
@@ -6954,7 +6986,11 @@ class RunEngine:
         if tier is None:
             return None
         rng = self.state.rng.merchant_rng if self.state.rng is not None else None
-        chosen = self._choose_random_relic_offer(get_relic_pool(tier), exclude=exclude, rng=rng)
+        chosen = self._choose_random_relic_offer(
+            get_relic_pool(tier, floor=self.state.floor, context="shop_offer"),
+            exclude=exclude,
+            rng=rng,
+        )
         if chosen is None:
             return None
         self._mark_relic_consumed(chosen.id, tier_key)
@@ -6992,7 +7028,14 @@ class RunEngine:
             return None
         replacement_exclude = {self._canonical_relic_id(relic_id) for relic_id in exclude}
         replacement_exclude.update(self._consumed_relic_ids(["common", "uncommon", "rare", "shop"]))
-        replacement_exclude.update({"OldCoin", "SmilingMask", "MawBank", "TheCourier"})
+        replacement_exclude.update(
+            {
+                self._canonical_relic_id("OldCoin"),
+                self._canonical_relic_id("SmilingMask"),
+                self._canonical_relic_id("MawBank"),
+                self._canonical_relic_id("TheCourier"),
+            }
+        )
         tier_key = roll_relic_tier(self.state.rng.merchant_rng)
         return self._generate_shop_relic_item(tier_key=tier_key, exclude=replacement_exclude)
 
@@ -7000,7 +7043,7 @@ class RunEngine:
         candidates = [
             relic_def
             for relic_def in relic_defs
-            if self._relic_matches_character(relic_def) and relic_def.id not in exclude
+            if self._relic_matches_character(relic_def) and self._canonical_relic_id(relic_def.id) not in exclude
         ]
         if not candidates:
             return None
@@ -7055,11 +7098,11 @@ class RunEngine:
         consumed_ids = self._consumed_relic_ids(["boss"])
         pool = [
             relic_def
-            for relic_def in get_relic_pool(RelicTier.BOSS)
+            for relic_def in get_relic_pool(RelicTier.BOSS, floor=self.state.floor, context="reward")
             if (
                 self._relic_matches_character(relic_def)
-                and relic_def.id not in current_ids
-                and relic_def.id not in consumed_ids
+                and self._canonical_relic_id(relic_def.id) not in current_ids
+                and self._canonical_relic_id(relic_def.id) not in consumed_ids
             )
         ]
         choices: list[str] = []
@@ -7084,7 +7127,11 @@ class RunEngine:
                 continue
             seen.add(tier_name)
             tier = RelicTier(tier_name)
-            chosen = self._choose_random_relic_offer(get_relic_pool(tier), exclude=exclude, rng=treasure_rng)
+            chosen = self._choose_random_relic_offer(
+                get_relic_pool(tier, floor=self.state.floor, context="reward"),
+                exclude=exclude,
+                rng=treasure_rng,
+            )
             if chosen is not None:
                 self._mark_relic_consumed(chosen.id, tier_name.lower())
                 return chosen.id
@@ -7100,7 +7147,11 @@ class RunEngine:
         relic_rng = self.state.rng.relic_rng if self.state.rng is not None else None
         for tier_name in self._roll_matryoshka_bonus_tiers():
             tier = RelicTier(tier_name)
-            chosen = self._choose_random_relic_offer(get_relic_pool(tier), exclude=exclude, rng=relic_rng)
+            chosen = self._choose_random_relic_offer(
+                get_relic_pool(tier, floor=self.state.floor, context="reward"),
+                exclude=exclude,
+                rng=relic_rng,
+            )
             if chosen is None:
                 continue
             self.state.relic_counters["Matryoshka"] = max(0, remaining_chests - 1)
@@ -7249,6 +7300,7 @@ class RunEngine:
             heal_from_relics = combat.trigger_victory_effects()
             if heal_from_relics > 0:
                 self.state.player_hp = min(self.state.player_max_hp, self.state.player_hp + heal_from_relics)
+            self._apply_post_combat_relic_effects()
 
             current = self.get_current_room()
             room_type_str = None

@@ -668,6 +668,9 @@ class CombatEngine:
         self.state.player.energy = max(0, self.state.player.energy - energy_cost)
         self.state.card_manager.set_energy(self.state.player.energy)
         self.state.cards_played_this_turn.append(card.card_id)
+        self._trigger_relic_effects("on_card_played")
+        if card.is_skill():
+            self._trigger_relic_effects("on_skill_played")
         self.state.player.powers.on_player_card_played(self.state.player, card)
         for monster in self.state.monsters:
             if monster.is_dead():
@@ -1110,6 +1113,9 @@ class CombatEngine:
         self.state.player.energy = max(0, self.state.player.energy - energy_cost)
         self.state.card_manager.set_energy(self.state.player.energy)
         self.state.cards_played_this_turn.append(card.card_id)
+        self._trigger_relic_effects("on_card_played")
+        if card.is_skill():
+            self._trigger_relic_effects("on_skill_played")
         self.state.player.powers.on_player_card_played(self.state.player, card)
         for monster in self.state.monsters:
             if monster.is_dead():
@@ -1730,13 +1736,16 @@ class CombatEngine:
                     ):
                         should_trigger = True
                 elif trigger_type == "at_turn_start":
-                    if effect_value in ("at_turn_start", "every_n_turns_self", "at_turn_start_no_attack", "at_turn_start_specific"):
+                    if effect_value in ("at_turn_start", "every_n_turns_self", "at_turn_start_no_attack", "at_turn_start_specific", "gain_mantra_per_turn"):
                         should_trigger = True
                 elif trigger_type == "at_turn_end":
                     if effect_value in ("at_turn_end", "at_turn_end_hand_block", "at_turn_end_empty_orb", "at_turn_end_no_discard", "every_n_turns"):
                         should_trigger = True
                 elif trigger_type == "on_attack":
                     if effect_value in ("on_attack", "every_n_attacks", "every_n_attacks_self"):
+                        should_trigger = True
+                elif trigger_type == "on_skill_played":
+                    if effect_value in ("every_n_skills",):
                         should_trigger = True
                 elif trigger_type == "on_card_played":
                     if effect_value in ("on_card_played", "every_n_cards"):
@@ -1979,6 +1988,18 @@ class CombatEngine:
                     self.state.player.strength += extra.get("amount", 1)
                 elif extra_type == "block":
                     self.state.player.gain_block(extra.get("amount", 4))
+
+        elif effect_type == RelicEffectType.EVERY_N_SKILLS:
+            if not hasattr(self.state.player, '_relic_skill_counters'):
+                self.state.player._relic_skill_counters = {}
+            relic_counter = int(self.state.player._relic_skill_counters.get(relic_id, 0) or 0) + 1
+            self.state.player._relic_skill_counters[relic_id] = relic_counter
+            extra_type = extra.get("type", "")
+            if relic_counter % value == 0 and extra_type == "damage_all":
+                damage = int(extra.get("amount", value) or value)
+                for monster in self.state.monsters:
+                    if not monster.is_dead():
+                        monster.take_damage(damage)
 
         elif effect_type == RelicEffectType.ON_ENEMY_DEATH:
             extra_type = extra.get("type", "")
@@ -2785,7 +2806,7 @@ class CombatEngine:
                 self.state.player._scry_on_shuffle = 0
             self.state.player._scry_on_shuffle += value
 
-        elif effect_type == RelicEffectType.MANNA_GAIN_DISABLED:
+        elif effect_type == RelicEffectType.MANA_GAIN_DISABLED:
             if not hasattr(self.state.player, '_mana_gain_disabled'):
                 self.state.player._mana_gain_disabled = True
 
@@ -2911,9 +2932,9 @@ class CombatEngine:
                 self.state.player._rest_upgrade = True
 
         elif effect_type == RelicEffectType.GAIN_MANTRA_PER_TURN:
-            if not hasattr(self.state.player, '_mantra_per_turn'):
-                self.state.player._mantra_per_turn = 0
-            self.state.player._mantra_per_turn += value
+            from sts_py.engine.combat.powers import create_power
+
+            self.state.player.add_power(create_power("Mantra", value, "player"))
 
         elif effect_type == RelicEffectType.REMOVE_CARDS_FROM_DECK:
             if not hasattr(self.state.player, '_remove_cards'):
@@ -3186,6 +3207,7 @@ class CombatEngine:
         self.state.player.energy = self.state.player.max_energy
         self.state.player._first_discard_triggered_this_turn = False
         self.state.player._discards_this_turn = 0
+        self.state.player._relic_skill_counters = {}
         if self.state.card_manager is not None:
             self.state.card_manager.set_energy(self.state.player.energy)
         self.state.player.powers.on_energy_recharge(self.state.player)

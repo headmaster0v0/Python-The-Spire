@@ -333,24 +333,27 @@ def generate_colorless_cards(rng: Any) -> list[ShopItem]:
 
 def generate_relics(rng: Any) -> list[ShopItem]:
     """Generate 3 relics: first 2 random tier, last one is always Shop Relic."""
+    from sts_py.engine.content.relics import RelicTier, get_relic_pool
+
     relics = []
+    representative_floor = 1
 
     for i in range(3):
         if i == 2:
             tier = "shop"
-            pool = RELIC_POOL_SHOP
+            pool = get_relic_pool(RelicTier.SHOP, floor=representative_floor, context="shop_offer")
         else:
             tier = roll_relic_tier(rng)
             if tier == "common":
-                pool = RELIC_POOL_COMMON
+                pool = get_relic_pool(RelicTier.COMMON, floor=representative_floor, context="shop_offer")
             elif tier == "uncommon":
-                pool = RELIC_POOL_UNCOMMON
+                pool = get_relic_pool(RelicTier.UNCOMMON, floor=representative_floor, context="shop_offer")
             else:
-                pool = RELIC_POOL_RARE
+                pool = get_relic_pool(RelicTier.RARE, floor=representative_floor, context="shop_offer")
 
         if pool:
             idx = rng.random_int(len(pool) - 1)
-            relic_id = pool[idx]
+            relic_id = pool[idx].id
             price = get_relic_price(tier, rng)
             relics.append(ShopItem(
                 item_type=ShopItemType.RELIC,

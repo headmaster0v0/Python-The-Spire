@@ -13,7 +13,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import re
 from typing import Any
+
+from sts_py.engine.content.official_relic_manifest import (
+    OfficialRelicManifestEntry,
+    get_localization_only_relic_manifest,
+    get_relic_lookup_aliases as _get_official_relic_lookup_aliases,
+    get_runtime_relic_manifest,
+)
 
 
 class RelicTier(str, Enum):
@@ -237,18 +245,44 @@ class RelicDef:
     tier: RelicTier
     name: str = ""
     name_en: str = ""
+    name_zhs: str = ""
     description: str = ""
+    description_en: str = ""
+    description_zhs: str = ""
     flavor: str = ""
+    flavor_en: str = ""
+    flavor_zhs: str = ""
     effects: list[RelicEffect] = field(default_factory=list)
     price: int = -1
     character_class: str = "UNIVERSAL"
     rarity: str = ""
     wiki_url: str = ""
     related_links: list = field(default_factory=list)
+    official_id: str = ""
+    class_name: str = ""
+    legacy_ids: tuple[str, ...] = field(default_factory=tuple)
+    spawn_rules: dict[str, Any] = field(default_factory=dict)
+    initial_counter: int | None = None
+    depletion_rules: dict[str, Any] = field(default_factory=dict)
+    source_methods: tuple[str, ...] = field(default_factory=tuple)
+    rng_notes: tuple[str, ...] = field(default_factory=tuple)
+    loadable: bool = True
 
     def __post_init__(self):
         if not self.name:
             self.name = self.id
+        if not self.name_zhs:
+            self.name_zhs = self.name
+        if not self.description_zhs:
+            self.description_zhs = self.description
+        if not self.description_en:
+            self.description_en = self.description
+        if not self.flavor_en:
+            self.flavor_en = self.flavor
+        if not self.flavor_zhs:
+            self.flavor_zhs = self.flavor
+        if not self.official_id:
+            self.official_id = self.id
 
     def get_price(self) -> int:
         if self.price >= 0:
@@ -492,7 +526,7 @@ COMMON_RELICS: dict[str, RelicDef] = {
         tier=RelicTier.COMMON,
         character_class="WATCHER",
         effects=[
-            RelicEffect(RelicEffectType.EVERY_N_ATTACKS_SELF, value=3, extra={"type": "mantra", "amount": 1}),
+            RelicEffect(RelicEffectType.GAIN_MANTRA_PER_TURN, value=1, extra={"type": "mantra"}),
         ],
     ),
     "DreamCatcher": RelicDef(
@@ -2088,7 +2122,214 @@ ALL_RELICS["SsserpentHead"].description = "进入事件房间时获得 50 金币
 ALL_RELICS["TinyChest"].description = "每 4 个事件房间变成宝藏房间。"
 
 
-def get_relic_pool(tier: RelicTier) -> list[RelicDef]:
+_LEGACY_RELIC_NAMES_BY_KEY = {
+    relic_id: str(relic_def.name or "")
+    for relic_id, relic_def in ALL_RELICS.items()
+}
+
+OFFICIAL_RELIC_MANIFEST: dict[str, OfficialRelicManifestEntry] = get_runtime_relic_manifest()
+LOCALIZATION_ONLY_RELICS: dict[str, OfficialRelicManifestEntry] = get_localization_only_relic_manifest()
+
+
+def _normalize_relic_lookup_key(value: str | None) -> str:
+    candidate = str(value or "").strip()
+    if not candidate:
+        return ""
+    candidate = candidate.replace(" ", "").replace("_", "").replace("-", "").replace("'", "")
+    return candidate.lower()
+
+
+def _candidate_description_values(relic_def: RelicDef, entry: OfficialRelicManifestEntry) -> list[str]:
+    overrides: dict[str, list[str]] = {
+        "Ancient Tea Set": ["2"],
+        "Damaru": ["1"],
+        "MealTicket": ["15"],
+        "MawBank": ["12"],
+        "White Beast Statue": [],
+    }
+    if entry.official_id in overrides:
+        return list(overrides[entry.official_id])
+
+    values: list[str] = []
+    for effect in relic_def.effects:
+        if effect.value not in (0, None):
+            values.append(str(int(effect.value)))
+        for key in ("amount", "energy", "draw", "per_cards", "turn", "chests", "default"):
+            raw_value = effect.extra.get(key)
+            if isinstance(raw_value, int) and raw_value != 0:
+                rendered = str(int(raw_value))
+                if rendered not in values:
+                    values.append(rendered)
+    if relic_def.initial_counter is not None:
+        rendered = str(int(relic_def.initial_counter))
+        if rendered not in values and relic_def.initial_counter > 0:
+            values.append(rendered)
+    return values
+
+
+def _sanitize_official_text(text: str | None, *, cn: bool) -> str:
+    cleaned = str(text or "")
+    replacements = {
+        "#b": "",
+        "#y": "",
+        "#r": "",
+        "#g": "",
+        "#p": "",
+        "#o": "",
+        " NL ": " ",
+        " NL": " ",
+        "NL ": " ",
+        "NL": " ",
+    }
+    for source, target in replacements.items():
+        cleaned = cleaned.replace(source, target)
+    cleaned = cleaned.replace("[E]", "1点能量" if cn else "1 Energy")
+    cleaned = cleaned.replace("？", "?")
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    cleaned = re.sub(r"\s+([。，“”、！？：；）】》])", r"\1", cleaned)
+    cleaned = re.sub(r"([（【《])\s+", r"\1", cleaned)
+    cleaned = re.sub(r"([。！？])\s+(?=[\u4e00-\u9fff0-9])", r"\1", cleaned)
+    cleaned = re.sub(r"(?<=[\u4e00-\u9fff0-9])\s+(?=[\u4e00-\u9fff])", "", cleaned)
+    cleaned = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[0-9])", "", cleaned)
+    return cleaned.strip()
+
+
+def _render_official_description(relic_def: RelicDef, entry: OfficialRelicManifestEntry, *, cn: bool) -> str:
+    parts = list(entry.description_zhs_parts if cn else entry.description_en_parts)
+    if not parts:
+        fallback = relic_def.description_zhs if cn else relic_def.description_en
+        return _sanitize_official_text(fallback, cn=cn)
+
+    sanitized_parts = [_sanitize_official_text(part, cn=cn) for part in parts if str(part or "").strip()]
+    if not sanitized_parts:
+        return ""
+    if len(sanitized_parts) == 1:
+        return sanitized_parts[0]
+
+    existing = entry.description_zhs if cn else entry.description_en
+    if existing and _sanitize_official_text(existing, cn=cn) != sanitized_parts[0]:
+        return _sanitize_official_text(existing, cn=cn)
+    values = _candidate_description_values(relic_def, entry)
+    if not values:
+        return sanitized_parts[0]
+
+    rendered: list[str] = [sanitized_parts[0]]
+    for idx, part in enumerate(sanitized_parts[1:], start=1):
+        if idx - 1 < len(values):
+            rendered.append(values[idx - 1])
+        rendered.append(part)
+    return re.sub(r"\s+", " ", "".join(rendered)).strip()
+
+
+def _apply_official_relic_metadata() -> None:
+    for runtime_id, relic_def in ALL_RELICS.items():
+        entry = OFFICIAL_RELIC_MANIFEST.get(runtime_id)
+        if entry is None:
+            continue
+
+        legacy_ids: list[str] = list(entry.legacy_ids)
+        legacy_name = str(_LEGACY_RELIC_NAMES_BY_KEY.get(runtime_id, "") or "").strip()
+        if legacy_name and legacy_name not in legacy_ids:
+            legacy_ids.append(legacy_name)
+
+        relic_def.official_id = entry.official_id
+        relic_def.class_name = entry.class_name
+        relic_def.legacy_ids = tuple(dict.fromkeys(str(item) for item in legacy_ids if str(item).strip()))
+        relic_def.spawn_rules = dict(entry.spawn_rules)
+        relic_def.initial_counter = entry.initial_counter
+        relic_def.depletion_rules = dict(entry.depletion_rules)
+        relic_def.name_en = str(entry.name_en or relic_def.name_en or "")
+        relic_def.name_zhs = str(entry.name_zhs or relic_def.name or "")
+        relic_def.description_en = _render_official_description(relic_def, entry, cn=False) or str(relic_def.description_en or "")
+        relic_def.description_zhs = _render_official_description(relic_def, entry, cn=True) or str(relic_def.description or "")
+        relic_def.flavor_en = str(entry.flavor_en or relic_def.flavor_en or "")
+        relic_def.flavor_zhs = str(entry.flavor_zhs or relic_def.flavor_zhs or "")
+        relic_def.flavor = relic_def.flavor_en or relic_def.flavor_zhs or relic_def.flavor
+        relic_def.source_methods = tuple(entry.source_methods)
+        relic_def.rng_notes = tuple(entry.rng_notes)
+        relic_def.loadable = bool(entry.loadable)
+        relic_def.name = relic_def.name_zhs or relic_def.name
+        relic_def.description = relic_def.description_zhs or relic_def.description
+        relic_def.rarity = entry.tier
+
+
+_COMPATIBILITY_RELIC_ALIASES: dict[str, str] = {
+    "铁锚": "Anchor",
+    "核电池": "NuclearBattery",
+    "斯内克之眼": "SneckoEye",
+    "送货员": "TheCourier",
+    "黑暗之血": "BlackBlood",
+    "召唤铃铛": "CallingBell",
+    "潘多拉魔盒": "PandoraBox",
+    "潘多拉的魔盒": "PandoraBox",
+}
+
+
+def _build_relic_lookup_maps() -> tuple[dict[str, str], dict[str, str]]:
+    alias_to_runtime: dict[str, str] = {}
+    alias_display: dict[str, str] = {}
+    for runtime_id, relic_def in ALL_RELICS.items():
+        entry = OFFICIAL_RELIC_MANIFEST.get(runtime_id)
+        candidates = {
+            runtime_id,
+            relic_def.id,
+            relic_def.official_id,
+            relic_def.class_name,
+            relic_def.name,
+            relic_def.name_zhs,
+            relic_def.name_en,
+            *_LEGACY_RELIC_NAMES_BY_KEY.get(runtime_id, "").split("\0"),
+            *relic_def.legacy_ids,
+        }
+        if entry is not None:
+            candidates.update({entry.runtime_id, entry.official_id, entry.class_name, entry.name_en, entry.name_zhs})
+        for candidate in candidates:
+            normalized = _normalize_relic_lookup_key(candidate)
+            if not normalized:
+                continue
+            alias_to_runtime[normalized] = runtime_id
+            alias_display[str(candidate)] = runtime_id
+    for normalized, runtime_id in _get_official_relic_lookup_aliases().items():
+        alias_to_runtime.setdefault(normalized, runtime_id)
+    for alias, runtime_id in _COMPATIBILITY_RELIC_ALIASES.items():
+        normalized = _normalize_relic_lookup_key(alias)
+        if normalized:
+            alias_to_runtime[normalized] = runtime_id
+            alias_display[alias] = runtime_id
+    return alias_to_runtime, alias_display
+
+
+def relic_can_spawn(
+    relic_def: RelicDef,
+    *,
+    floor: int | None = None,
+    context: str = "reward",
+    endless: bool = False,
+) -> bool:
+    if not bool(getattr(relic_def, "loadable", True)):
+        return False
+    if relic_def.id == "Circlet":
+        return context == "fallback"
+    rules = getattr(relic_def, "spawn_rules", {}) or {}
+    floor_limit = rules.get("floor_limit")
+    if floor_limit is not None and not endless and floor is not None and int(floor) > int(floor_limit):
+        return False
+    if context != "shop_offer" and rules.get("disallow_reward_in_shop_room"):
+        return False
+    return True
+
+
+_apply_official_relic_metadata()
+_RELIC_LOOKUP_BY_NORMALIZED, _RELIC_LOOKUP_BY_RAW = _build_relic_lookup_maps()
+
+
+def get_relic_pool(
+    tier: RelicTier,
+    *,
+    floor: int | None = None,
+    context: str = "reward",
+    endless: bool = False,
+) -> list[RelicDef]:
     tier_map = {
         RelicTier.COMMON: COMMON_RELICS,
         RelicTier.UNCOMMON: UNCOMMON_RELICS,
@@ -2097,17 +2338,25 @@ def get_relic_pool(tier: RelicTier) -> list[RelicDef]:
         RelicTier.SHOP: SHOP_RELICS,
         RelicTier.EVENT: EVENT_RELICS,
     }
-    return list(tier_map.get(tier, {}).values())
+    return [
+        relic_def
+        for relic_def in tier_map.get(tier, {}).values()
+        if relic_can_spawn(relic_def, floor=floor, context=context, endless=endless)
+    ]
 
 
-def get_starter_relic_pool(character_class: str) -> list[RelicDef]:
+def get_starter_relic_pool(character_class: str, *, floor: int | None = None, endless: bool = False) -> list[RelicDef]:
     class_map = {
         "IRONCLAD": IRONCLAD_STARTER_RELICS,
         "DEFECT": DEFECT_STARTER_RELICS,
         "WATCHER": WATCHER_STARTER_RELICS,
         "SILENT": SILENT_STARTER_RELICS,
     }
-    return list(class_map.get(character_class, {}).values())
+    return [
+        relic_def
+        for relic_def in class_map.get(character_class, {}).values()
+        if relic_can_spawn(relic_def, floor=floor, context="starter", endless=endless)
+    ]
 
 
 RELIC_ID_ALIASES: dict[str, str] = {
@@ -2297,41 +2546,34 @@ RELIC_ID_ALIASES: dict[str, str] = {
     "RingOfTheSnake": "蛇之戒指",
 }
 
-def _normalize_relic_lookup_key(value: str | None) -> str:
-    return str(value or "").replace(" ", "").replace("_", "").lower()
+RELIC_ID_ALIASES = dict(_RELIC_LOOKUP_BY_RAW)
+
+
+def normalize_relic_id(relic_id: str | None) -> str | None:
+    normalized_target = _normalize_relic_lookup_key(relic_id)
+    if not normalized_target:
+        return None
+    runtime_id = _RELIC_LOOKUP_BY_NORMALIZED.get(normalized_target)
+    if runtime_id is None:
+        return None
+    relic_def = ALL_RELICS.get(runtime_id)
+    if relic_def is None:
+        return None
+    return str(getattr(relic_def, "official_id", "") or relic_def.id)
 
 
 def get_relic_by_id(relic_id: str) -> RelicDef | None:
     normalized_target = _normalize_relic_lookup_key(relic_id)
+    if not normalized_target:
+        return None
+    runtime_id = _RELIC_LOOKUP_BY_NORMALIZED.get(normalized_target)
+    if runtime_id is not None:
+        return ALL_RELICS.get(runtime_id)
     if relic_id in ALL_RELICS:
         return ALL_RELICS.get(relic_id)
     for relic in ALL_RELICS.values():
-        if relic.name == relic_id:
+        if _normalize_relic_lookup_key(relic.name) == normalized_target:
             return relic
-    for relic in ALL_RELICS.values():
-        if (
-            _normalize_relic_lookup_key(relic.id) == normalized_target
-            or _normalize_relic_lookup_key(relic.name) == normalized_target
-        ):
-            return relic
-    if relic_id in RELIC_ID_ALIASES:
-        mapped_id = RELIC_ID_ALIASES[relic_id]
-        if mapped_id in ALL_RELICS:
-            return ALL_RELICS[mapped_id]
-        for relic in ALL_RELICS.values():
-            if relic.name == mapped_id:
-                return relic
-    for alias_id, mapped_id in RELIC_ID_ALIASES.items():
-        if _normalize_relic_lookup_key(alias_id) != normalized_target:
-            continue
-        if mapped_id in ALL_RELICS:
-            return ALL_RELICS[mapped_id]
-        for relic in ALL_RELICS.values():
-            if relic.name == mapped_id:
-                return relic
-    for eng_id, cn_name in RELIC_ID_ALIASES.items():
-        if cn_name == relic_id and eng_id in ALL_RELICS:
-            return ALL_RELICS[eng_id]
     return None
 
 

@@ -8,6 +8,7 @@ import play_cli
 from sts_py.engine.combat.orbs import LightningOrb
 from sts_py.engine.content.card_instance import CardInstance
 from sts_py.engine.run.events import ACT1_EVENTS, Event, EventChoice, EventEffect, EventEffectType
+from sts_py.engine.content.relics import normalize_relic_id
 from sts_py.engine.run.run_engine import RunEngine, RunPhase
 
 
@@ -84,7 +85,7 @@ def test_event_gain_random_relic_uses_real_relic_id() -> None:
     assert engine.get_pending_reward_state()["relic"] == effect_result["relic_id"]
     assert engine.state.relic_history[-1] == {
         "floor": 0,
-        "relic_id": effect_result["relic_id"],
+        "relic_id": normalize_relic_id(effect_result["relic_id"]),
         "source": "event",
     }
 
@@ -100,7 +101,7 @@ def test_dead_adventurer_relic_reward_is_not_placeholder(monkeypatch) -> None:
         "continuation_mode": False,
     }
 
-    monkeypatch.setattr(engine.state.rng.event_rng, "random_int", lambda upper: upper)
+    monkeypatch.setattr(engine.state.rng.misc_rng, "random_int", lambda upper: upper)
     result = engine._do_dead_adventurer_search(event, da_state)
 
     assert result["reward"]["type"] == "relic"
@@ -109,7 +110,7 @@ def test_dead_adventurer_relic_reward_is_not_placeholder(monkeypatch) -> None:
     assert engine.get_pending_reward_state()["relic"] == result["reward"]["id"]
     assert engine.state.relic_history[-1] == {
         "floor": 0,
-        "relic_id": result["reward"]["id"],
+        "relic_id": normalize_relic_id(result["reward"]["id"]),
         "source": "event",
     }
 

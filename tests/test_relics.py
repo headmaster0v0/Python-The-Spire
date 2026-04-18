@@ -73,10 +73,10 @@ class TestRelicEffects:
         assert victory_effect.value == 6
 
     def test_anchor_effect(self):
-        """Anchor (铁锚) should give 10 block at battle start."""
+        """Anchor should give 10 block at battle start."""
         relic = COMMON_RELICS.get("Anchor")
         assert relic is not None, "Anchor should exist"
-        assert relic.name == "铁锚", "Chinese name should be 铁锚"
+        assert relic.name == "锚", "Chinese name should use the official localization"
         assert len(relic.effects) > 0, "Anchor should have effects"
 
         effect = relic.effects[0]

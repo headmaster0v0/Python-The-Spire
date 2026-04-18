@@ -523,6 +523,8 @@ def _looks_mojibake(text: str) -> bool:
     if "\ufffd" in candidate or _contains_private_use(candidate):
         return True
     if "?" in candidate and _contains_cjk(candidate):
+        if re.search(r"\?\s*(房间|rooms?)", candidate, re.I):
+            return False
         return True
     return sum(marker in candidate for marker in MOJIBAKE_MARKERS) >= 2
 

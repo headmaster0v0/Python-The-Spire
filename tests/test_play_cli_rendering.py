@@ -195,14 +195,14 @@ def test_render_shop_relic_and_potion_lines_include_descriptions() -> None:
         [{"index": 0, "potion_id": "Elixir", "price": 70, "affordable": True}]
     )
 
-    assert relic_lines == ["r0: 燃烧之血 (BurningBlood) - 300G | 战斗结束时，治疗6点生命。"]
+    assert relic_lines == ["r0: 燃烧之血 (BurningBlood) - 300G | 在战斗结束时，回复6点生命。"]
     assert potion_lines == ["p0: 万灵药水 (Elixir) - 70G | 消耗你手牌中的任意张牌。"]
 
 
 def test_render_boss_relic_lines_include_descriptions() -> None:
     lines = render.render_boss_relic_lines(["TinyHouse"])
 
-    assert lines == ["[0] 小屋子 (TinyHouse) | 获得1瓶药水，50金币，5点最大生命值，1张卡牌，升级1张随机卡牌。"]
+    assert lines == ["[0] 小屋子 (TinyHouse) | 拾起时，获得1瓶药水。获得50金币。将你的最大生命值提升5。获得1张牌。随机升级1张牌。"]
 
 
 def test_render_treasure_relic_lines_include_main_marker_and_description() -> None:

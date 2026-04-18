@@ -79,9 +79,9 @@ def test_phase248_card_info_uses_clean_runtime_descriptions() -> None:
 
 
 def test_priority_one_relic_descriptions_are_cleaned_up() -> None:
-    assert ALL_RELICS["JuzuBracelet"].description == "事件房间不再遭遇普通敌人。"
-    assert ALL_RELICS["SsserpentHead"].description == "进入事件房间时获得 50 金币。"
-    assert ALL_RELICS["TinyChest"].description == "每 4 个事件房间变成宝藏房间。"
+    assert ALL_RELICS["JuzuBracelet"].description == "你在 ? 房间中不会再遭遇常规战斗。"
+    assert ALL_RELICS["SsserpentHead"].description == "每次进入?房间时获得50金币。"
+    assert ALL_RELICS["TinyChest"].description == "每4个 ? 房间的最后一个必是宝箱房。"
 
 
 def test_priority_one_translation_fix_queue_items_are_cleared() -> None:

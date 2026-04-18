@@ -603,13 +603,16 @@ def _card_removal_priority(card: str) -> tuple[int, str]:
 
 
 def _normalize_relic_id(relic: Any) -> str:
+    from sts_py.engine.content.relics import normalize_relic_id
+
     if hasattr(relic, "relic_id"):
         relic_id = getattr(relic, "relic_id")
     elif isinstance(relic, dict):
         relic_id = relic.get("id") or relic.get("relic_id") or relic.get("relicId") or ""
     else:
         relic_id = str(relic)
-    return relic_id.replace(" ", "").lower()
+    canonical = normalize_relic_id(str(relic_id))
+    return str(canonical or relic_id).replace(" ", "").lower()
 
 
 def _normalize_relic_list(relics: list[Any]) -> list[str]:
