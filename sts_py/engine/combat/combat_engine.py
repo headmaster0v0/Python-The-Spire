@@ -305,6 +305,7 @@ class CombatEngine:
         player_max_hp: int,
         ai_rng: MutableRNG,
         hp_rng: MutableRNG,
+        card_random_rng: MutableRNG | None = None,
         ascension: int = 0,
         deck: list[str] | None = None,
         relics: list[str] | None = None,
@@ -344,6 +345,7 @@ class CombatEngine:
         card_manager.set_energy(player.energy)
         card_manager.set_max_energy(player.max_energy)
         state = CombatState(player=player, monsters=monsters, card_manager=card_manager)
+        state.card_random_rng = card_random_rng
         player._combat_state = state
         card_manager._combat_state = state
         state.rng = hp_rng
@@ -363,6 +365,7 @@ class CombatEngine:
         player_max_hp: int,
         ai_rng: "MutableRNG",
         hp_rng: "MutableRNG",
+        card_random_rng: MutableRNG | None = None,
         ascension: int = 0,
         deck: list[str] | None = None,
         relics: list[str] | None = None,
@@ -387,6 +390,7 @@ class CombatEngine:
         card_manager.set_energy(player.energy)
         card_manager.set_max_energy(player.max_energy)
         state = CombatState(player=player, monsters=monsters, card_manager=card_manager)
+        state.card_random_rng = card_random_rng
         player._combat_state = state
         card_manager._combat_state = state
         state.rng = hp_rng
@@ -2236,8 +2240,9 @@ class CombatEngine:
                 if self.state.card_manager:
                     hand = list(self.state.card_manager.hand.cards)
                     if hand:
-                        import random
-                        card = random.choice(hand)
+                        rng = getattr(self.state, "card_random_rng", None) or self.ai_rng
+                        pick = rng.random_int(len(hand) - 1) if rng is not None and len(hand) > 1 else 0
+                        card = hand[pick]
                         card.temporary_cost = 0
 
         elif effect_type == RelicEffectType.MODIFY_WEAK:

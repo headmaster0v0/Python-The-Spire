@@ -222,6 +222,7 @@ class CombatState:
     turn: int = 1
     phase: CombatPhase = CombatPhase.INIT
     card_manager: CardManager | None = None
+    card_random_rng: Any | None = None
     cards_played_this_turn: list[str] = field(default_factory=list)
     turn_has_ended: bool = False
     pending_combat_choice: dict[str, Any] | None = None

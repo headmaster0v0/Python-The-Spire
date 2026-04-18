@@ -2091,7 +2091,14 @@ class RunEngine:
         exclude = self._current_relic_ids()
         exclude.update(self._consumed_relic_ids([tier_name.lower()]))
         chosen = self._choose_random_relic_offer(
-            get_relic_pool(tier, floor=self.state.floor, context="reward"),
+            get_relic_pool(
+                tier,
+                floor=self.state.floor,
+                act=self.state.act,
+                context="reward",
+                owned_relics=self.state.relics,
+                deck=self.state.deck,
+            ),
             exclude=exclude,
             rng=self._neow_rng,
         )
@@ -2656,7 +2663,14 @@ class RunEngine:
             exclude = self._current_relic_ids()
             exclude.update(self._consumed_relic_ids(["boss"]))
             chosen = self._choose_random_relic_offer(
-                get_relic_pool(RelicTier.BOSS, floor=self.state.floor, context="reward"),
+                get_relic_pool(
+                    RelicTier.BOSS,
+                    floor=self.state.floor,
+                    act=self.state.act,
+                    context="reward",
+                    owned_relics=self.state.relics,
+                    deck=self.state.deck,
+                ),
                 exclude=exclude,
                 rng=self._neow_rng,
             )
@@ -3105,6 +3119,7 @@ class RunEngine:
             player_max_hp=self.state.player_max_hp,
             ai_rng=self.ai_rng,
             hp_rng=self.hp_rng,
+            card_random_rng=self.state.rng.card_random_rng if self.state.rng is not None else None,
             ascension=self.state.ascension,
             deck=self.state.deck,
             relics=self.state.relics,
@@ -3163,6 +3178,7 @@ class RunEngine:
             player_max_hp=self.state.player_max_hp,
             ai_rng=self.ai_rng,
             hp_rng=self.hp_rng,
+            card_random_rng=self.state.rng.card_random_rng if self.state.rng is not None else None,
             ascension=self.state.ascension,
             deck=self.state.deck,
             relics=self.state.relics,
@@ -6987,7 +7003,14 @@ class RunEngine:
             return None
         rng = self.state.rng.merchant_rng if self.state.rng is not None else None
         chosen = self._choose_random_relic_offer(
-            get_relic_pool(tier, floor=self.state.floor, context="shop_offer"),
+            get_relic_pool(
+                tier,
+                floor=self.state.floor,
+                act=self.state.act,
+                context="shop_offer",
+                owned_relics=self.state.relics,
+                deck=self.state.deck,
+            ),
             exclude=exclude,
             rng=rng,
         )
@@ -7098,7 +7121,14 @@ class RunEngine:
         consumed_ids = self._consumed_relic_ids(["boss"])
         pool = [
             relic_def
-            for relic_def in get_relic_pool(RelicTier.BOSS, floor=self.state.floor, context="reward")
+            for relic_def in get_relic_pool(
+                RelicTier.BOSS,
+                floor=self.state.floor,
+                act=self.state.act,
+                context="reward",
+                owned_relics=self.state.relics,
+                deck=self.state.deck,
+            )
             if (
                 self._relic_matches_character(relic_def)
                 and self._canonical_relic_id(relic_def.id) not in current_ids
@@ -7128,7 +7158,14 @@ class RunEngine:
             seen.add(tier_name)
             tier = RelicTier(tier_name)
             chosen = self._choose_random_relic_offer(
-                get_relic_pool(tier, floor=self.state.floor, context="reward"),
+                get_relic_pool(
+                    tier,
+                    floor=self.state.floor,
+                    act=self.state.act,
+                    context="reward",
+                    owned_relics=self.state.relics,
+                    deck=self.state.deck,
+                ),
                 exclude=exclude,
                 rng=treasure_rng,
             )
@@ -7148,7 +7185,14 @@ class RunEngine:
         for tier_name in self._roll_matryoshka_bonus_tiers():
             tier = RelicTier(tier_name)
             chosen = self._choose_random_relic_offer(
-                get_relic_pool(tier, floor=self.state.floor, context="reward"),
+                get_relic_pool(
+                    tier,
+                    floor=self.state.floor,
+                    act=self.state.act,
+                    context="reward",
+                    owned_relics=self.state.relics,
+                    deck=self.state.deck,
+                ),
                 exclude=exclude,
                 rng=relic_rng,
             )

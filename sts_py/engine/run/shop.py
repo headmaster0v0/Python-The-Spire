@@ -331,25 +331,60 @@ def generate_colorless_cards(rng: Any) -> list[ShopItem]:
     return cards
 
 
-def generate_relics(rng: Any) -> list[ShopItem]:
+def generate_relics(
+    rng: Any,
+    *,
+    act: int = 1,
+    floor: int = 1,
+    owned_relics: list[str] | None = None,
+    deck: list[str] | None = None,
+) -> list[ShopItem]:
     """Generate 3 relics: first 2 random tier, last one is always Shop Relic."""
     from sts_py.engine.content.relics import RelicTier, get_relic_pool
 
     relics = []
-    representative_floor = 1
+    representative_floor = int(floor or 1)
 
     for i in range(3):
         if i == 2:
             tier = "shop"
-            pool = get_relic_pool(RelicTier.SHOP, floor=representative_floor, context="shop_offer")
+            pool = get_relic_pool(
+                RelicTier.SHOP,
+                floor=representative_floor,
+                act=act,
+                context="shop_offer",
+                owned_relics=owned_relics,
+                deck=deck,
+            )
         else:
             tier = roll_relic_tier(rng)
             if tier == "common":
-                pool = get_relic_pool(RelicTier.COMMON, floor=representative_floor, context="shop_offer")
+                pool = get_relic_pool(
+                    RelicTier.COMMON,
+                    floor=representative_floor,
+                    act=act,
+                    context="shop_offer",
+                    owned_relics=owned_relics,
+                    deck=deck,
+                )
             elif tier == "uncommon":
-                pool = get_relic_pool(RelicTier.UNCOMMON, floor=representative_floor, context="shop_offer")
+                pool = get_relic_pool(
+                    RelicTier.UNCOMMON,
+                    floor=representative_floor,
+                    act=act,
+                    context="shop_offer",
+                    owned_relics=owned_relics,
+                    deck=deck,
+                )
             else:
-                pool = get_relic_pool(RelicTier.RARE, floor=representative_floor, context="shop_offer")
+                pool = get_relic_pool(
+                    RelicTier.RARE,
+                    floor=representative_floor,
+                    act=act,
+                    context="shop_offer",
+                    owned_relics=owned_relics,
+                    deck=deck,
+                )
 
         if pool:
             idx = rng.random_int(len(pool) - 1)
@@ -460,7 +495,7 @@ def generate_shop(
 
     shop.colored_cards = generate_colored_cards(rng, character_class)
     shop.colorless_cards = generate_colorless_cards(rng)
-    shop.relics = list(relics) if relics is not None else generate_relics(rng)
+    shop.relics = list(relics) if relics is not None else generate_relics(rng, act=act)
     shop.potions = generate_potions(rng, character_class)
 
     apply_sale_card(shop, rng)
