@@ -18,7 +18,16 @@ from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
-from sts_py.engine.run.events import EVENT_ID_BY_KEY, EVENTS_BY_KEY, Event, EventChoice, _resolve_event_key
+from sts_py.engine.run.events import (
+    EVENT_FLOW_FACTS_BY_KEY as RUNTIME_EVENT_FLOW_FACTS_BY_KEY,
+    EVENT_ID_BY_KEY,
+    EVENT_RNG_STREAMS_BY_KEY as RUNTIME_EVENT_RNG_STREAMS_BY_KEY,
+    EVENTS_BY_KEY,
+    EVENT_WIKI_NAME_ALIASES as RUNTIME_EVENT_WIKI_NAME_ALIASES,
+    Event,
+    EventChoice,
+    _resolve_event_key,
+)
 from sts_py.engine.run.official_event_strings import get_official_event_strings
 from sts_py.engine.run.official_neow_strings import (
     get_official_neow_event_strings,
@@ -308,6 +317,12 @@ for event_key in {"The Woman in Blue", "Lab"}:
 for event_key in {"Transmorgrifier", "Living Wall"}:
     EVENT_RNG_STREAMS_BY_KEY[event_key].append("card_random_rng")
 
+# Event truth now lives in sts_py.engine.run.events. Keep local names wired to
+# that source so audit/reporting stays aligned with runtime metadata.
+EVENT_WIKI_NAME_ALIASES = RUNTIME_EVENT_WIKI_NAME_ALIASES
+EVENT_FLOW_FACTS_BY_KEY = RUNTIME_EVENT_FLOW_FACTS_BY_KEY
+EVENT_RNG_STREAMS_BY_KEY = RUNTIME_EVENT_RNG_STREAMS_BY_KEY
+
 CATALOG_OVERRIDE_SOURCES = {
     "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
     "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
@@ -330,20 +345,47 @@ MECHANICS_FIELDS_BY_ENTITY = {
         "act",
         "pool_bucket",
         "gating_flags",
+        "java_class",
         "choice_count",
         "initial_option_count",
         "source_description_count",
+        "source_description_count_cn",
         "source_option_count",
+        "source_option_count_cn",
         "flow_kind",
         "stage_count",
         "reward_surface",
         "event_combat_reentry",
         "dynamic_option_slots",
+        "wiki_aliases_en",
+        "wiki_aliases_cn",
+        "official_name_en_available",
+        "official_name_cn_available",
+        "official_description_en_available",
+        "official_description_cn_available",
+        "official_option_en_available",
+        "official_option_cn_available",
         "choices",
         "choice_effect_signatures",
         "rng_streams",
     ],
-    "neow": ["screen_count", "reward_option_groups", "rng_streams"],
+    "neow": [
+        "screen_count",
+        "reward_option_groups",
+        "rng_streams",
+        "event_text_count",
+        "event_text_count_cn",
+        "event_option_count",
+        "event_option_count_cn",
+        "reward_text_count",
+        "reward_text_count_cn",
+        "reward_option_count",
+        "reward_option_count_cn",
+        "unique_reward_count",
+        "unique_reward_count_cn",
+        "wiki_aliases_en",
+        "wiki_aliases_cn",
+    ],
     "room_type": ["enum_name", "symbol"],
     "ui_term": ["contexts"],
 }
@@ -1063,12 +1105,13 @@ def build_event_java_facts(repo_root: Path, event_key: str, event: Event | None 
         official.options_en if official is not None and official.options_en
         else getattr(runtime_event, "source_options", []) or []
     )
-    flow = dict(EVENT_FLOW_FACTS_BY_KEY.get(event_key, {}))
     source_path = _event_java_source_path(repo_root, event_key)
+    wiki_aliases_en = list(getattr(runtime_event, "wiki_aliases_en", []) or [])
+    wiki_aliases_cn = list(getattr(runtime_event, "wiki_aliases_cn", []) or [])
     return {
         "source_kind": "decompiled_event_source",
         "java_path": str(source_path) if source_path is not None else "",
-        "java_class": source_path.stem if source_path is not None else "",
+        "java_class": source_path.stem if source_path is not None else str(getattr(runtime_event, "java_class", "") or ""),
         "event_key": event_key,
         "event_id": str(EVENT_ID_BY_KEY.get(event_key, getattr(runtime_event, "event_id", event_key))),
         "pool_bucket": _event_java_pool_bucket(repo_root, event_key, str(getattr(runtime_event, "pool_bucket", "") or "")),
@@ -1078,12 +1121,20 @@ def build_event_java_facts(repo_root: Path, event_key: str, event: Event | None 
         "initial_option_count": _event_java_initial_option_count(repo_root, event_key, len(runtime_event.choices)),
         "source_description_count": len(source_descriptions),
         "source_option_count": len(source_options),
-        "flow_kind": str(flow.get("flow_kind", "single_screen" if len(source_descriptions) <= 1 else "multi_screen")),
-        "stage_count": int(flow.get("stage_count", max(1, len(source_descriptions)))),
-        "reward_surface": str(flow.get("reward_surface", "none")),
-        "event_combat_reentry": bool(flow.get("event_combat_reentry", False)),
-        "dynamic_option_slots": int(flow.get("dynamic_option_slots", max(0, len(source_options) - len(runtime_event.choices)))),
-        "rng_streams": list(EVENT_RNG_STREAMS_BY_KEY.get(event_key, [])),
+        "flow_kind": str(getattr(runtime_event, "flow_kind", "single_screen")),
+        "stage_count": int(getattr(runtime_event, "stage_count", max(1, len(source_descriptions))) or 0),
+        "reward_surface": str(getattr(runtime_event, "reward_surface", "none") or "none"),
+        "event_combat_reentry": bool(getattr(runtime_event, "event_combat_reentry", False)),
+        "dynamic_option_slots": int(getattr(runtime_event, "dynamic_option_slots", max(0, len(source_options) - len(runtime_event.choices))) or 0),
+        "rng_streams": list(getattr(runtime_event, "rng_streams", []) or []),
+        "wiki_aliases_en": wiki_aliases_en,
+        "wiki_aliases_cn": wiki_aliases_cn,
+        "official_name_en_available": bool(getattr(official, "name_en", "") or getattr(runtime_event, "name", "")),
+        "official_name_cn_available": bool(getattr(official, "name_zhs", "") or getattr(runtime_event, "name_cn", "")),
+        "official_description_en_available": bool(source_descriptions),
+        "official_description_cn_available": bool(getattr(official, "descriptions_zhs", ()) or getattr(runtime_event, "source_descriptions_cn", [])),
+        "official_option_en_available": bool(source_options),
+        "official_option_cn_available": bool(getattr(official, "options_zhs", ()) or getattr(runtime_event, "source_options_cn", [])),
         "choice_effect_signatures": build_event_choice_effect_signatures(runtime_event),
         "choices": [
             {
@@ -1099,8 +1150,9 @@ def build_event_java_facts(repo_root: Path, event_key: str, event: Event | None 
 def build_event_source_facts(event: Event) -> dict[str, Any]:
     event_key = str(getattr(event, "event_key", "") or getattr(event, "name", "") or getattr(event, "id", ""))
     source_descriptions = list(getattr(event, "source_descriptions", []) or [])
+    source_descriptions_cn = list(getattr(event, "source_descriptions_cn", []) or [])
     source_options = list(getattr(event, "source_options", []) or [])
-    flow = dict(EVENT_FLOW_FACTS_BY_KEY.get(event_key, {}))
+    source_options_cn = list(getattr(event, "source_options_cn", []) or [])
     initial_option_count = _event_java_initial_option_count(REPO_ROOT, event_key, len(event.choices))
     return {
         "source_kind": "python_run_source",
@@ -1108,17 +1160,28 @@ def build_event_source_facts(event: Event) -> dict[str, Any]:
         "event_id": str(getattr(event, "event_id", getattr(event, "id", "")) or ""),
         "pool_bucket": str(getattr(event, "pool_bucket", "") or ""),
         "gating_flags": list(getattr(event, "gating_flags", []) or []),
+        "java_class": str(getattr(event, "java_class", "") or ""),
         "act": int(event.act),
         "choice_count": len(event.choices),
         "initial_option_count": initial_option_count,
         "source_description_count": len(source_descriptions),
+        "source_description_count_cn": len(source_descriptions_cn),
         "source_option_count": len(source_options),
-        "flow_kind": str(flow.get("flow_kind", "single_screen" if len(source_descriptions) <= 1 else "multi_screen")),
-        "stage_count": int(flow.get("stage_count", max(1, len(source_descriptions)))),
-        "reward_surface": str(flow.get("reward_surface", "none")),
-        "event_combat_reentry": bool(flow.get("event_combat_reentry", False)),
-        "dynamic_option_slots": int(flow.get("dynamic_option_slots", max(0, len(source_options) - len(event.choices)))),
-        "rng_streams": list(EVENT_RNG_STREAMS_BY_KEY.get(event_key, [])),
+        "source_option_count_cn": len(source_options_cn),
+        "flow_kind": str(getattr(event, "flow_kind", "single_screen")),
+        "stage_count": int(getattr(event, "stage_count", max(1, len(source_descriptions))) or 0),
+        "reward_surface": str(getattr(event, "reward_surface", "none") or "none"),
+        "event_combat_reentry": bool(getattr(event, "event_combat_reentry", False)),
+        "dynamic_option_slots": int(getattr(event, "dynamic_option_slots", max(0, len(source_options) - len(event.choices))) or 0),
+        "rng_streams": list(getattr(event, "rng_streams", []) or []),
+        "wiki_aliases_en": list(getattr(event, "wiki_aliases_en", []) or []),
+        "wiki_aliases_cn": list(getattr(event, "wiki_aliases_cn", []) or []),
+        "official_name_en_available": bool(str(getattr(event, "name", "") or "")),
+        "official_name_cn_available": bool(str(getattr(event, "name_cn", "") or "")),
+        "official_description_en_available": bool(source_descriptions),
+        "official_description_cn_available": bool(source_descriptions_cn),
+        "official_option_en_available": bool(source_options),
+        "official_option_cn_available": bool(source_options_cn),
         "choice_effect_signatures": build_event_choice_effect_signatures(event),
         "choices": [
             {
@@ -1140,7 +1203,17 @@ def build_neow_source_facts() -> dict[str, Any]:
         "reward_option_groups": {"mini": 2, "full": 4},
         "rng_streams": ["neow_rng"],
         "event_text_count": len(event_strings.text_en),
+        "event_text_count_cn": len(event_strings.text_zhs),
+        "event_option_count": len(event_strings.options_en),
+        "event_option_count_cn": len(event_strings.options_zhs),
         "reward_text_count": len(reward_strings.text_en),
+        "reward_text_count_cn": len(reward_strings.text_zhs),
+        "reward_option_count": len(reward_strings.options_en),
+        "reward_option_count_cn": len(reward_strings.options_zhs),
+        "unique_reward_count": len(reward_strings.unique_rewards_en),
+        "unique_reward_count_cn": len(reward_strings.unique_rewards_zhs),
+        "wiki_aliases_en": [str(event_strings.names_en[0] if event_strings.names_en else "Neow")],
+        "wiki_aliases_cn": [str(event_strings.names_zhs[0] if event_strings.names_zhs else "")],
         "profile_dependencies": ["neow_intro_seen", "spirits", "highest_unlocked_ascension", "last_ascension_level"],
     }
 
@@ -1154,7 +1227,17 @@ def build_neow_java_facts() -> dict[str, Any]:
         "reward_option_groups": {"mini": 2, "full": 4},
         "rng_streams": ["neow_rng"],
         "event_text_count": len(event_strings.text_en),
+        "event_text_count_cn": len(event_strings.text_zhs),
+        "event_option_count": len(event_strings.options_en),
+        "event_option_count_cn": len(event_strings.options_zhs),
         "reward_text_count": len(reward_strings.text_en),
+        "reward_text_count_cn": len(reward_strings.text_zhs),
+        "reward_option_count": len(reward_strings.options_en),
+        "reward_option_count_cn": len(reward_strings.options_zhs),
+        "unique_reward_count": len(reward_strings.unique_rewards_en),
+        "unique_reward_count_cn": len(reward_strings.unique_rewards_zhs),
+        "wiki_aliases_en": [str(event_strings.names_en[0] if event_strings.names_en else "Neow")],
+        "wiki_aliases_cn": [str(event_strings.names_zhs[0] if event_strings.names_zhs else "")],
         "profile_dependencies": ["neow_intro_seen", "spirits", "highest_unlocked_ascension", "last_ascension_level"],
     }
 

@@ -23,5 +23,5 @@ def test_phase271_placeholder_like_stagewide_surface_is_replaced_with_official_c
 
     assert lines
     assert "真实" in lines[0]
-    assert any("mark of the bloom" in line.lower() for line in lines[1:])
+    assert any("无法再回复生命" in line for line in lines[1:])
     assert not any("Nothing happens" in line for line in lines)

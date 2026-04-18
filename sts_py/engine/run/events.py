@@ -473,6 +473,15 @@ class Event:
     event_key: str = ""
     pool_bucket: str = "act_event"
     gating_flags: list[str] = field(default_factory=list)
+    java_class: str = ""
+    wiki_aliases_en: list[str] = field(default_factory=list)
+    wiki_aliases_cn: list[str] = field(default_factory=list)
+    flow_kind: str = "single_screen"
+    stage_count: int = 1
+    reward_surface: str = "none"
+    event_combat_reentry: bool = False
+    dynamic_option_slots: int = 0
+    rng_streams: list[str] = field(default_factory=list)
     description: str = ""
     description_cn: str = ""
     description_variants: list[str] = field(default_factory=list)
@@ -2009,6 +2018,90 @@ EVENT_GATING_FLAGS_BY_KEY = {
     "NoteForYourself": ["ascension_lt_15"],
 }
 
+EVENT_WIKI_NAME_ALIASES: dict[str, dict[str, list[str]]] = {
+    "NoteForYourself": {"en": ["A Note For Yourself"]},
+    "Fountain of Cleansing": {"en": ["The Divine Fountain"]},
+    "Bonfire Elementals": {"en": ["Bonfire Spirits"]},
+    "Accursed Blacksmith": {"en": ["Ominous Forge"]},
+    "Addict": {"en": ["Pleading Vagrant"]},
+    "Ghosts": {"en": ["Council of Ghosts"]},
+    "Nest": {"en": ["The Nest"]},
+    "Beggar": {"en": ["Old Beggar"]},
+    "Back to Basics": {"en": ["Ancient Writing"]},
+    "Designer": {"en": ["Designer In-Spire"], "cn": ["“尖端”设计师", "尖端设计师"]},
+    "Match and Keep!": {"en": ["Match and Keep"], "cn": ["对对碰！"]},
+    "Mushrooms": {"en": ["Hypnotizing Colored Mushrooms"]},
+    "SpireHeart": {"en": ["Corrupt Heart"], "cn": ["高塔之心"]},
+}
+
+EVENT_FLOW_FACTS_BY_KEY: dict[str, dict[str, Any]] = {
+    "Big Fish": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_immediate", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Cleric": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Beggar": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Liars Game": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Cursed Tome": {"flow_kind": "multi_screen", "stage_count": 6, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Forgotten Altar": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Ghosts": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Masked Bandits": {"flow_kind": "event_combat_or_multi_screen", "stage_count": 5, "reward_surface": "gold_and_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Nest": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_or_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Library": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "card_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Mausoleum": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Vampires": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Colosseum": {"flow_kind": "event_combat_reentry", "stage_count": 4, "reward_surface": "relics_and_gold", "event_combat_reentry": True, "dynamic_option_slots": 0},
+    "SensoryStone": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "colorless_cards", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Tomb of Lord Red Mask": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Winding Halls": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "cards_or_heal_or_max_hp", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Accursed Blacksmith": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "relic_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "FaceTrader": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Fountain of Cleansing": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Knowing Skull": {"flow_kind": "looping_menu", "stage_count": 3, "reward_surface": "gold_potion_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Match and Keep!": {"flow_kind": "memory_game", "stage_count": 4, "reward_surface": "cards", "event_combat_reentry": False, "dynamic_option_slots": 12},
+    "NoteForYourself": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "stored_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Moai Head": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Wheel of Change": {"flow_kind": "spin_result", "stage_count": 3, "reward_surface": "mixed", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "SpireHeart": {"flow_kind": "terminal_transition", "stage_count": 4, "reward_surface": "act_transition_or_death", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Addict": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Back to Basics": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "remove_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Bonfire Elementals": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "sacrifice_boon", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Dead Adventurer": {"flow_kind": "looping_search_or_event_combat", "stage_count": 4, "reward_surface": "gold_or_relic_or_event_combat", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Designer": {"flow_kind": "multi_screen", "stage_count": 4, "reward_surface": "deck_services", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Drug Dealer": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "card_transform_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Duplicator": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "duplicate_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Falling": {"flow_kind": "multi_screen", "stage_count": 2, "reward_surface": "remove_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Idol": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "relic_and_trap", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Shrine": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_gold_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Wing": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "gold_or_card_remove", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Lab": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "potions", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Living Wall": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "remove_or_transform_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "MindBloom": {"flow_kind": "event_combat_or_result", "stage_count": 2, "reward_surface": "combat_or_gold_or_heal_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Mushrooms": {"flow_kind": "event_combat_or_result", "stage_count": 2, "reward_surface": "event_combat_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Mysterious Sphere": {"flow_kind": "event_combat_or_multi_screen", "stage_count": 3, "reward_surface": "rare_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "N'loth": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_swap", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Purifier": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "remove_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Scrap Ooze": {"flow_kind": "looping_search", "stage_count": 4, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "SecretPortal": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "boss_jump", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Shining Light": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "upgrades", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Joust": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Woman in Blue": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "potions", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Transmorgrifier": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "transform_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Upgrade Shrine": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "upgrade_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "WeMeetAgain": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_trade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "World of Goop": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_gold_loss", "event_combat_reentry": False, "dynamic_option_slots": 0},
+}
+
+_ALL_EVENT_KEYS = ACT1_EVENT_KEYS + ACT2_EVENT_KEYS + ACT3_EVENT_KEYS + SHRINE_EVENT_KEYS + SPECIAL_ONE_TIME_EVENT_KEYS + TERMINAL_EVENT_KEYS
+EVENT_RNG_STREAMS_BY_KEY: dict[str, list[str]] = {event_key: [] for event_key in _ALL_EVENT_KEYS}
+for event_key in {"Big Fish", "Addict", "Dead Adventurer", "Cursed Tome", "The Mausoleum", "MindBloom"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("relic_rng")
+for event_key in {"World of Goop", "Golden Wing", "Living Wall", "Scrap Ooze", "Shining Light", "Designer", "FaceTrader", "Drug Dealer", "The Joust", "Mysterious Sphere", "SensoryStone", "The Mausoleum", "WeMeetAgain", "N'loth", "Transmorgrifier", "Dead Adventurer", "MindBloom", "Falling", "Cursed Tome", "Wheel of Change"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("misc_rng")
+for event_key in {"Scrap Ooze", "Masked Bandits"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("treasure_rng")
+for event_key in {"The Woman in Blue", "Lab"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("potion_rng")
+for event_key in {"Transmorgrifier", "Living Wall"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("card_random_rng")
+
 _LEGACY_EVENT_SOURCE_MAP: dict[str, tuple[dict[str, Event], str]] = {
     "Big Fish": (ACT1_EVENTS, "Big Fish"),
     "The Cleric": (ACT1_EVENTS, "The Cleric"),
@@ -2086,7 +2179,24 @@ def _canonicalize_event_template(event_key: str) -> Event:
     event.id = EVENT_ID_BY_KEY[event_key]
     event.pool_bucket = EVENT_POOL_BUCKET_BY_KEY[event_key]
     event.gating_flags = list(EVENT_GATING_FLAGS_BY_KEY.get(event_key, []))
+    _apply_event_truth_metadata(event)
     return event
+
+
+def _apply_event_truth_metadata(event: Event) -> None:
+    event.java_class = EVENT_ID_BY_KEY.get(event.event_key, event.id)
+    alias_bundle = EVENT_WIKI_NAME_ALIASES.get(event.event_key, {})
+    event.wiki_aliases_en = list(alias_bundle.get("en", []))
+    event.wiki_aliases_cn = list(alias_bundle.get("cn", []))
+    flow = EVENT_FLOW_FACTS_BY_KEY.get(event.event_key, {})
+    source_desc_count = len(list(getattr(event, "source_descriptions", []) or []))
+    source_opt_count = len(list(getattr(event, "source_options", []) or []))
+    event.flow_kind = str(flow.get("flow_kind", "single_screen" if source_desc_count <= 1 else "multi_screen"))
+    event.stage_count = int(flow.get("stage_count", max(1, source_desc_count)))
+    event.reward_surface = str(flow.get("reward_surface", "none"))
+    event.event_combat_reentry = bool(flow.get("event_combat_reentry", False))
+    event.dynamic_option_slots = int(flow.get("dynamic_option_slots", max(0, source_opt_count - len(event.choices))))
+    event.rng_streams = list(EVENT_RNG_STREAMS_BY_KEY.get(event.event_key, []))
 
 
 def _set_choice_text(
@@ -2102,6 +2212,15 @@ def _set_choice_text(
         event.choices[idx].description_cn = cn_labels[idx] if idx < len(cn_labels) else ""
 
 
+def _source_option_text(event: Event, *indexes: int, cn: bool = False) -> str:
+    values = list(getattr(event, "source_options_cn" if cn else "source_options", []) or [])
+    parts: list[str] = []
+    for idx in indexes:
+        if 0 <= idx < len(values):
+            parts.append(str(values[idx] or ""))
+    return "".join(parts)
+
+
 def _apply_event_truth_overrides(event: Event) -> None:
     if event.event_key == "Back to Basics":
         event.name = "Back to Basics"
@@ -2110,6 +2229,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Elegance] Remove a card from your deck."),
             EventChoice(description="[Simplicity] Upgrade all starter Strikes and Defends."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Drug Dealer":
         event.name = "Drug Dealer"
         event.description = "A hooded dealer lays out three offers: a dose of J.A.X., a risky two-card experiment, or a mutagenic injection."
@@ -2118,12 +2242,20 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Experiment] Transform 2 cards."),
             EventChoice(description="[Inject Mutagens] Obtain Mutagenic Strength."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1), _source_option_text(event, 2)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True), _source_option_text(event, 2, cn=True)],
+        )
     elif event.event_key == "Ghosts":
         event.name = "Ghosts"
         event.description = "A chorus of whispering spirits offers ethereal power in exchange for part of your life."
         _set_choice_text(event, [
             "[Accept] Lose 50% Max HP. Obtain Apparitions.",
             "[Leave] Walk away.",
+        ], [
+            _source_option_text(event, 0, cn=True) + "50%" + _source_option_text(event, 1, cn=True),
+            _source_option_text(event, 2, cn=True),
         ])
     elif event.event_key == "Masked Bandits":
         event.name = "Masked Bandits"
@@ -2132,6 +2264,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Pay] Lose all your gold.", effects=[EventEffect(EventEffectType.LOSE_GOLD, amount=9999)]),
             EventChoice(description="[Fight] Refuse and battle the bandits.", trigger_combat=True, combat_enemies=["Pointy", "Romeo", "Bear"]),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Nest":
         event.name = "Nest"
         event.description = "You discover a nest of stolen treasures and a choice between shiny coins and a strange ritual dagger."
@@ -2139,17 +2276,24 @@ def _apply_event_truth_overrides(event: Event) -> None:
         event.name = "Colosseum"
         event.description = "The arena crowd spots you. First comes the spectacle, and if you crave more, a second brutal match awaits."
         event.choices = [EventChoice(description="[Continue] Step into the arena.")]
+        _set_choice_text(event, [_source_option_text(event, 0)], [_source_option_text(event, 0, cn=True)])
     elif event.event_key == "The Library":
         event.description = "You uncover a quiet library. You may rest among the books, or study and claim one of the offered cards."
         event.choices = [
             EventChoice(description="[Read] Choose a card to add to your deck."),
             EventChoice(description="[Sleep] Heal 33% of max HP."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), "[Sleep] Heal 33% of max HP."],
+            [_source_option_text(event, 0, cn=True), "[睡觉] 回复33%生命。"],
+        )
     elif event.event_key == "Forgotten Altar":
         event.description = "A forgotten altar looms in the dark. Its offerings change depending on whether you still carry the Golden Idol."
     elif event.event_key == "Knowing Skull":
         event.description = "The skull offers repeated bargains: potion, gold, or a colorless card. Each answer costs life."
         event.choices = [EventChoice(description="[Approach] Hear the skull's offers.")]
+        _set_choice_text(event, [_source_option_text(event, 0)], [_source_option_text(event, 0, cn=True)])
     elif event.event_key == "MindBloom":
         event.name = "Mind Bloom"
         event.description = "A strange bloom offers three impossible answers: fight an old boss, take immense gold with a curse, or bless your whole deck with the Mark of the Bloom."
@@ -2158,6 +2302,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[I am Awake] Upgrade all cards. Obtain Mark of the Bloom."),
             EventChoice(description="[I am Rich / Healthy] Gain the floor-based reward and its curse."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 3), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 3, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "SecretPortal":
         event.name = "Secret Portal"
         event.description = "A hidden portal tears open in the Beyond, offering a shortcut to the final stretch."
@@ -2165,6 +2314,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Enter] Skip ahead to Act 3 floor 50."),
             EventChoice(description="[Ignore] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "SensoryStone":
         event.name = "Sensory Stone"
         event.description = "A sensory stone floods your mind with memories. Endure them to claim a set of colorless cards."
@@ -2179,6 +2333,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Open] Fight 2 Orb Walkers. Obtain a rare relic.", trigger_combat=True, combat_enemies=["OrbWalker", "OrbWalker"]),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Tomb of Lord Red Mask":
         event.description = "The tomb of the Red Mask offers gold, but the mask itself may react if you already possess it."
     elif event.event_key == "Winding Halls":
@@ -2196,6 +2355,11 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Pray] Duplicate a card in your deck."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "FaceTrader":
         event.name = "Face Trader"
         event.description = "A gaunt man offers to touch your face or trade for one of his masks."
@@ -2205,17 +2369,28 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Drink] Remove all curses from your deck."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Golden Shrine":
         event.description = "A radiant shrine glitters with coins. It promises wealth, but greed may spring a trap."
     elif event.event_key == "Match and Keep!":
         event.description = "A Gremlin invites you to play a memory game for cards."
         event.choices = [EventChoice(description="[Play] Begin the match game.")]
+        _set_choice_text(event, [_source_option_text(event, 2)], [_source_option_text(event, 2, cn=True)])
     elif event.event_key == "Lab":
         event.description = "A hidden lab offers free potions to the bold."
         event.choices = [
             EventChoice(description="[Search] Obtain 3 random potions."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), "[Leave]"],
+            [_source_option_text(event, 0, cn=True), "[离开]"],
+        )
     elif event.event_key == "N'loth":
         event.description = "N'loth offers his gift in exchange for one of two relics."
     elif event.event_key == "NoteForYourself":
@@ -2226,18 +2401,33 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Pray] Remove a card from your deck."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Transmorgrifier":
         event.description = "A mutating shrine offers to transform a card from your deck."
         event.choices = [
             EventChoice(description="[Pray] Transform a card in your deck."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "Upgrade Shrine":
         event.description = "An ancient shrine offers to upgrade a card in your deck."
         event.choices = [
             EventChoice(description="[Pray] Upgrade a card in your deck."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [_source_option_text(event, 0), _source_option_text(event, 1)],
+            [_source_option_text(event, 0, cn=True), _source_option_text(event, 1, cn=True)],
+        )
     elif event.event_key == "WeMeetAgain":
         event.description = "A familiar figure asks for one of three things: a potion, gold, or a card. Pay the requested price for a relic."
     elif event.event_key == "The Woman in Blue":
@@ -2248,15 +2438,32 @@ def _apply_event_truth_overrides(event: Event) -> None:
             EventChoice(description="[Buy 3] Lose 40 gold. Obtain 3 potions."),
             EventChoice(description="[Leave] Leave."),
         ]
+        _set_choice_text(
+            event,
+            [
+                _source_option_text(event, 0) + "20" + _source_option_text(event, 3),
+                _source_option_text(event, 1) + "30" + _source_option_text(event, 3),
+                _source_option_text(event, 2) + "40" + _source_option_text(event, 3),
+                _source_option_text(event, 4),
+            ],
+            [
+                _source_option_text(event, 0, cn=True) + "20" + _source_option_text(event, 3, cn=True),
+                _source_option_text(event, 1, cn=True) + "30" + _source_option_text(event, 3, cn=True),
+                _source_option_text(event, 2, cn=True) + "40" + _source_option_text(event, 3, cn=True),
+                _source_option_text(event, 4, cn=True),
+            ],
+        )
     elif event.event_key == "Wheel of Change":
         event.description = "A giant wheel offers fortune and misfortune in equal measure."
         event.choices = [EventChoice(description="[Spin] Spin the wheel.")]
+        _set_choice_text(event, [_source_option_text(event, 0)], [_source_option_text(event, 0, cn=True)])
     elif event.event_key == "The Joust":
         event.description = "A betting table offers odds on the murder of a peasant or the fall of a beast."
     elif event.event_key == "SpireHeart":
         event.name = "Spire Heart"
         event.description = "The Spire Heart pulses before you as the run reaches its final threshold."
         event.choices = [EventChoice(description="[Continue] Face the Heart.")]
+        _set_choice_text(event, [_source_option_text(event, 0)], [_source_option_text(event, 0, cn=True)])
 
     official = get_official_event_strings(str(getattr(event, "event_key", "") or getattr(event, "id", "") or ""))
     if official is not None:

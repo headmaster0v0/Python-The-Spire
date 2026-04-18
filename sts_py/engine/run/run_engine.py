@@ -1907,7 +1907,7 @@ class RunEngine:
             event_key = self._draw_event_key_from_pool(shrine=True)
         return event_key
 
-    def _init_neow(self) -> None:
+    def _legacy_init_neow_unused(self) -> None:
         self.state.pending_neow_choice = None
         self.state.neow_options = [self._build_neow_option(category) for category in range(4)]
 
@@ -1929,7 +1929,7 @@ class RunEngine:
     def _neow_percent_damage(self) -> int:
         return int(self.state.player_hp / 10) * 3
 
-    def _neow_reward_text(self, reward_type: str, reward_value: int) -> str:
+    def _legacy_neow_reward_text_unused(self, reward_type: str, reward_value: int) -> str:
         if reward_type == "THREE_CARDS":
             return "从 3 张牌中选择 1 张"
         if reward_type == "ONE_RANDOM_RARE_CARD":
@@ -1970,7 +1970,7 @@ class RunEngine:
             return "将起始遗物替换为 1 件首领遗物"
         return reward_type
 
-    def _neow_drawback_text(self, drawback: str, drawback_value: int) -> str:
+    def _legacy_neow_drawback_text_unused(self, drawback: str, drawback_value: int) -> str:
         if drawback == "NONE":
             return ""
         if drawback == "TEN_PERCENT_HP_LOSS":
@@ -1983,7 +1983,7 @@ class RunEngine:
             return f"代价：失去 {drawback_value} 点生命"
         return drawback
 
-    def _build_neow_option(self, category: int) -> dict[str, Any]:
+    def _legacy_build_neow_option_unused(self, category: int) -> dict[str, Any]:
         reward_value = 0
         drawback = "NONE"
         drawback_value = 0
@@ -2045,7 +2045,7 @@ class RunEngine:
             "label": label,
         }
 
-    def get_neow_options(self) -> list[dict[str, Any]]:
+    def _legacy_get_neow_options_unused(self) -> list[dict[str, Any]]:
         return [dict(option) for option in list(getattr(self.state, "neow_options", []) or [])]
 
     def _neow_reward_card_pool(self, *, rare_only: bool) -> list[str]:
@@ -2152,166 +2152,6 @@ class RunEngine:
             entry.update(details)
         self.state.event_choices.append(entry)
 
-    def _finish_neow(self) -> None:
-        self.state.pending_neow_choice = None
-        self.state.neow_options = []
-        if self.state.phase != RunPhase.GAME_OVER:
-            self.state.phase = RunPhase.MAP
-
-    def choose_neow_option(self, index: int) -> dict[str, Any]:
-        if self.state.phase != RunPhase.NEOW:
-            return {"success": False, "reason": "not_in_neow"}
-        if self.state.pending_neow_choice is not None:
-            return {"success": False, "reason": "pending_neow_choice"}
-
-        options = list(getattr(self.state, "neow_options", []) or [])
-        if index < 0 or index >= len(options):
-            return {"success": False, "reason": "invalid_neow_option"}
-        option = dict(options[index])
-        drawback_result = self._apply_neow_drawback(option)
-        if self.state.phase == RunPhase.GAME_OVER:
-            self._record_neow_choice(option_index=index, option=option, details=drawback_result)
-            return {"success": True, "game_over": True, "option": option, "drawback_result": drawback_result}
-
-        reward_type = str(option.get("reward_type", ""))
-        if reward_type == "THREE_CARDS":
-            cards = self._draw_unique_neow_cards(3, rare_only=False, colorless=False)
-            self.state.pending_neow_choice = {
-                "action": "reward_pick",
-                "cards": cards,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
-        if reward_type == "THREE_RARE_CARDS":
-            cards = self._draw_unique_neow_cards(3, rare_only=True, colorless=False)
-            self.state.pending_neow_choice = {
-                "action": "reward_pick",
-                "cards": cards,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
-        if reward_type == "RANDOM_COLORLESS":
-            cards = self._draw_unique_neow_cards(3, rare_only=False, colorless=True)
-            self.state.pending_neow_choice = {
-                "action": "reward_pick",
-                "cards": cards,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
-        if reward_type == "RANDOM_COLORLESS_2":
-            cards = self._draw_unique_neow_cards(3, rare_only=True, colorless=True)
-            self.state.pending_neow_choice = {
-                "action": "reward_pick",
-                "cards": cards,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
-        if reward_type == "REMOVE_CARD":
-            self.state.pending_neow_choice = {
-                "action": "remove",
-                "remaining": 1,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "remove", "remaining": 1}
-        if reward_type == "REMOVE_TWO":
-            self.state.pending_neow_choice = {
-                "action": "remove",
-                "remaining": 2,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "remove", "remaining": 2}
-        if reward_type == "UPGRADE_CARD":
-            self.state.pending_neow_choice = {
-                "action": "upgrade",
-                "remaining": 1,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "upgrade", "remaining": 1}
-        if reward_type == "TRANSFORM_CARD":
-            self.state.pending_neow_choice = {
-                "action": "transform",
-                "remaining": 1,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "transform", "remaining": 1}
-        if reward_type == "TRANSFORM_TWO_CARDS":
-            self.state.pending_neow_choice = {
-                "action": "transform",
-                "remaining": 2,
-                "option": option,
-                "option_index": index,
-                "drawback_result": drawback_result,
-            }
-            return {"success": True, "requires_card_choice": True, "action": "transform", "remaining": 2}
-
-        details: dict[str, Any] = {}
-        if reward_type == "ONE_RANDOM_RARE_CARD":
-            cards = self._draw_unique_neow_cards(1, rare_only=True, colorless=False)
-            if cards:
-                self.state.deck.append(cards[0])
-                details["card_id"] = cards[0]
-        elif reward_type == "THREE_SMALL_POTIONS":
-            details["potions"] = self._grant_neow_potions(3)
-        elif reward_type == "RANDOM_COMMON_RELIC":
-            details["relic_id"] = self._grant_neow_random_relic("COMMON")
-        elif reward_type == "ONE_RARE_RELIC":
-            details["relic_id"] = self._grant_neow_random_relic("RARE")
-        elif reward_type == "TEN_PERCENT_HP_BONUS":
-            bonus = int(option.get("reward_value", 0) or 0)
-            self.state.player_max_hp += bonus
-            self.state.player_hp += bonus
-            details["max_hp_gained"] = bonus
-        elif reward_type == "TWENTY_PERCENT_HP_BONUS":
-            bonus = int(option.get("reward_value", 0) or 0)
-            self.state.player_max_hp += bonus
-            self.state.player_hp += bonus
-            details["max_hp_gained"] = bonus
-        elif reward_type == "THREE_ENEMY_KILL":
-            self.state.neow_blessing = True
-            self.state.neow_blessing_remaining = 3
-            if "NeowsLament" not in self.state.relics:
-                self.state.relics.append("NeowsLament")
-                self._record_relic_history("NeowsLament", source=RelicSource.NEOW)
-            details["relic_id"] = "NeowsLament"
-        elif reward_type == "HUNDRED_GOLD":
-            self.state.player_gold += 100
-            details["gold_gained"] = 100
-        elif reward_type == "TWO_FIFTY_GOLD":
-            self.state.player_gold += 250
-            details["gold_gained"] = 250
-        elif reward_type == "BOSS_RELIC":
-            from sts_py.engine.content.relics import RelicTier, get_relic_pool
-
-            replaced = self.state.relics.pop(0) if self.state.relics else None
-            if replaced is not None:
-                details["replaced_relic"] = replaced
-            exclude = self._current_relic_ids()
-            exclude.update(self._consumed_relic_ids(["boss"]))
-            chosen = self._choose_random_relic_offer(get_relic_pool(RelicTier.BOSS), exclude=exclude, rng=self._neow_rng)
-            if chosen is not None:
-                self._mark_relic_consumed(chosen.id, "boss")
-                details["relic_id"] = self._acquire_relic(chosen.id, source=RelicSource.NEOW, record_pending=False)
-
-        self._record_neow_choice(option_index=index, option=option, details={**drawback_result, **details})
-        self._finish_neow()
-        return {"success": True, "option": option, "drawback_result": drawback_result, "details": details}
-
     def get_neow_choice_cards(self) -> list[str]:
         pending = getattr(self.state, "pending_neow_choice", None)
         if not isinstance(pending, dict):
@@ -2334,7 +2174,7 @@ class RunEngine:
                     candidates.append(card_id)
         return candidates
 
-    def choose_card_for_neow(self, card_index: int) -> dict[str, Any]:
+    def _legacy_choose_card_for_neow_unused(self, card_index: int) -> dict[str, Any]:
         if self.state.phase != RunPhase.NEOW:
             return {"success": False, "reason": "not_in_neow"}
         pending = getattr(self.state, "pending_neow_choice", None)
