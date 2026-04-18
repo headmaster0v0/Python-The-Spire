@@ -1284,16 +1284,64 @@ def _generic_en_page_candidates(entity_type: str, entity_id: str, runtime_name_e
     if entity_type == "event":
         aliases = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("en", []))
         return _unique_nonempty([*aliases, runtime_name_en, _humanize_identifier(entity_id)])
+    if entity_type == "relic":
+        return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
     return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
 
 
 def _generic_cn_page_candidates(entity_type: str, entity_id: str, runtime_name_cn: str, runtime_name_en: str) -> list[str]:
+    if entity_type == "relic":
+        policy = get_translation_policy_entry("relic", entity_id)
+        candidates: list[str] = []
+        if policy is not None and policy.huiji_page_or_title.strip():
+            candidates.append(policy.huiji_page_or_title.strip())
+        if policy is not None and policy.alignment_status == "approved_alias" and policy.runtime_name_cn.strip():
+            candidates.append(policy.runtime_name_cn.strip())
+        if _looks_cataloged_cn(runtime_name_cn):
+            candidates.append(runtime_name_cn)
+        if _contains_cjk(runtime_name_en):
+            candidates.append(runtime_name_en)
+        return _unique_nonempty(candidates)
     candidates = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("cn", [])) if entity_type == "event" else []
     if _looks_cataloged_cn(runtime_name_cn):
         candidates.append(runtime_name_cn)
     if _contains_cjk(runtime_name_en):
         candidates.append(runtime_name_en)
     return _unique_nonempty(candidates)
+
+
+def _parse_relic_wiki_summary_facts(summary: str) -> dict[str, Any]:
+    text = str(summary or "").strip()
+    if not text:
+        return {}
+    facts: dict[str, Any] = {}
+    tier_match = re.search(r"\b(Starter|Common|Uncommon|Rare|Boss|Shop|Event|Special)\b(?:\s+Relic)?", text, re.I)
+    if tier_match:
+        facts["tier"] = tier_match.group(1).upper()
+    class_match = re.search(r"\b(Ironclad|Silent|Defect|Watcher)\b", text)
+    if class_match:
+        facts["character_class"] = class_match.group(1).upper()
+    return facts
+
+
+def _augment_relic_wiki_page(page: WikiPageSnapshot, *, source_lang: str) -> WikiPageSnapshot:
+    if page.error:
+        return page
+    payload = dict(page.payload or {})
+    facts = dict(payload.get("facts") or {})
+    if source_lang == "en":
+        facts.update(_parse_relic_wiki_summary_facts(page.summary))
+    payload["facts"] = facts
+    return WikiPageSnapshot(
+        source=page.source,
+        requested_title=page.requested_title,
+        resolved_title=page.resolved_title,
+        url=page.url,
+        summary=page.summary,
+        payload=payload,
+        attempts=list(page.attempts or []),
+        error=page.error,
+    )
 
 
 def _fetch_entity_wiki_pages(
@@ -1313,6 +1361,9 @@ def _fetch_entity_wiki_pages(
 
     en_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(EN_SOURCE_ORDER, en_candidates))
     cn_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(CN_SOURCE_ORDER, cn_candidates))
+    if entity_type == "relic":
+        en_page = _augment_relic_wiki_page(en_page, source_lang="en")
+        cn_page = _augment_relic_wiki_page(cn_page, source_lang="cn")
     return en_page, cn_page
 
 

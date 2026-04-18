@@ -725,6 +725,9 @@ class CombatEngine:
             return False
         self.state.card_manager.play_card(resolved_card_index, exhaust=is_exhaust)
 
+        if card.is_power():
+            self._trigger_relic_effects("on_power_played")
+
         if is_exhaust:
             _trigger_exhaust_hooks(self.state.card_manager, self.state.player, card)
 
@@ -1754,6 +1757,9 @@ class CombatEngine:
                 elif trigger_type == "on_card_played":
                     if effect_value in ("on_card_played", "every_n_cards"):
                         should_trigger = True
+                elif trigger_type == "on_power_played":
+                    if effect_value in ("on_power_played",):
+                        should_trigger = True
                 elif trigger_type == "on_exhaust":
                     if effect_value in ("on_exhaust", "on_exhaust_damage_all", "on_exhaust_add_random"):
                         should_trigger = True
@@ -2243,7 +2249,8 @@ class CombatEngine:
                         rng = getattr(self.state, "card_random_rng", None) or self.ai_rng
                         pick = rng.random_int(len(hand) - 1) if rng is not None and len(hand) > 1 else 0
                         card = hand[pick]
-                        card.temporary_cost = 0
+                        card.cost_for_turn = 0
+                        card.is_cost_modified_for_turn = True
 
         elif effect_type == RelicEffectType.MODIFY_WEAK:
             if not hasattr(self.state.player, '_paper_crane_weak_mod'):

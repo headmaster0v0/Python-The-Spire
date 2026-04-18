@@ -8,7 +8,7 @@
       "monster": 62,
       "event": 52
     },
-    "family_count": 212,
+    "family_count": 213,
     "dedicated_entity_count": 32,
     "family_entity_count": 402
   },
@@ -172,6 +172,7 @@
     "relic:free_movement": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
     "relic:gain_gold": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
     "relic:gain_intangible": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_cardplay_deck_and_status_truth",
+    "relic:gain_mantra_per_turn": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
     "relic:gain_max_HP": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_reward_shop_rest_and_pickup_truth",
     "relic:gain_potion": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
     "relic:gold_disabled": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_family_battle_turn_and_resource_truth",
@@ -3085,7 +3086,7 @@
       "entity_type": "relic",
       "entity_id": "Damaru",
       "family_ids": [
-        "relic:every_n_attacks_self"
+        "relic:gain_mantra_per_turn"
       ],
       "proof_kind": "family",
       "notes": ""

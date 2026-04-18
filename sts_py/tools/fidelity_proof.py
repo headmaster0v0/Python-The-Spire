@@ -72,6 +72,7 @@ RELIC_TURN_SIGNATURES = {
     "relic:every_2_turns",
     "relic:every_n_turns",
     "relic:every_n_turns_self",
+    "relic:gain_mantra_per_turn",
 }
 RELIC_CARDPLAY_SIGNATURES = {
     "relic:chance_for_free_attack",

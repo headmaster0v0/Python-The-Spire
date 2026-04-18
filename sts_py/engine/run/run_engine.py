@@ -7217,7 +7217,10 @@ class RunEngine:
         exclude = self._current_relic_ids()
         exclude.update(self._consumed_relic_ids(["common", "uncommon", "rare"]))
         bonus_relics = self._generate_matryoshka_bonus_relics(exclude=exclude)
-        exclude.update(bonus_relics)
+        exclude.update(
+            self._canonical_relic_id(relic_id) or str(relic_id)
+            for relic_id in bonus_relics
+        )
         main_relic = self._generate_main_chest_relic(exclude=exclude)
         self.state.pending_chest_relic_choices = [*bonus_relics]
         if main_relic is not None:
@@ -7566,6 +7569,8 @@ class RunEngine:
         return self.rest(heal_percent=0.3)
 
     def gain_potion(self, potion_id: str) -> bool:
+        if self._has_relic("Sozu"):
+            return False
         for i in range(len(self.state.potions)):
             if self.state.potions[i] == "EmptyPotionSlot":
                 self.state.potions[i] = potion_id
