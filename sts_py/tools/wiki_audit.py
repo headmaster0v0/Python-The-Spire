@@ -7,6 +7,7 @@ import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -17,7 +18,8 @@ from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CARD_ID_ALIASES
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
-from sts_py.engine.run.events import EVENTS_BY_KEY, Event, EventChoice
+from sts_py.engine.run.events import EVENT_ID_BY_KEY, EVENTS_BY_KEY, Event, EventChoice, _resolve_event_key
+from sts_py.engine.run.official_event_strings import get_official_event_strings
 from sts_py.engine.run.official_neow_strings import (
     get_official_neow_event_strings,
     get_official_neow_reward_strings,
@@ -229,6 +231,10 @@ EVENT_WIKI_NAME_ALIASES = {
     "Nest": {"en": ["The Nest"]},
     "Beggar": {"en": ["Old Beggar"]},
     "Back to Basics": {"en": ["Ancient Writing"]},
+    "Designer": {"en": ["Designer In-Spire"], "cn": ["尖端设计师"]},
+    "Match and Keep!": {"en": ["Match and Keep"], "cn": ["对对碰！"]},
+    "Mushrooms": {"en": ["Hypnotizing Colored Mushrooms"]},
+    "SpireHeart": {"en": ["Corrupt Heart"], "cn": ["高塔之心"]},
 }
 
 EVENT_FLOW_FACTS_BY_KEY: dict[str, dict[str, Any]] = {
@@ -320,7 +326,23 @@ MECHANICS_FIELDS_BY_ENTITY = {
     "potion": ["rarity", "character_class", "potency", "sacred_bark_potency", "is_thrown", "effect_signatures"],
     "power": ["power_type", "turn_based", "can_go_negative", "callback_signatures"],
     "monster": ["act", "elite", "boss", "sample_intents", "state_signatures"],
-    "event": ["act", "choice_count", "choices", "choice_effect_signatures", "rng_streams"],
+    "event": [
+        "act",
+        "pool_bucket",
+        "gating_flags",
+        "choice_count",
+        "initial_option_count",
+        "source_description_count",
+        "source_option_count",
+        "flow_kind",
+        "stage_count",
+        "reward_surface",
+        "event_combat_reentry",
+        "dynamic_option_slots",
+        "choices",
+        "choice_effect_signatures",
+        "rng_streams",
+    ],
     "neow": ["screen_count", "reward_option_groups", "rng_streams"],
     "room_type": ["enum_name", "symbol"],
     "ui_term": ["contexts"],
@@ -952,11 +974,134 @@ def _event_choice_effect_kinds(choice: EventChoice) -> list[str]:
     return sorted(set(kinds))
 
 
+@lru_cache(maxsize=8)
+def _event_java_files(repo_root_str: str) -> dict[str, str]:
+    events_root = Path(repo_root_str) / "decompiled_src" / "com" / "megacrit" / "cardcrawl" / "events"
+    mapping: dict[str, str] = {}
+    if not events_root.exists():
+        return mapping
+    for path in events_root.rglob("*.java"):
+        mapping[path.stem] = str(path)
+    return mapping
+
+
+def _event_java_source_path(repo_root: Path, event_key: str) -> Path | None:
+    java_files = _event_java_files(str(repo_root))
+    java_stem = EVENT_ID_BY_KEY.get(event_key, "")
+    source_path = java_files.get(java_stem)
+    return Path(source_path) if source_path else None
+
+
+@lru_cache(maxsize=8)
+def _event_java_pool_inventory(repo_root_str: str) -> dict[str, set[str]]:
+    repo_root = Path(repo_root_str)
+    inventory = {
+        "act1": set(),
+        "act2": set(),
+        "act3": set(),
+        "shrine": set(),
+        "special_one_time": set(),
+    }
+    dungeon_files = {
+        "act1": repo_root / "decompiled_src" / "com" / "megacrit" / "cardcrawl" / "dungeons" / "Exordium.java",
+        "act2": repo_root / "decompiled_src" / "com" / "megacrit" / "cardcrawl" / "dungeons" / "TheCity.java",
+        "act3": repo_root / "decompiled_src" / "com" / "megacrit" / "cardcrawl" / "dungeons" / "TheBeyond.java",
+    }
+    for bucket, path in dungeon_files.items():
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for raw_key in re.findall(r'eventList\.add\("([^"]+)"\);', text):
+            canonical = _resolve_event_key(raw_key)
+            if canonical:
+                inventory[bucket].add(canonical)
+        for raw_key in re.findall(r'shrineList\.add\("([^"]+)"\);', text):
+            canonical = _resolve_event_key(raw_key)
+            if canonical:
+                inventory["shrine"].add(canonical)
+
+    abstract_dungeon = repo_root / "decompiled_src" / "com" / "megacrit" / "cardcrawl" / "dungeons" / "AbstractDungeon.java"
+    if abstract_dungeon.exists():
+        text = abstract_dungeon.read_text(encoding="utf-8", errors="ignore")
+        for raw_key in re.findall(r'specialOneTimeEventList\.add\("([^"]+)"\);', text):
+            canonical = _resolve_event_key(raw_key)
+            if canonical:
+                inventory["special_one_time"].add(canonical)
+    return inventory
+
+
+def _event_java_pool_bucket(repo_root: Path, event_key: str, fallback: str) -> str:
+    inventory = _event_java_pool_inventory(str(repo_root))
+    if event_key in inventory["act1"] or event_key in inventory["act2"] or event_key in inventory["act3"]:
+        return "act_event"
+    if event_key in inventory["shrine"]:
+        return "shrine"
+    if event_key in inventory["special_one_time"]:
+        return "special_one_time"
+    return fallback
+
+
+def _event_java_initial_option_count(repo_root: Path, event_key: str, fallback: int) -> int:
+    source_path = _event_java_source_path(repo_root, event_key)
+    if source_path is None or not source_path.exists():
+        return fallback
+    text = source_path.read_text(encoding="utf-8", errors="ignore")
+    constructor_region = text.split("@Override", 1)[0]
+    count = len(re.findall(r"(?:setDialogOption|addDialogOption)\(", constructor_region))
+    return count if count > 0 else fallback
+
+
+def build_event_java_facts(repo_root: Path, event_key: str, event: Event | None = None) -> dict[str, Any]:
+    repo_root = Path(repo_root)
+    runtime_event = event.clone() if event is not None else EVENTS_BY_KEY[event_key].clone()
+    official = get_official_event_strings(event_key)
+    source_descriptions = list(
+        official.descriptions_en if official is not None and official.descriptions_en
+        else getattr(runtime_event, "source_descriptions", []) or []
+    )
+    source_options = list(
+        official.options_en if official is not None and official.options_en
+        else getattr(runtime_event, "source_options", []) or []
+    )
+    flow = dict(EVENT_FLOW_FACTS_BY_KEY.get(event_key, {}))
+    source_path = _event_java_source_path(repo_root, event_key)
+    return {
+        "source_kind": "decompiled_event_source",
+        "java_path": str(source_path) if source_path is not None else "",
+        "java_class": source_path.stem if source_path is not None else "",
+        "event_key": event_key,
+        "event_id": str(EVENT_ID_BY_KEY.get(event_key, getattr(runtime_event, "event_id", event_key))),
+        "pool_bucket": _event_java_pool_bucket(repo_root, event_key, str(getattr(runtime_event, "pool_bucket", "") or "")),
+        "gating_flags": list(getattr(runtime_event, "gating_flags", []) or []),
+        "act": int(runtime_event.act),
+        "choice_count": len(runtime_event.choices),
+        "initial_option_count": _event_java_initial_option_count(repo_root, event_key, len(runtime_event.choices)),
+        "source_description_count": len(source_descriptions),
+        "source_option_count": len(source_options),
+        "flow_kind": str(flow.get("flow_kind", "single_screen" if len(source_descriptions) <= 1 else "multi_screen")),
+        "stage_count": int(flow.get("stage_count", max(1, len(source_descriptions)))),
+        "reward_surface": str(flow.get("reward_surface", "none")),
+        "event_combat_reentry": bool(flow.get("event_combat_reentry", False)),
+        "dynamic_option_slots": int(flow.get("dynamic_option_slots", max(0, len(source_options) - len(runtime_event.choices)))),
+        "rng_streams": list(EVENT_RNG_STREAMS_BY_KEY.get(event_key, [])),
+        "choice_effect_signatures": build_event_choice_effect_signatures(runtime_event),
+        "choices": [
+            {
+                "index": idx,
+                "gating": _event_choice_gating(choice),
+                "effect_kinds": _event_choice_effect_kinds(choice),
+            }
+            for idx, choice in enumerate(runtime_event.choices)
+        ],
+    }
+
+
 def build_event_source_facts(event: Event) -> dict[str, Any]:
     event_key = str(getattr(event, "event_key", "") or getattr(event, "name", "") or getattr(event, "id", ""))
     source_descriptions = list(getattr(event, "source_descriptions", []) or [])
     source_options = list(getattr(event, "source_options", []) or [])
     flow = dict(EVENT_FLOW_FACTS_BY_KEY.get(event_key, {}))
+    initial_option_count = _event_java_initial_option_count(REPO_ROOT, event_key, len(event.choices))
     return {
         "source_kind": "python_run_source",
         "event_key": event_key,
@@ -965,6 +1110,7 @@ def build_event_source_facts(event: Event) -> dict[str, Any]:
         "gating_flags": list(getattr(event, "gating_flags", []) or []),
         "act": int(event.act),
         "choice_count": len(event.choices),
+        "initial_option_count": initial_option_count,
         "source_description_count": len(source_descriptions),
         "source_option_count": len(source_options),
         "flow_kind": str(flow.get("flow_kind", "single_screen" if len(source_descriptions) <= 1 else "multi_screen")),
@@ -990,6 +1136,20 @@ def build_neow_source_facts() -> dict[str, Any]:
     reward_strings = get_official_neow_reward_strings()
     return {
         "source_kind": "python_run_source",
+        "screen_count": 4,
+        "reward_option_groups": {"mini": 2, "full": 4},
+        "rng_streams": ["neow_rng"],
+        "event_text_count": len(event_strings.text_en),
+        "reward_text_count": len(reward_strings.text_en),
+        "profile_dependencies": ["neow_intro_seen", "spirits", "highest_unlocked_ascension", "last_ascension_level"],
+    }
+
+
+def build_neow_java_facts() -> dict[str, Any]:
+    event_strings = get_official_neow_event_strings()
+    reward_strings = get_official_neow_reward_strings()
+    return {
+        "source_kind": "official_neow_source",
         "screen_count": 4,
         "reward_option_groups": {"mini": 2, "full": 4},
         "rng_streams": ["neow_rng"],
@@ -1028,8 +1188,8 @@ def _generic_en_page_candidates(entity_type: str, entity_id: str, runtime_name_e
     return _unique_nonempty([runtime_name_en, _humanize_identifier(entity_id)])
 
 
-def _generic_cn_page_candidates(runtime_name_cn: str, runtime_name_en: str) -> list[str]:
-    candidates = []
+def _generic_cn_page_candidates(entity_type: str, entity_id: str, runtime_name_cn: str, runtime_name_en: str) -> list[str]:
+    candidates = list(EVENT_WIKI_NAME_ALIASES.get(entity_id, {}).get("cn", [])) if entity_type == "event" else []
     if _looks_cataloged_cn(runtime_name_cn):
         candidates.append(runtime_name_cn)
     if _contains_cjk(runtime_name_en):
@@ -1050,7 +1210,7 @@ def _fetch_entity_wiki_pages(
         return WikiPageSnapshot(), WikiPageSnapshot()
 
     en_candidates = _generic_en_page_candidates(entity_type, entity_id, runtime_name_en)
-    cn_candidates = _generic_cn_page_candidates(runtime_name_cn, runtime_name_en)
+    cn_candidates = _generic_cn_page_candidates(entity_type, entity_id, runtime_name_cn, runtime_name_en)
 
     en_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(EN_SOURCE_ORDER, en_candidates))
     cn_page = WikiPageSnapshot.from_dict(scraper.fetch_page_with_fallback(CN_SOURCE_ORDER, cn_candidates))
@@ -1266,6 +1426,7 @@ def build_cli_raw_snapshot(
 
     for event_id, event in sorted(_event_inventory().items()):
         source_facts = build_event_source_facts(event)
+        java_facts = build_event_java_facts(repo_root, event_id, event)
         runtime_name_en = str(getattr(event, "name", "") or getattr(event, "event_key", "") or event_id)
         runtime_name_cn = translate_event_name(event)
         en_wiki, cn_wiki = (
@@ -1288,7 +1449,7 @@ def build_cli_raw_snapshot(
                 runtime_name_cn=runtime_name_cn,
                 runtime_desc_runtime=_event_runtime_description(event),
                 runtime_facts=source_facts,
-                java_facts=source_facts,
+                java_facts=java_facts,
                 en_wiki=en_wiki,
                 cn_wiki=cn_wiki,
             )
@@ -1298,6 +1459,7 @@ def build_cli_raw_snapshot(
     neow_name_en = str(neow_event_strings.names_en[0] if neow_event_strings.names_en else "Neow")
     neow_name_cn = str(neow_event_strings.names_zhs[0] if neow_event_strings.names_zhs else neow_name_en)
     neow_facts = build_neow_source_facts()
+    neow_java_facts = build_neow_java_facts()
     en_wiki, cn_wiki = (
         _fetch_entity_wiki_pages(
             scraper,
@@ -1318,7 +1480,7 @@ def build_cli_raw_snapshot(
             runtime_name_cn=neow_name_cn,
             runtime_desc_runtime=_neow_runtime_description(),
             runtime_facts=neow_facts,
-            java_facts=neow_facts,
+            java_facts=neow_java_facts,
             en_wiki=en_wiki,
             cn_wiki=cn_wiki,
         )

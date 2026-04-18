@@ -617,6 +617,8 @@ class RunEngine:
 
         event_key = str(getattr(event, "event_key", "") or "")
         event_id = str(getattr(event, "event_id", getattr(event, "id", "")) or "")
+        if event_key == "Golden Shrine Trap" or event_id == "Golden Shrine Trap":
+            return "Golden Shrine Trap"
         return (
             _resolve_event_key(event_key)
             or _resolve_event_key(event_id)
@@ -851,7 +853,23 @@ class RunEngine:
 
     def _prepare_event_for_runtime(self, event: "Event") -> None:
         handler_key = self._event_handler_key(event)
-        if handler_key == "Big Fish":
+        if handler_key == "Dead Adventurer":
+            self._configure_dead_adventurer_event(event)
+        elif handler_key == "Golden Idol":
+            self._configure_golden_idol_event(event)
+        elif handler_key == "Golden Wing":
+            self._configure_golden_wing_event(event)
+        elif handler_key == "World of Goop":
+            self._configure_world_of_goop_event(event)
+        elif handler_key == "Living Wall":
+            self._configure_living_wall_event(event)
+        elif handler_key == "Mushrooms":
+            self._configure_mushrooms_event(event)
+        elif handler_key == "Scrap Ooze":
+            self._configure_scrap_ooze_event(event)
+        elif handler_key == "Shining Light":
+            self._configure_shining_light_event(event)
+        elif handler_key == "Big Fish":
             self._configure_big_fish_event(event)
         elif handler_key == "The Cleric":
             self._configure_cleric_event(event)
@@ -939,6 +957,174 @@ class RunEngine:
             self._configure_bonfire_event(event)
         elif handler_key == "SpireHeart":
             self._configure_spire_heart_event(event)
+
+    def _configure_dead_adventurer_event(self, event: "Event") -> None:
+        if not getattr(self.state, "dead_adventurer_state", None):
+            self.state.dead_adventurer_state = {
+                "searches_done": 0,
+                "rewards_given": {"gold": False, "nothing": False, "relic": False},
+                "encounter_triggered": False,
+                "monster_type": None,
+                "enemy_index": None,
+                "continuation_mode": False,
+            }
+        da_state = self.state.dead_adventurer_state
+        if da_state.get("enemy_index") is None:
+            rng = self._misc_rng()
+            da_state["enemy_index"] = rng.random_int(2) if rng is not None else 0
+
+        enemy_index = int(da_state.get("enemy_index", 0) or 0)
+        if not da_state.get("monster_type"):
+            da_state["monster_type"] = ["3 Sentries", "Gremlin Nob", "Lagavulin Event"][enemy_index]
+
+        if da_state.get("continuation_mode"):
+            self._update_dead_adventurer_choices(event, da_state)
+            return
+
+        encounter_chance = (35 if self.state.ascension >= 15 else 25) + (25 * int(da_state.get("searches_done", 0) or 0))
+        encounter_chance = min(100, encounter_chance)
+        event.description = self._event_desc(event, 2) + self._event_desc(event, 3 + enemy_index) + self._event_desc(event, 6)
+        event.description_cn = self._event_desc(event, 2, cn=True) + self._event_desc(event, 3 + enemy_index, cn=True) + self._event_desc(event, 6, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + str(encounter_chance) + self._event_opt(event, 4),
+                description_cn=self._event_opt(event, 0, cn=True) + str(encounter_chance) + self._event_opt(event, 4, cn=True),
+                encounter_chance=encounter_chance,
+                search_level=1,
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 1, cn=True),
+            ),
+        ]
+
+    def _configure_golden_idol_event(self, event: "Event") -> None:
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True)),
+            self._make_event_choice(description=self._event_opt(event, 1), description_cn=self._event_opt(event, 1, cn=True)),
+        ]
+
+    def _configure_golden_wing_event(self, event: "Event") -> None:
+        from sts_py.engine.content.card_instance import CardInstance
+
+        can_attack = False
+        for card_id in self.state.deck:
+            try:
+                card = CardInstance(card_id)
+            except Exception:
+                continue
+            if card.card_type.value == "ATTACK" and int(getattr(card, "base_damage", 0) or 0) >= 10:
+                can_attack = True
+                break
+
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + "7" + self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 0, cn=True) + "7" + self._event_opt(event, 1, cn=True),
+                requires_card_removal=True,
+            ),
+            self._make_event_choice(
+                description=(self._event_opt(event, 2) + "50" + self._event_opt(event, 3) + "80" + self._event_opt(event, 4)) if can_attack else (self._event_opt(event, 5) + "10" + self._event_opt(event, 6)),
+                description_cn=(self._event_opt(event, 2, cn=True) + "50" + self._event_opt(event, 3, cn=True) + "80" + self._event_opt(event, 4, cn=True)) if can_attack else (self._event_opt(event, 5, cn=True) + "10" + self._event_opt(event, 6, cn=True)),
+                enabled=can_attack,
+                requires_attack_card=can_attack,
+            ),
+            self._make_event_choice(description=self._event_opt(event, 7), description_cn=self._event_opt(event, 7, cn=True)),
+        ]
+
+    def _configure_world_of_goop_event(self, event: "Event") -> None:
+        state = self._event_state()
+        gold_loss = int(state.get("gold_loss", 0) or 0)
+        if gold_loss <= 0:
+            gold_min, gold_max = (35, 75) if self.state.ascension >= 15 else (20, 50)
+            rng = self._misc_rng()
+            gold_loss = rng.random_int(gold_max - gold_min) + gold_min if rng is not None else gold_min
+            gold_loss = min(gold_loss, self.state.player_gold)
+            state["gold_loss"] = gold_loss
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + "75" + self._event_opt(event, 1) + "11" + self._event_opt(event, 2),
+                description_cn=self._event_opt(event, 0, cn=True) + "75" + self._event_opt(event, 1, cn=True) + "11" + self._event_opt(event, 2, cn=True),
+                gain_gold=75,
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 3) + str(gold_loss) + self._event_opt(event, 4),
+                description_cn=self._event_opt(event, 3, cn=True) + str(gold_loss) + self._event_opt(event, 4, cn=True),
+            ),
+        ]
+
+    def _configure_living_wall_event(self, event: "Event") -> None:
+        purgeable_cards = [
+            card_id for card_id in self.state.deck
+            if self._canonical_card_id(card_id) not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}
+        ]
+        has_upgradable = any(self._upgrade_card(card_id) is not None for card_id in self.state.deck)
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0),
+                description_cn=self._event_opt(event, 0, cn=True),
+                enabled=bool(purgeable_cards),
+                requires_card_removal=bool(purgeable_cards),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 1, cn=True),
+                enabled=bool(purgeable_cards),
+                requires_card_transform=bool(purgeable_cards),
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 2) if has_upgradable else self._event_opt(event, 7),
+                description_cn=self._event_opt(event, 2, cn=True) if has_upgradable else self._event_opt(event, 7, cn=True),
+                enabled=has_upgradable,
+                requires_card_upgrade=has_upgradable,
+            ),
+        ]
+
+    def _configure_mushrooms_event(self, event: "Event") -> None:
+        heal_amt = max(1, self.state.player_max_hp // 4)
+        event.description = self._event_desc(event, 2)
+        event.description_cn = self._event_desc(event, 2, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0),
+                description_cn=self._event_opt(event, 0, cn=True),
+                trigger_combat=True,
+                combat_enemies=["FungiBeast", "FungiBeast", "FungiBeast"],
+            ),
+            self._make_event_choice(
+                description=self._event_opt(event, 1) + str(heal_amt) + self._event_opt(event, 2),
+                description_cn=self._event_opt(event, 1, cn=True) + str(heal_amt) + self._event_opt(event, 2, cn=True),
+            ),
+        ]
+
+    def _configure_scrap_ooze_event(self, event: "Event") -> None:
+        if not getattr(self.state, "scrap_ooze_state", None):
+            self.state.scrap_ooze_state = {"attempts": 0}
+        self._update_scrap_ooze_choices(event, self.state.scrap_ooze_state)
+
+    def _configure_shining_light_event(self, event: "Event") -> None:
+        import math
+
+        damage = int(math.floor(self.state.player_max_hp * (0.3 if self.state.ascension >= 15 else 0.2) + 0.5))
+        has_upgradable = any(self._upgrade_card(card_id) is not None for card_id in self.state.deck)
+        event.description = self._event_desc(event, 0)
+        event.description_cn = self._event_desc(event, 0, cn=True)
+        event.choices = [
+            self._make_event_choice(
+                description=self._event_opt(event, 0) + str(damage) + self._event_opt(event, 1) if has_upgradable else self._event_opt(event, 3),
+                description_cn=self._event_opt(event, 0, cn=True) + str(damage) + self._event_opt(event, 1, cn=True) if has_upgradable else self._event_opt(event, 3, cn=True),
+                enabled=has_upgradable,
+            ),
+            self._make_event_choice(description=self._event_opt(event, 2), description_cn=self._event_opt(event, 2, cn=True)),
+        ]
 
     def _configure_addict_event(self, event: "Event") -> None:
         gold_required = 85
@@ -6066,6 +6252,7 @@ class RunEngine:
                 "rewards_given": {"gold": False, "nothing": False, "relic": False},
                 "encounter_triggered": False,
                 "monster_type": None,
+                "enemy_index": None,
                 "continuation_mode": False,
             }
 
@@ -6074,29 +6261,7 @@ class RunEngine:
         if da_state.get("encounter_triggered"):
             return {"success": False, "reason": "encounter_in_progress"}
 
-        if da_state.get("continuation_mode"):
-            if choice_index == 0:
-                if da_state["searches_done"] >= 3:
-                    self._current_event = None
-                    self.state.dead_adventurer_state = {}
-                    self.state.phase = RunPhase.MAP
-                    return {"success": True, "action": "max_searches_reached"}
-                return self._do_dead_adventurer_search(event, da_state)
-            elif choice_index == 1:
-                self.state.event_choices.append({
-                    "floor": self.state.floor,
-                    "event_id": event.id,
-                    "choice_index": choice_index,
-                    "choice_text": "Leave",
-                })
-                self._current_event = None
-                self.state.dead_adventurer_state = {}
-                self.state.phase = RunPhase.MAP
-                return {"success": True, "action": "left", "rewards_obtained": da_state["rewards_given"]}
-            else:
-                return {"success": False, "reason": "invalid_choice"}
-
-        if choice_index == 3:
+        if choice_index == 1:
             self.state.event_choices.append({
                 "floor": self.state.floor,
                 "event_id": event.id,
@@ -6108,41 +6273,46 @@ class RunEngine:
             self.state.phase = RunPhase.MAP
             return {"success": True, "action": "left", "rewards_obtained": da_state["rewards_given"]}
 
-        if choice_index not in [0, 1, 2] or choice_index != da_state["searches_done"]:
-            return {"success": False, "reason": "must_search_in_order"}
+        if choice_index != 0:
+            return {"success": False, "reason": "invalid_choice"}
 
         return self._do_dead_adventurer_search(event, da_state)
 
     def _do_dead_adventurer_search(self, event: "Event", da_state: dict) -> dict[str, Any]:
-        choice = event.get_choice(da_state["searches_done"])
+        choice = event.get_choice(0)
         if choice is None:
             return {"success": False, "reason": "invalid_choice"}
 
-        encounter_chance = choice.encounter_chance
+        encounter_chance = int(choice.encounter_chance or ((35 if self.state.ascension >= 15 else 25) + 25 * int(da_state.get("searches_done", 0) or 0)))
 
         roll = self._misc_rng().random_int(99) if self._misc_rng() is not None else 0
         if roll < encounter_chance:
             da_state["encounter_triggered"] = True
             da_state["searches_done"] += 1
-            variant_idx = self._misc_rng().random_int(2) if self._misc_rng() is not None else 0
-            monsters = ["Sentry", "GremlinNob", "LegSweeper"]
-            da_state["monster_type"] = monsters[variant_idx]
+            enemy_index = int(da_state.get("enemy_index", 0) or 0)
+            encounter_names = ["3 Sentries", "Gremlin Nob", "Lagavulin Event"]
+            encounter_monsters = [
+                ["Sentry", "Sentry", "Sentry"],
+                ["GremlinNob"],
+                ["Lagavulin Event"],
+            ]
+            da_state["monster_type"] = encounter_names[enemy_index]
             self.state.event_choices.append({
                 "floor": self.state.floor,
                 "event_id": event.id,
-                "choice_index": da_state["searches_done"] - 1,
+                "choice_index": 0,
                 "choice_text": f"Search (encounter: {da_state['monster_type']})",
             })
             self._current_event = None
             self.state.dead_adventurer_state = {}
             missing_rewards = [k for k, v in da_state["rewards_given"].items() if not v]
             self._set_current_event_combat(
-                enemies=[da_state["monster_type"]],
+                enemies=encounter_monsters[enemy_index],
                 bonus_reward=None,
                 pending_event_rewards=missing_rewards,
                 is_elite_combat=True,
             )
-            self.start_combat_with_monsters([da_state["monster_type"]])
+            self.start_combat_with_monsters(encounter_monsters[enemy_index])
             return {
                 "success": True,
                 "action": "encounter",
@@ -6157,7 +6327,7 @@ class RunEngine:
                 self.state.event_choices.append({
                     "floor": self.state.floor,
                     "event_id": event.id,
-                    "choice_index": da_state["searches_done"],
+                    "choice_index": 0,
                     "choice_text": "Search (all rewards taken)",
                 })
                 self._current_event = None
@@ -6167,24 +6337,31 @@ class RunEngine:
             reward = available_rewards[self._misc_rng().random_int(len(available_rewards) - 1) if self._misc_rng() is not None else 0]
             da_state["rewards_given"][reward] = True
             reward_result = {}
+            description_idx = 8
             if reward == "gold":
                 self.state.player_gold += 30
                 self._pending_gold_reward += 30
                 reward_result = {"type": "gold", "amount": 30}
+                description_idx = 7
             elif reward == "relic":
                 relic_id = self._grant_random_relic(source=RelicSource.EVENT)
                 reward_result = {"type": "relic", "id": relic_id}
+                description_idx = 9
             else:
                 reward_result = {"type": "nothing"}
             da_state["searches_done"] += 1
+            event.description = self._event_desc(event, description_idx)
+            event.description_cn = self._event_desc(event, description_idx, cn=True)
             self.state.event_choices.append({
                 "floor": self.state.floor,
                 "event_id": event.id,
-                "choice_index": da_state["searches_done"] - 1,
+                "choice_index": 0,
                 "choice_text": f"Search (got: {reward})",
             })
 
             if da_state["searches_done"] >= 3:
+                event.description = self._event_desc(event, 10)
+                event.description_cn = self._event_desc(event, 10, cn=True)
                 self._current_event = None
                 self.state.dead_adventurer_state = {}
                 self.state.phase = RunPhase.MAP
@@ -6210,17 +6387,18 @@ class RunEngine:
         from sts_py.engine.run.events import EventChoice
 
         searches_done = da_state["searches_done"]
+        encounter_chance = min(100, (35 if self.state.ascension >= 15 else 25) + searches_done * 25)
         event.choices = [
             EventChoice(
-                description=f"[Continue] Search again. {25 + searches_done * 25}% chance to encounter.",
-                description_cn=f"[继续] 寻找东西。{25 + searches_done * 25}%：遇见回来的怪物。",
+                description=self._event_opt(event, 3) + str(encounter_chance) + self._event_opt(event, 4),
+                description_cn=self._event_opt(event, 3, cn=True) + str(encounter_chance) + self._event_opt(event, 4, cn=True),
                 effects=[],
-                encounter_chance=25 + searches_done * 25,
+                encounter_chance=encounter_chance,
                 search_level=searches_done + 1,
             ),
             EventChoice(
-                description="[Leave] You leave silently with your rewards.",
-                description_cn="[离开] 你带着奖励一声不发地离开了。",
+                description=self._event_opt(event, 1),
+                description_cn=self._event_opt(event, 1, cn=True),
                 effects=[]
             ),
         ]
@@ -6262,33 +6440,46 @@ class RunEngine:
 
     def _create_golden_shrine_trap_event(self) -> "Event":
         from sts_py.engine.run.events import Event, EventChoice, EventEffect, EventEffectType
+        from sts_py.engine.run.official_event_strings import get_official_event_strings
+
+        official = get_official_event_strings("Golden Idol")
+        descriptions_en = list(official.descriptions_en) if official is not None else []
+        descriptions_cn = list(official.descriptions_zhs) if official is not None else []
+        options_en = list(official.options_en) if official is not None else []
+        options_cn = list(official.options_zhs) if official is not None else []
+        damage_pct = 35 if self.state.ascension >= 15 else 25
+        max_hp_pct = 10 if self.state.ascension >= 15 else 8
 
         trap_event = Event(
             id="Golden Shrine Trap",
-            name="Golden Shrine Trap",
-            name_cn="金神像陷阱",
+            name="Golden Idol",
+            name_cn=str(getattr(official, "name_zhs", "") or "Golden Idol"),
             event_key="Golden Shrine Trap",
             pool_bucket="special",
-            description="A massive boulder rolls toward you!",
-            description_cn="一块巨大的圆石向你滚来！",
+            description=descriptions_en[1] if len(descriptions_en) > 1 else "A massive boulder rolls toward you!",
+            description_cn=descriptions_cn[1] if len(descriptions_cn) > 1 else "",
+            source_descriptions=descriptions_en,
+            source_descriptions_cn=descriptions_cn,
+            source_options=options_en,
+            source_options_cn=options_cn,
             choices=[
                 EventChoice(
-                    description="[Run] Get cursed with Injury. Run away!",
+                    description=options_en[2] if len(options_en) > 2 else "[Run] Get cursed with Injury. Run away!",
                     description_cn="[逃跑] 被诅咒——受伤。快跑！",
                     effects=[],
                 ),
                 EventChoice(
-                    description="[Smash] Lose 25% HP. Attack the boulder!",
+                    description=(options_en[3] + str(damage_pct) + options_en[4]) if len(options_en) > 4 else f"[Smash] Lose {damage_pct}% HP. Attack the boulder!",
                     description_cn="[砸烂] 失去25%生命。你用尽全力向巨石发起了攻击。",
                     effects=[
-                        EventEffect(EventEffectType.LOSE_HP_PERCENT, amount=25),
+                        EventEffect(EventEffectType.LOSE_HP_PERCENT, amount=damage_pct),
                     ],
                 ),
                 EventChoice(
-                    description="[Hide] Lose 8% Max HP. The boulder grazes you.",
+                    description=(options_en[5] + str(max_hp_pct) + options_en[6]) if len(options_en) > 6 else f"[Hide] Lose {max_hp_pct}% Max HP. The boulder grazes you.",
                     description_cn="[躲藏] 失去8%最大生命。咕叽！巨石滚过时压到了你一点。",
                     effects=[
-                        EventEffect(EventEffectType.LOSE_MAX_HP_PERCENT, amount=8),
+                        EventEffect(EventEffectType.LOSE_MAX_HP_PERCENT, amount=max_hp_pct),
                     ],
                 ),
             ],
@@ -6335,7 +6526,8 @@ class RunEngine:
             return {"success": False, "reason": "invalid_choice"}
 
         if choice_index == 1:
-            gold_lost = self._misc_rng().random_int(30) + 20 if self._misc_rng() is not None else 20
+            state = self._event_state()
+            gold_lost = int(state.get("gold_loss", 20) or 20)
             gold_lost = min(gold_lost, self.state.player_gold)
             self.state.player_gold -= gold_lost
             result = {"action": "leave", "gold_lost": gold_lost}
@@ -6513,6 +6705,7 @@ class RunEngine:
             return {"success": False, "reason": "invalid_choice"}
 
         if choice_index == 0:
+            reward_relic = "Circlet" if self._has_relic("OddMushroom") else "OddMushroom"
             self.state.event_choices.append({
                 "floor": self.state.floor,
                 "event_id": event.id,
@@ -6522,8 +6715,8 @@ class RunEngine:
             self._current_event = None
             self._set_current_event_combat(
                 enemies=choice.combat_enemies,
-                bonus_reward=choice.combat_reward,
-                pending_event_rewards=[],
+                bonus_reward=reward_relic,
+                pending_event_rewards=["gold_range:20:30"],
                 is_elite_combat=False,
             )
             self.start_combat_with_monsters(choice.combat_enemies)
@@ -6531,7 +6724,7 @@ class RunEngine:
                 "success": True,
                 "action": "combat",
                 "enemies": choice.combat_enemies,
-                "bonus_reward": choice.combat_reward,
+                "bonus_reward": reward_relic,
                 "is_event_combat": True,
             }
         elif choice_index == 1:
@@ -6576,7 +6769,7 @@ class RunEngine:
             return {"success": False, "reason": "invalid_choice"}
 
         attempts = so_state["attempts"]
-        base_damage = 3
+        base_damage = 5 if self.state.ascension >= 15 else 3
         base_chance = 25
 
         damage = base_damage + attempts
@@ -6632,24 +6825,31 @@ class RunEngine:
         from sts_py.engine.run.events import EventChoice
 
         attempts = so_state["attempts"]
-        new_damage = 3 + attempts
+        base_damage = 5 if self.state.ascension >= 15 else 3
+        new_damage = base_damage + attempts
         new_chance = 25 + (10 * attempts)
+        description_idx = 0 if attempts == 0 else 1
+        option_idx = 0 if attempts == 0 else 4
+        event.description = self._event_desc(event, description_idx)
+        event.description_cn = self._event_desc(event, description_idx, cn=True)
         event.choices = [
             EventChoice(
-                description=f"[Reach In Again] Lose {new_damage} HP. {new_chance}% chance to find a relic.",
-                description_cn=f"[接着往里伸] 失去{new_damage}生命。{new_chance}%：找到一件遗物。",
+                description=self._event_opt(event, option_idx) + str(new_damage) + self._event_opt(event, 1) + str(new_chance) + self._event_opt(event, 2),
+                description_cn=self._event_opt(event, option_idx, cn=True) + str(new_damage) + self._event_opt(event, 1, cn=True) + str(new_chance) + self._event_opt(event, 2, cn=True),
                 effects=[],
-                base_damage=3,
+                base_damage=base_damage,
                 base_chance=25,
             ),
             EventChoice(
-                description="[Leave] The slime continues digesting. You leave.",
-                description_cn="[离开] 史莱姆并不在意，接着慢慢消化它的美餐。你决定离开。",
+                description=self._event_opt(event, 3),
+                description_cn=self._event_opt(event, 3, cn=True),
                 effects=[]
             ),
         ]
 
     def _handle_shining_light(self, choice_index: int) -> dict[str, Any]:
+        import math
+
         event = self._current_event
         if event is None:
             return {"success": False, "reason": "no_event"}
@@ -6703,8 +6903,8 @@ class RunEngine:
                     self.state.deck[card_idx] = upgraded_card
                     upgraded_cards.append(card_id)
 
-        lose_hp_percent = 20
-        lose_hp = int(self.state.player_max_hp * lose_hp_percent / 100)
+        lose_hp_percent = 30 if self.state.ascension >= 15 else 20
+        lose_hp = int(math.floor(self.state.player_max_hp * (lose_hp_percent / 100.0) + 0.5))
         self.state.player_hp -= lose_hp
         survival_result = self._check_survival_relics(lose_hp)
 

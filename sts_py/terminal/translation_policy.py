@@ -29,6 +29,18 @@ ALIGNMENT_STATUSES = {
 }
 
 
+def _canonical_entity_id(entity_type: str, entity_id: str) -> str:
+    canonical_type = str(entity_type or "").strip()
+    canonical_id = str(entity_id or "").strip()
+    if canonical_type != "event" or not canonical_id:
+        return canonical_id
+    try:
+        from sts_py.engine.run.events import _resolve_event_key
+    except Exception:
+        return canonical_id
+    return str(_resolve_event_key(canonical_id) or canonical_id)
+
+
 @dataclass(frozen=True)
 class TranslationPolicyEntry:
     entity_type: str
@@ -42,7 +54,7 @@ class TranslationPolicyEntry:
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> "TranslationPolicyEntry":
         entity_type = str(data.get("entity_type", "") or "").strip()
-        entity_id = str(data.get("entity_id", "") or "").strip()
+        entity_id = _canonical_entity_id(entity_type, str(data.get("entity_id", "") or "").strip())
         alignment_status = str(data.get("alignment_status", "") or "").strip()
         if entity_type not in VISIBLE_ENTITY_TYPES:
             raise ValueError(f"unknown translation policy entity_type: {entity_type!r}")
@@ -105,7 +117,9 @@ def load_translation_policy_entries() -> dict[tuple[str, str], TranslationPolicy
 
 
 def get_translation_policy_entry(entity_type: str, entity_id: str) -> TranslationPolicyEntry | None:
-    return load_translation_policy_entries().get((str(entity_type), str(entity_id)))
+    canonical_type = str(entity_type)
+    canonical_id = _canonical_entity_id(canonical_type, str(entity_id))
+    return load_translation_policy_entries().get((canonical_type, canonical_id))
 
 
 def translation_policy_entity_ids_by_type() -> dict[str, list[str]]:
