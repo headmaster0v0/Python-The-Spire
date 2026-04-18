@@ -9,8 +9,8 @@
       "event": 52
     },
     "family_count": 213,
-    "dedicated_entity_count": 32,
-    "family_entity_count": 402
+    "dedicated_entity_count": 49,
+    "family_entity_count": 385
   },
   "family_tests": {
     "event:choose_card_to_remove": "tests/test_phase269_monster_event_shop_truth.py::test_phase269_event_choice_family_card_and_resource_truth",
@@ -278,12 +278,29 @@
     "power:Rupture": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
     "power:Rushdown": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
     "power:StaticDischarge": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_power_dedicated_bespoke_truth",
+    "relic:Astrolabe": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_rng_relics_match_fixed_seed_truth",
     "relic:BlackStar": "tests/test_phase267_dynamic_truth.py::test_phase267_reward_mutation_family_keeps_prayer_wheel_and_black_star_live",
+    "relic:BustedCrown": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_question_card_busted_crown_and_prayer_wheel_stack",
+    "relic:CallingBell": "tests/test_run_layer_relic_fidelity.py::test_calling_bell_adds_curse_and_three_extra_relics",
+    "relic:CursedKey": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cursed_key_and_matryoshka_preserve_bonus_relics_when_taking_sapphire_key",
+    "relic:LizardTail": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cross_relic_callbacks_and_modifiers_remain_live",
     "relic:MagicFlower": "tests/test_phase267_dynamic_truth.py::test_phase267_potion_and_relic_callback_family_remains_live",
+    "relic:Matryoshka": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cursed_key_and_matryoshka_preserve_bonus_relics_when_taking_sapphire_key",
+    "relic:MummifiedHand": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_rng_relics_match_fixed_seed_truth",
+    "relic:PandoraBox": "tests/test_run_layer_relic_fidelity.py::test_pandora_box_transforms_all_strikes_and_defends",
+    "relic:PaperCrane": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cross_relic_callbacks_and_modifiers_remain_live",
+    "relic:PaperFrog": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cross_relic_callbacks_and_modifiers_remain_live",
     "relic:PrayerWheel": "tests/test_phase267_dynamic_truth.py::test_phase267_reward_mutation_family_keeps_prayer_wheel_and_black_star_live",
+    "relic:QuestionCard": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_question_card_busted_crown_and_prayer_wheel_stack",
     "relic:SacredBark": "tests/test_phase269_relic_potion_power_truth.py::test_phase269_relic_and_potion_dedicated_bespoke_truth",
     "relic:SmilingMask": "tests/test_phase267_dynamic_truth.py::test_phase267_shop_lane_keeps_courier_restock_and_smiling_mask_remove_truth",
-    "relic:TheCourier": "tests/test_phase267_dynamic_truth.py::test_phase267_shop_lane_keeps_courier_restock_and_smiling_mask_remove_truth"
+    "relic:SneckoSkull": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cross_relic_callbacks_and_modifiers_remain_live",
+    "relic:Sozu": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_sozu_blocks_potion_gain_from_relic_rewards",
+    "relic:TheCourier": "tests/test_phase267_dynamic_truth.py::test_phase267_shop_lane_keeps_courier_restock_and_smiling_mask_remove_truth",
+    "relic:TheSpecimen": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_cross_relic_callbacks_and_modifiers_remain_live",
+    "relic:TinyHouse": "tests/test_run_layer_relic_fidelity.py::test_tiny_house_applies_full_pickup_bundle",
+    "relic:WarPaint": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_rng_relics_match_fixed_seed_truth",
+    "relic:Whetstone": "tests/test_relic_truth_matrix.py::test_relic_truth_matrix_rng_relics_match_fixed_seed_truth"
   },
   "entities": [
     {
@@ -2796,7 +2813,7 @@
       "family_ids": [
         "relic:on_pickup"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -2933,7 +2950,7 @@
         "relic:card_reward_reduce",
         "relic:start_with_energy"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -2951,7 +2968,7 @@
       "family_ids": [
         "relic:on_pickup"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3079,7 +3096,7 @@
         "relic:on_chest_open",
         "relic:start_with_energy"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3461,7 +3478,7 @@
       "family_ids": [
         "relic:on_death_save"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3507,7 +3524,7 @@
       "family_ids": [
         "relic:chest_relics"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3588,7 +3605,7 @@
       "family_ids": [
         "relic:on_power_played"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3751,7 +3768,7 @@
       "family_ids": [
         "relic:on_pickup"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3769,7 +3786,7 @@
       "family_ids": [
         "relic:modify_weak"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3778,7 +3795,7 @@
       "family_ids": [
         "relic:modify_vulnerable"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -3878,7 +3895,7 @@
       "family_ids": [
         "relic:extra_card_reward"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4052,7 +4069,7 @@
       "family_ids": [
         "relic:on_poison_applied"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4062,7 +4079,7 @@
         "relic:potion_gain_disabled",
         "relic:start_with_energy"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4179,7 +4196,7 @@
       "family_ids": [
         "relic:on_enemy_death_poison_transfer"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4220,7 +4237,7 @@
         "relic:on_pickup",
         "relic:upgrade_random"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4338,7 +4355,7 @@
       "family_ids": [
         "relic:on_pickup"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {
@@ -4356,7 +4373,7 @@
       "family_ids": [
         "relic:on_pickup"
       ],
-      "proof_kind": "family",
+      "proof_kind": "dedicated",
       "notes": ""
     },
     {

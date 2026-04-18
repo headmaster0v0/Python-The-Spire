@@ -2644,6 +2644,7 @@ class RunEngine:
         elif reward_type == "THREE_ENEMY_KILL":
             self.state.neow_blessing = True
             self.state.neow_blessing_remaining = 3
+            self.state.relic_counters["NeowsLament"] = 3
             if "NeowsLament" not in self.state.relics:
                 self.state.relics.append("NeowsLament")
                 self._record_relic_history("NeowsLament", source=RelicSource.NEOW)
@@ -3109,6 +3110,7 @@ class RunEngine:
         consume_neow_relic = False
         if neow_active:
             self.state.neow_blessing_remaining -= 1
+            self.state.relic_counters["NeowsLament"] = max(0, self.state.neow_blessing_remaining)
             if self.state.neow_blessing_remaining <= 0:
                 self.state.neow_blessing = False
                 consume_neow_relic = True
@@ -3705,6 +3707,9 @@ class RunEngine:
         relic_def = get_relic_by_id(relic_id)
         if relic_def is None:
             return []
+
+        if relic_def.initial_counter is not None and relic_def.id not in self.state.relic_counters:
+            self.state.relic_counters[relic_def.id] = int(relic_def.initial_counter)
 
         applied: list[dict[str, Any]] = []
         for effect in relic_def.effects:
@@ -6872,6 +6877,10 @@ class RunEngine:
             if str(normalize_relic_id(relic_id) or relic_id) == target:
                 return True
         return False
+
+    def _mark_maw_bank_used(self) -> None:
+        if self._has_relic("MawBank"):
+            self.state.relic_counters["MawBank"] = -2
 
     def _handle_face_trader(self, choice_index: int) -> dict[str, Any]:
         event = self._current_event

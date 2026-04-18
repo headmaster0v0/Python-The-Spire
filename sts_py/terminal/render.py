@@ -12,6 +12,7 @@ from sts_py.engine.run.run_engine import RoomType
 from sts_py.terminal.catalog import (
     _looks_presentable_text,
     _looks_sane_translation,
+    build_relic_contexts_from_engine,
     card_requires_target,
     get_card_info,
     get_potion_info,
@@ -556,10 +557,15 @@ def render_card_detail_lines(card_id: str, *, index: int | None = None) -> list[
     return lines
 
 
-def render_relic_lines(relic_ids: Iterable[str]) -> list[str]:
+def render_relic_lines(
+    relic_ids: Iterable[str],
+    *,
+    relic_contexts: dict[str, dict[str, Any]] | None = None,
+) -> list[str]:
     lines: list[str] = []
     for idx, relic_id in enumerate(relic_ids):
-        name, description = get_relic_info(relic_id)
+        context = dict((relic_contexts or {}).get(str(relic_id), {}))
+        name, description = get_relic_info(relic_id, relic_context=context or None)
         suffix = f" - {description}" if description else ""
         lines.append(f"[{idx}] {name} ({relic_id}){suffix}")
     return lines
@@ -574,7 +580,11 @@ def render_potion_lines(potion_ids: Iterable[str]) -> list[str]:
     return lines
 
 
-def render_reward_lines(pending: dict[str, Any]) -> list[str]:
+def render_reward_lines(
+    pending: dict[str, Any],
+    *,
+    relic_contexts: dict[str, dict[str, Any]] | None = None,
+) -> list[str]:
     lines: list[str] = []
     if pending["gold"]:
         lines.append(f"[g] 查看金币奖励：{pending['gold']}")
@@ -589,7 +599,8 @@ def render_reward_lines(pending: dict[str, Any]) -> list[str]:
             relics = [str(pending["relic"])]
         lines.append("[r] 查看遗物奖励：")
         for relic_id in relics:
-            relic_name, relic_desc = get_relic_info(relic_id)
+            context = dict((relic_contexts or {}).get(str(relic_id), {}))
+            relic_name, relic_desc = get_relic_info(relic_id, relic_context=context or None)
             desc_suffix = f" | {relic_desc}" if relic_desc else ""
             lines.append(f"    {relic_name} ({relic_id}){desc_suffix}")
     if pending["cards"]:
@@ -615,11 +626,16 @@ def render_shop_card_lines(cards: list[dict[str, Any]]) -> tuple[list[str], list
     return lines, inspect_card_ids
 
 
-def render_shop_relic_lines(relics: list[dict[str, Any]]) -> list[str]:
+def render_shop_relic_lines(
+    relics: list[dict[str, Any]],
+    *,
+    relic_contexts: dict[str, dict[str, Any]] | None = None,
+) -> list[str]:
     lines: list[str] = []
     for item in relics:
         relic_id = str(item["relic_id"])
-        name, description = get_relic_info(relic_id)
+        context = dict((relic_contexts or {}).get(relic_id, {}))
+        name, description = get_relic_info(relic_id, relic_context=context or None)
         afford_text = "" if item.get("affordable") else " [金币不足]"
         desc_suffix = f" | {description}" if description else ""
         lines.append(f"r{item['index']}: {name} ({relic_id}) - {item['price']}G{afford_text}{desc_suffix}")
@@ -677,10 +693,15 @@ def describe_event_card_choice(pending_choice: dict[str, Any] | None) -> str:
     return f"事件选牌 - 选择要{action}的牌"
 
 
-def render_boss_relic_lines(relic_ids: Iterable[str]) -> list[str]:
+def render_boss_relic_lines(
+    relic_ids: Iterable[str],
+    *,
+    relic_contexts: dict[str, dict[str, Any]] | None = None,
+) -> list[str]:
     lines: list[str] = []
     for idx, relic_id in enumerate(relic_ids):
-        name, description = get_relic_info(relic_id)
+        context = dict((relic_contexts or {}).get(str(relic_id), {}))
+        name, description = get_relic_info(relic_id, relic_context=context or None)
         desc_suffix = f" | {description}" if description else ""
         lines.append(f"[{idx}] {name} ({relic_id}){desc_suffix}")
     return lines
@@ -690,10 +711,12 @@ def render_treasure_relic_lines(
     relic_ids: Iterable[str],
     *,
     pending_main_relic_id: str | None = None,
+    relic_contexts: dict[str, dict[str, Any]] | None = None,
 ) -> list[str]:
     lines: list[str] = []
     for idx, relic_id in enumerate(relic_ids):
-        name, description = get_relic_info(relic_id)
+        context = dict((relic_contexts or {}).get(str(relic_id), {}))
+        name, description = get_relic_info(relic_id, relic_context=context or None)
         main_tag = " [主遗物]" if relic_id == pending_main_relic_id else ""
         desc_suffix = f" | {description}" if description else ""
         lines.append(f"[{idx}] {name} ({relic_id}){main_tag}{desc_suffix}")

@@ -7,6 +7,7 @@ from sts_py.tools import wiki_audit
 
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "wiki_audit" / "sample_raw_snapshot.json"
+RELIC_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "wiki_audit" / "relic_raw_snapshot.json"
 
 
 def _load_fixture() -> dict:
@@ -129,6 +130,44 @@ def test_refresh_offline_writes_outputs_without_network(monkeypatch, tmp_path: P
         wiki_audit.FIX_QUEUE_FILENAME,
     ):
         assert (tmp_path / filename).exists()
+
+
+def test_build_cli_raw_snapshot_supports_relic_only_filter() -> None:
+    raw_snapshot = wiki_audit.build_cli_raw_snapshot(
+        Path.cwd(),
+        enable_network=False,
+        entity_types={"relic"},
+    )
+
+    assert raw_snapshot["entity_types"] == ["relic"]
+    assert set(raw_snapshot["runtime_inventory"]) == {"relic"}
+    assert set(raw_snapshot["source_inventory"]) == {"relic"}
+    assert set(raw_snapshot["catalog_overrides"]) == {"relic"}
+    assert all(record["entity_type"] == "relic" for record in raw_snapshot["records"])
+    assert len(raw_snapshot["records"]) == 179
+
+
+def test_relic_only_audit_command_writes_outputs_from_checked_in_fixture(tmp_path: Path) -> None:
+    exit_code = wiki_audit.main(
+        [
+            "audit",
+            "--repo-root",
+            str(Path.cwd()),
+            "--raw-snapshot",
+            str(RELIC_FIXTURE_PATH),
+            "--entity-types",
+            "relic",
+            "--output-dir",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    raw_snapshot = json.loads((tmp_path / wiki_audit.RAW_SNAPSHOT_FILENAME).read_text(encoding="utf-8"))
+    assert raw_snapshot["entity_types"] == ["relic"]
+    assert set(raw_snapshot["runtime_inventory"]) == {"relic"}
+    assert set(raw_snapshot["source_inventory"]) == {"relic"}
+    assert all(record["entity_type"] == "relic" for record in raw_snapshot["records"])
 
 
 def test_phase252_offline_audit_closes_remaining_runtime_card_tail() -> None:

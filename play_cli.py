@@ -16,6 +16,7 @@ from sts_py.terminal.catalog import (
     translate_room_type,
 )
 from sts_py.terminal.render import (
+    build_relic_contexts_from_engine,
     clear_screen,
     describe_event_card_choice,
     describe_neow_card_choice,
@@ -90,7 +91,7 @@ def _show_deck(engine: RunEngine) -> None:
 
 
 def _show_relics(engine: RunEngine) -> None:
-    _show_lines("遗物", render_relic_lines(engine.state.relics))
+    _show_lines("遗物", render_relic_lines(engine.state.relics, relic_contexts=build_relic_contexts_from_engine(engine)))
 
 
 def _show_potions(engine: RunEngine) -> None:

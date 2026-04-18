@@ -16,12 +16,16 @@ from sts_py.engine.monsters.intent import MonsterIntent
 from sts_py.engine.monsters.monster_base import MonsterBase, MonsterMove
 from sts_py.engine.run.run_engine import MapNode, RoomType, RunEngine, RunPhase
 from sts_py.tools.relic_truth_matrix import (
+    DATA_TRUTH_KINDS,
+    HIGH_RISK_RUNTIME_RELIC_IDS,
     PICKUP_RNG_RELIC_IDS,
-    PRIMARY_PROOF_KINDS,
     RELIC_TRUTH_MATRIX_PATH,
+    RUNTIME_TRUTH_KINDS,
     SCENARIO_NODEIDS,
     build_relic_truth_matrix,
 )
+from sts_py.terminal.translation_policy import get_translation_policy_entry
+from sts_py.tools.wiki_audit import build_relic_source_facts
 from tests.log_helpers import require_checked_in_fixture
 
 
@@ -214,7 +218,8 @@ def test_relic_truth_matrix_is_complete_and_decision_filled(generated_matrix: di
 
     assert len(entities) == 179
     assert matrix_ids == set(ALL_RELICS)
-    assert set(generated_matrix["summary"]["proof_kind_counts"]).issubset(set(PRIMARY_PROOF_KINDS))
+    assert set(generated_matrix["summary"]["data_truth_kind_counts"]).issubset(set(DATA_TRUTH_KINDS))
+    assert set(generated_matrix["summary"]["runtime_truth_kind_counts"]).issubset(set(RUNTIME_TRUTH_KINDS))
 
     for row in entities:
         assert row["runtime_id"] in ALL_RELICS
@@ -228,12 +233,15 @@ def test_relic_truth_matrix_is_complete_and_decision_filled(generated_matrix: di
         assert row["official_desc_zhs"]
         assert row["wiki_en_url"]
         assert row["wiki_cn_url"]
+        assert isinstance(row["wiki_status"], str)
+        assert isinstance(row["wiki_conflict_fields"], list)
         assert isinstance(row["spawn_rules"], dict)
         assert isinstance(row["rng_streams"], list)
         assert row["effect_signatures"]
-        assert row["primary_proof_kind"] in PRIMARY_PROOF_KINDS
-        assert row["proof_test_nodeid"]
-        assert row["required_scenarios"]
+        assert row["data_truth_kind"] in DATA_TRUTH_KINDS
+        assert row["runtime_truth_kind"] in RUNTIME_TRUTH_KINDS
+        assert row["data_proof_nodeids"]
+        assert isinstance(row["runtime_proof_nodeids"], list)
         assert isinstance(row["resolution_notes"], str)
 
 
@@ -242,24 +250,77 @@ def test_relic_truth_matrix_registry_references_real_tests(generated_matrix: dic
         _assert_nodeid_exists(str(nodeid))
 
     for row in generated_matrix["entities"]:
-        _assert_nodeid_exists(str(row["proof_test_nodeid"]))
-        for scenario in row["required_scenarios"]:
-            assert scenario in generated_matrix["scenario_nodeids"]
+        for nodeid in row["data_proof_nodeids"]:
+            _assert_nodeid_exists(str(nodeid))
+        for nodeid in row["runtime_proof_nodeids"]:
+            _assert_nodeid_exists(str(nodeid))
 
 
-def test_relic_truth_matrix_primary_proof_kinds_have_real_backing(generated_matrix: dict[str, object]) -> None:
+def test_relic_truth_matrix_high_risk_runtime_rows_are_not_static_only(generated_matrix: dict[str, object]) -> None:
+    rows = {row["runtime_id"]: row for row in generated_matrix["entities"]}
+
+    for relic_id in HIGH_RISK_RUNTIME_RELIC_IDS:
+        row = rows[relic_id]
+        assert row["runtime_truth_kind"] in {"combat_runtime", "run_runtime"}
+        assert row["runtime_proof_nodeids"]
+
+
+def test_relic_truth_matrix_dual_track_proofs_have_real_backing(generated_matrix: dict[str, object]) -> None:
     for row in generated_matrix["entities"]:
-        proof_kind = str(row["primary_proof_kind"])
-        if proof_kind == "pickup_rng":
+        data_truth_kind = str(row["data_truth_kind"])
+        runtime_truth_kind = str(row["runtime_truth_kind"])
+
+        if data_truth_kind == "pickup_rng":
             assert row["rng_streams"] or row["runtime_id"] in PICKUP_RNG_RELIC_IDS
-        elif proof_kind == "stateful_text_ui":
+        elif data_truth_kind == "stateful_text_ui":
             assert row["stateful_description_variants"] or row["ui_prompt_slots"]
-        elif proof_kind == "spawn_rule_static":
+        elif data_truth_kind == "spawn_rule_static":
             assert row["spawn_rules"]
-        elif proof_kind in {"combat_runtime", "run_runtime"}:
-            assert row["effect_signatures"]
+        elif data_truth_kind == "manifest_overlay":
+            assert row["truth_sources"]
         else:
-            raise AssertionError(f"unexpected proof kind {proof_kind}")
+            raise AssertionError(f"unexpected data truth kind {data_truth_kind}")
+
+        if row["effect_signatures"]:
+            assert runtime_truth_kind != "none"
+            assert row["runtime_proof_nodeids"]
+        else:
+            assert runtime_truth_kind == "none"
+
+
+def test_relic_truth_matrix_data_truth_rows_match_runtime_source_facts(generated_matrix: dict[str, object]) -> None:
+    row_map = {row["runtime_id"]: row for row in generated_matrix["entities"]}
+
+    for relic_id, relic_def in ALL_RELICS.items():
+        row = row_map[relic_id]
+        source_facts = build_relic_source_facts(relic_def)
+
+        assert row["official_id"] == str(source_facts.get("official_id", "") or relic_id)
+        assert row["class_name"] == str(source_facts.get("class_name", "") or "")
+        assert row["tier"] == str(source_facts.get("tier", "") or "")
+        assert row["character_class"] == str(source_facts.get("character_class", "") or "")
+        assert row["official_name_en"] == str(source_facts.get("display_name_en", "") or "")
+        assert row["official_name_zhs"] == str(getattr(relic_def, "name_zhs", "") or getattr(relic_def, "name", "") or "")
+        assert row["official_desc_en"] == str(source_facts.get("default_description_en", "") or "")
+        assert row["official_desc_zhs"] == str(source_facts.get("default_description_zhs", "") or "")
+        assert row["spawn_rules"] == json.loads(json.dumps(dict(source_facts.get("spawn_rules") or {}), ensure_ascii=False))
+        assert row["rng_streams"] == list(source_facts.get("rng_notes") or [])
+        assert row["effect_signatures"] == list(source_facts.get("effect_signatures") or [])
+        assert row["truth_sources"] == json.loads(json.dumps(dict(source_facts.get("truth_sources") or {}), ensure_ascii=False))
+
+
+def test_relic_truth_matrix_wiki_status_and_resolution_notes_follow_translation_policy(generated_matrix: dict[str, object]) -> None:
+    for row in generated_matrix["entities"]:
+        policy = get_translation_policy_entry("relic", row["runtime_id"])
+        assert policy is not None
+        assert row["wiki_status"] == policy.alignment_status
+        if policy.alignment_status == "wiki_missing":
+            assert row["wiki_conflict_fields"] == ["page_missing"]
+            assert row["resolution_notes"]
+        elif policy.alignment_status == "approved_alias":
+            assert "approved_alias" in row["wiki_conflict_fields"]
+        else:
+            assert row["wiki_conflict_fields"] == []
 
 
 def test_relic_truth_matrix_stateful_text_and_ui_rows_match_manifest_truth(generated_matrix: dict[str, object]) -> None:
@@ -268,7 +329,7 @@ def test_relic_truth_matrix_stateful_text_and_ui_rows_match_manifest_truth(gener
     assert generated_matrix["summary"]["ui_prompt_relic_count"] == 11
 
     for row in entities:
-        if row["primary_proof_kind"] != "stateful_text_ui":
+        if row["data_truth_kind"] != "stateful_text_ui":
             continue
         relic_def = ALL_RELICS[row["runtime_id"]]
         assert row["stateful_description_variants"] == json.loads(json.dumps(list(relic_def.stateful_description_variants), ensure_ascii=False))
@@ -276,7 +337,7 @@ def test_relic_truth_matrix_stateful_text_and_ui_rows_match_manifest_truth(gener
 
 
 def test_relic_truth_matrix_spawn_rule_static_rows_match_manifest_filters(generated_matrix: dict[str, object]) -> None:
-    rows = [row for row in generated_matrix["entities"] if row["primary_proof_kind"] == "spawn_rule_static"]
+    rows = [row for row in generated_matrix["entities"] if row["data_truth_kind"] == "spawn_rule_static"]
 
     assert rows
     for row in rows:

@@ -556,6 +556,7 @@ class ShopEngine:
             return {"success": False, "reason": "not_enough_gold"}
 
         self.run_engine.state.player_gold -= item.price
+        self.run_engine._mark_maw_bank_used()
         self.run_engine.state.deck.append(item.item_id)
         self.purchased_cards.append(item.item_id)
 
@@ -784,6 +785,7 @@ class ShopEngine:
             return {"success": False, "reason": "not_enough_gold"}
 
         self.run_engine.state.player_gold -= item.price
+        self.run_engine._mark_maw_bank_used()
         acquired = self.run_engine._acquire_relic(
             item.item_id,
             source=RelicSource.SHOP,
@@ -821,6 +823,7 @@ class ShopEngine:
             return {"success": False, "reason": "not_enough_gold"}
 
         self.run_engine.state.player_gold -= price
+        self.run_engine._mark_maw_bank_used()
         from sts_py.engine.run.events import _apply_parasite_penalty
         _apply_parasite_penalty(self.run_engine.state, card_id)
         self.run_engine.state.deck.remove(card_id)
@@ -862,6 +865,7 @@ class ShopEngine:
             return {"success": False, "reason": "not_enough_gold"}
 
         self.run_engine.state.player_gold -= item.price
+        self.run_engine._mark_maw_bank_used()
         if self.run_engine.gain_potion(item.item_id):
             self.purchased_potions.append(item.item_id)
             replacement_potion = None

@@ -211,6 +211,56 @@ def test_render_treasure_relic_lines_include_main_marker_and_description() -> No
     assert lines == ["[0] 锚 (Anchor) [主遗物] | 每场战斗开始时获得10点格挡。"]
 
 
+def test_render_relic_surfaces_can_use_stateful_contexts() -> None:
+    inventory_lines = render.render_relic_lines(
+        ["Omamori"],
+        relic_contexts={"Omamori": {"counter": 1, "owned": True}},
+    )
+    shop_lines = render.render_shop_relic_lines(
+        [{"index": 0, "relic_id": "BottledFlame", "price": 250, "affordable": True}],
+        relic_contexts={"BottledFlame": {"selected_card_name": "愤怒"}},
+    )
+    boss_lines = render.render_boss_relic_lines(
+        ["NeowsLament"],
+        relic_contexts={"NeowsLament": {"counter": 0, "used_up": True, "owned": True}},
+    )
+    treasure_lines = render.render_treasure_relic_lines(
+        ["NeowsLament"],
+        relic_contexts={"NeowsLament": {"counter": 2, "owned": True}},
+    )
+
+    assert inventory_lines == ["[0] 御守 (Omamori) - 抵消你下一次获得的诅咒。"]
+    assert shop_lines == ["r0: 瓶装火焰 (BottledFlame) - 250G | 在每场战斗开始时，将 愤怒 放入你的手牌。"]
+    assert boss_lines == ["[0] 涅奥的悲恸 (NeowsLament) | 这个祝福已经耗尽。"]
+    assert treasure_lines == ["[0] 涅奥的悲恸 (NeowsLament) | 接下来2场战斗中的敌人将只有1点生命。"]
+
+
+def test_build_relic_contexts_from_engine_surfaces_runtime_counter_and_curse_state() -> None:
+    engine = RunEngine.create("TESTRELICCONTEXTS", ascension=0)
+    engine.state.relics = ["NeowsLament", "DuVuDoll", "MawBank"]
+    engine.state.neow_blessing_remaining = 2
+    engine.state.relic_counters["MawBank"] = -2
+    engine.state.deck.append("Regret")
+
+    contexts = render.build_relic_contexts_from_engine(engine)
+
+    assert contexts["NeowsLament"]["counter"] == 2
+    assert contexts["NeowsLament"]["used_up"] is False
+    assert contexts["DuVuDoll"]["curse_count"] >= 1
+    assert contexts["MawBank"]["used_up"] is True
+
+
+def test_show_relics_uses_runtime_stateful_contexts(capsys) -> None:
+    engine = RunEngine.create("TESTSHOWRELICS", ascension=0)
+    engine.state.relics = ["NeowsLament"]
+    engine.state.neow_blessing_remaining = 2
+
+    play_cli._show_relics(engine)
+    output = capsys.readouterr().out
+
+    assert "接下来2场战斗中的敌人将只有1点生命。" in output
+
+
 def test_handle_boss_relic_choice_uses_chinese_title_and_prompt(monkeypatch, capsys) -> None:
     engine = RunEngine.create("TESTPHASE254BOSSRELIC", ascension=0)
     engine.state.phase = RunPhase.VICTORY
