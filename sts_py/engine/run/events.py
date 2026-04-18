@@ -13,7 +13,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Callable
 
 from sts_py.engine.content.relics import RelicSource
-from sts_py.engine.run.official_event_strings import apply_official_event_strings
+from sts_py.engine.run.official_event_strings import apply_official_event_strings, get_official_event_strings
 
 if TYPE_CHECKING:
     from sts_py.engine.run.run_engine import RunEngine
@@ -2257,6 +2257,17 @@ def _apply_event_truth_overrides(event: Event) -> None:
         event.name = "Spire Heart"
         event.description = "The Spire Heart pulses before you as the run reaches its final threshold."
         event.choices = [EventChoice(description="[Continue] Face the Heart.")]
+
+    official = get_official_event_strings(str(getattr(event, "event_key", "") or getattr(event, "id", "") or ""))
+    if official is not None:
+        if official.name_en:
+            event.name = official.name_en
+        if official.name_zhs:
+            event.name_cn = official.name_zhs
+        if official.descriptions_en:
+            event.description = official.descriptions_en[0]
+        if official.descriptions_zhs:
+            event.description_cn = official.descriptions_zhs[0]
 
 
 def build_event(event_key: str, event_rng: Any | None = None) -> Event:

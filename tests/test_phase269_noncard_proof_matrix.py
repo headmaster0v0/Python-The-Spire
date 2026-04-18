@@ -65,7 +65,7 @@ def test_phase269_fidelity_audit_requires_noncard_proof_coverage_to_be_green(
     assert summary["known_approximations_count"] == 0
     assert summary["noncard_proof_uncovered"] == 0
     assert summary["noncard_signature_mismatches"] == 0
-    assert noncard_summary["entity_count"] == 433
+    assert noncard_summary["entity_count"] == 434
     assert noncard_summary["noncard_proof_uncovered"] == 0
     assert noncard_summary["signature_mismatches"] == 0
     assert noncard_summary["stale_matrix_entries"] == 0

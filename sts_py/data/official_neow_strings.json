@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "records": {
+    "Neow Event": {
+      "eng": {
+        "names": [
+          "Neow"
+        ],
+        "text": [
+          "~Greetings...~ NL ~I..~ ~am~ ~Neow...~",
+          "~Hello...~ NL ~Again..~",
+          "~Greetings...~",
+          "~Another~ NL ~try...?~",
+          "~Reach~ ~the~ ~boss...~ NL ~to~ ~receive~ ~more..~ ~blessings...~",
+          "~At~ ~least...~ ~confront~ NL ~the~ ~first~ ~boss...~",
+          "~I~ ~brought~ ~you~ ~back...~",
+          "~Choose...~",
+          "~Granted...~",
+          "~Risk...~ NL ~..reward....~",
+          "~Time~ ~for~ ~a~ NL ~CHALLENGE...~",
+          "Rewards",
+          "~Let's~ ~keep~ ~going...~",
+          "~It~ ~only~ ~gets~ ~harder...~",
+          "~Impressive...~ ~more...~",
+          "Cursed!",
+          "Scatterbrain!",
+          "Transformation!"
+        ],
+        "options": [
+          "[Continue]",
+          "[Talk]",
+          "[Skip]",
+          "[Leave]",
+          "Choose 10 cards to add to your deck."
+        ],
+        "unique_rewards": []
+      },
+      "zhs": {
+        "names": [
+          "涅奥"
+        ],
+        "text": [
+          "~你好……~ NL ~我是…~ ~涅奥~……~",
+          "~你又…~ NL ~来啦……~",
+          "~你好……~",
+          "~还想~ NL ~再来……？~",
+          "~见到~ ~Boss...~ NL ~就能获得~ ~更多…~ ~祝福……~",
+          "~至少…~ ~也要见到~ NL ~第一个~ ~Boss~ ~吧……~",
+          "~我把你~ ~带回来了……~",
+          "~选择……~",
+          "~实现了……~",
+          "~风险……~ NL ~与回报……~",
+          "~来试试~ NL ~挑战~ ~吧……~",
+          "奖励",
+          "~让我们~ ~继续~ ~吧……~",
+          "~只会~ ~越来~ ~越难……~",
+          "~了不起……~ ~继续……~",
+          "诅咒！",
+          "杂念！",
+          "转化！"
+        ],
+        "options": [
+          "[继续]",
+          "[对话]",
+          "[跳过]",
+          "[离开]",
+          "选择10张牌加入你的牌组。"
+        ],
+        "unique_rewards": []
+      }
+    },
+    "Neow Reward": {
+      "eng": {
+        "names": [],
+        "text": [
+          "[ #gChoose #ga #gCard #gto #gobtain ]",
+          "[ #gObtain #ga #grandom #grare #gCard ]",
+          "[ #gRemove #ga #gCard #gfrom #gyour #gdeck ]",
+          "[ #gUpgrade #ga #gCard ]",
+          "[ #gTransform #ga #gCard ]",
+          "[ #gObtain #g3 #grandom #gPotions ]",
+          "[ #gObtain #ga #grandom #gcommon #gRelic ]",
+          "[ #gMax #gHP #g+",
+          "[ #gObtain #g",
+          " #gGold ]",
+          "#gRemove #g2 #gCards ]",
+          "#gObtain #ga #grandom #grare #gRelic ]",
+          "#gChoose #ga #grare #gCard #gto #gobtain ]",
+          "#gGain #g",
+          " #gGold ]",
+          "#gTransform #g2 #gCards ]",
+          "#gMax #gHP #g+",
+          "[ #rLose #r",
+          " #rMax #rHP ",
+          "[ #rLose #rall #rGold ",
+          "[ #rObtain #ra #rCurse ",
+          "[ #rTake #r",
+          "Choose a Card",
+          "Select a Card to Remove",
+          "Select 2 Cards to Remove",
+          "Select a Card to Transform",
+          "Select 2 Cards to Transform",
+          "Select a Card to Upgrade",
+          "[ #gEnemies #gin #gyour #gnext #gthree #gcombats #ghave #g1 #gHP ]",
+          " #rdamage",
+          "[ #gChoose #ga #gcolorless #gCard #gto #gobtain ]",
+          "#gChoose #ga #grare #gcolorless #gCard #gto #gobtain ]"
+        ],
+        "options": [],
+        "unique_rewards": [
+          "[ #rLose #ryour #rstarting #rRelic #gObtain #ga #grandom #gboss #gRelic ]"
+        ]
+      },
+      "zhs": {
+        "names": [],
+        "text": [
+          "[ #g选择并获得一张牌 ]",
+          "[ #g随机获得一张稀有牌 ]",
+          "[ #g从牌组中移除一张牌 ]",
+          "[ #g升级一张牌 ]",
+          "[ #g变化一张牌 ]",
+          "[ #g获得 #g3 #g瓶药水 ]",
+          "[ #g随机获得一个普通遗物 ]",
+          "[ #g最大生命值 #g+",
+          "[ #g获得 #g",
+          " #g金币 ]",
+          "#g去除 #g2 #g张牌 ]",
+          "#g获得一个稀有遗物 ]",
+          "#g选择并获得一张稀有牌 ]",
+          "#g获得 #g",
+          " #g金币 ]",
+          "#g变化 #g2 #g张牌 ]",
+          "#g最大生命 #g+",
+          "[ #r失去 #r",
+          " #r最大生命。 ",
+          "[ #r失去所有金币。 ",
+          "[ #r得到一张诅咒牌。 ",
+          "[ #r受到 #r",
+          "选一张牌",
+          "选择移除一张牌",
+          "选择移除两张牌",
+          "选择变化一张牌",
+          "选择变化两张牌",
+          "选择升级一张牌",
+          "[ #g接下来 #g3 #g场战斗中的敌人将只有 #g1 #g点生命 ]",
+          " #r点伤害。",
+          "[ #g选择并获得一张无色牌 ]",
+          "#g选择并获得一张稀有无色牌 ]"
+        ],
+        "options": [],
+        "unique_rewards": [
+          "[ #r失去你的初始遗物， #g获得一件随机Boss遗物。 ]"
+        ]
+      }
+    }
+  }
+}

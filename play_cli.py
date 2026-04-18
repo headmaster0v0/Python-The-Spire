@@ -271,6 +271,10 @@ def handle_neow(engine: RunEngine, reached_boss: bool = False) -> None:
         _print_title("涅奥")
         print(render_status_line(engine))
         print_separator("-")
+        neow_body = str(getattr(engine.state, "neow_body_cn", "") or getattr(engine.state, "neow_body", "") or "").strip()
+        if neow_body:
+            print(neow_body)
+            print_separator("-")
 
         pending_choice = getattr(engine.state, "pending_neow_choice", None)
         if pending_choice:

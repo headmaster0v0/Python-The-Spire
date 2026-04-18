@@ -88,7 +88,7 @@ def test_phase273_wheel_of_change_remove_card_result_uses_real_remove_prompt(mon
     engine.state.phase = RunPhase.EVENT
     engine.state.deck = ["Strike", "Bash"]
     engine._set_current_event(build_event("Wheel of Change"))
-    monkeypatch.setattr(engine.state.rng.event_rng, "random_int", lambda upper: 4)
+    monkeypatch.setattr(engine.state.rng.misc_rng, "random_int", lambda upper: 4)
 
     first = engine.choose_event_option(0)
     second = engine.choose_event_option(0)

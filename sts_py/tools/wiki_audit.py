@@ -18,6 +18,10 @@ from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
 from sts_py.engine.run.events import EVENTS_BY_KEY, Event, EventChoice
+from sts_py.engine.run.official_neow_strings import (
+    get_official_neow_event_strings,
+    get_official_neow_reward_strings,
+)
 from sts_py.engine.run.run_engine import RoomType, _monster_factory_registry
 from sts_py.terminal.catalog import (
     card_requires_target,
@@ -63,6 +67,7 @@ ENTITY_TYPES = (
     "power",
     "monster",
     "event",
+    "neow",
     "room_type",
     "ui_term",
 )
@@ -254,6 +259,49 @@ EVENT_FLOW_FACTS_BY_KEY: dict[str, dict[str, Any]] = {
     "SpireHeart": {"flow_kind": "terminal_transition", "stage_count": 4, "reward_surface": "act_transition_or_death", "event_combat_reentry": False, "dynamic_option_slots": 0},
 }
 
+EVENT_FLOW_FACTS_BY_KEY = {
+    **EVENT_FLOW_FACTS_BY_KEY,
+    "Addict": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_or_none", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Back to Basics": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "remove_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Bonfire Elementals": {"flow_kind": "card_select_result", "stage_count": 3, "reward_surface": "sacrifice_boon", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Dead Adventurer": {"flow_kind": "looping_search_or_event_combat", "stage_count": 4, "reward_surface": "gold_or_relic_or_event_combat", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Designer": {"flow_kind": "multi_screen", "stage_count": 4, "reward_surface": "deck_services", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Drug Dealer": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "card_transform_or_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Duplicator": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "duplicate_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Falling": {"flow_kind": "multi_screen", "stage_count": 2, "reward_surface": "remove_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Idol": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "relic_and_trap", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Shrine": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_gold_and_curse", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Golden Wing": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "gold_or_card_remove", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Lab": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "potions", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Living Wall": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "remove_or_transform_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "MindBloom": {"flow_kind": "event_combat_or_result", "stage_count": 2, "reward_surface": "combat_or_gold_or_heal_or_upgrade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Mushrooms": {"flow_kind": "event_combat_or_result", "stage_count": 2, "reward_surface": "event_combat_or_heal", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Mysterious Sphere": {"flow_kind": "event_combat_or_multi_screen", "stage_count": 3, "reward_surface": "rare_relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "N'loth": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_swap", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Purifier": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "remove_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Scrap Ooze": {"flow_kind": "looping_search", "stage_count": 4, "reward_surface": "relic", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "SecretPortal": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "boss_jump", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Shining Light": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "upgrades", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Joust": {"flow_kind": "multi_screen", "stage_count": 3, "reward_surface": "gold", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "The Woman in Blue": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "potions", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Transmorgrifier": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "transform_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "Upgrade Shrine": {"flow_kind": "card_select_result", "stage_count": 2, "reward_surface": "upgrade_card", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "WeMeetAgain": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "relic_trade", "event_combat_reentry": False, "dynamic_option_slots": 0},
+    "World of Goop": {"flow_kind": "result_screen", "stage_count": 2, "reward_surface": "gold_or_gold_loss", "event_combat_reentry": False, "dynamic_option_slots": 0},
+}
+
+EVENT_RNG_STREAMS_BY_KEY: dict[str, list[str]] = {event_key: [] for event_key in EVENTS_BY_KEY}
+for event_key in {"Big Fish", "Addict", "Dead Adventurer", "Cursed Tome", "The Mausoleum", "MindBloom"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("relic_rng")
+for event_key in {"World of Goop", "Golden Wing", "Living Wall", "Scrap Ooze", "Shining Light", "Designer", "FaceTrader", "Drug Dealer", "The Joust", "Mysterious Sphere", "SensoryStone", "The Mausoleum", "WeMeetAgain", "N'loth", "Transmorgrifier", "Dead Adventurer", "MindBloom", "Falling", "Cursed Tome", "Wheel of Change"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("misc_rng")
+for event_key in {"Scrap Ooze", "Masked Bandits"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("treasure_rng")
+for event_key in {"The Woman in Blue", "Lab"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("potion_rng")
+for event_key in {"Transmorgrifier", "Living Wall"}:
+    EVENT_RNG_STREAMS_BY_KEY[event_key].append("card_random_rng")
+
 CATALOG_OVERRIDE_SOURCES = {
     "card": lambda: set(getattr(terminal_catalog, "CARD_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("card", [])),
     "relic": lambda: set(getattr(terminal_catalog, "RELIC_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("relic", [])),
@@ -261,6 +309,7 @@ CATALOG_OVERRIDE_SOURCES = {
     "monster": lambda: set(getattr(terminal_catalog, "MONSTER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("monster", [])),
     "power": lambda: set(getattr(terminal_catalog, "POWER_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("power", [])),
     "event": lambda: set(getattr(terminal_catalog, "EVENT_NAME_OVERRIDES", {}).keys()) | set(translation_policy_entity_ids_by_type().get("event", [])),
+    "neow": lambda: set(),
     "room_type": lambda: set(translation_policy_entity_ids_by_type().get("room_type", [])),
     "ui_term": lambda: set(translation_policy_entity_ids_by_type().get("ui_term", [])),
 }
@@ -271,7 +320,8 @@ MECHANICS_FIELDS_BY_ENTITY = {
     "potion": ["rarity", "character_class", "potency", "sacred_bark_potency", "is_thrown", "effect_signatures"],
     "power": ["power_type", "turn_based", "can_go_negative", "callback_signatures"],
     "monster": ["act", "elite", "boss", "sample_intents", "state_signatures"],
-    "event": ["act", "choice_count", "choices", "choice_effect_signatures"],
+    "event": ["act", "choice_count", "choices", "choice_effect_signatures", "rng_streams"],
+    "neow": ["screen_count", "reward_option_groups", "rng_streams"],
     "room_type": ["enum_name", "symbol"],
     "ui_term": ["contexts"],
 }
@@ -922,6 +972,7 @@ def build_event_source_facts(event: Event) -> dict[str, Any]:
         "reward_surface": str(flow.get("reward_surface", "none")),
         "event_combat_reentry": bool(flow.get("event_combat_reentry", False)),
         "dynamic_option_slots": int(flow.get("dynamic_option_slots", max(0, len(source_options) - len(event.choices)))),
+        "rng_streams": list(EVENT_RNG_STREAMS_BY_KEY.get(event_key, [])),
         "choice_effect_signatures": build_event_choice_effect_signatures(event),
         "choices": [
             {
@@ -931,6 +982,20 @@ def build_event_source_facts(event: Event) -> dict[str, Any]:
             }
             for idx, choice in enumerate(event.choices)
         ],
+    }
+
+
+def build_neow_source_facts() -> dict[str, Any]:
+    event_strings = get_official_neow_event_strings()
+    reward_strings = get_official_neow_reward_strings()
+    return {
+        "source_kind": "python_run_source",
+        "screen_count": 4,
+        "reward_option_groups": {"mini": 2, "full": 4},
+        "rng_streams": ["neow_rng"],
+        "event_text_count": len(event_strings.text_en),
+        "reward_text_count": len(reward_strings.text_en),
+        "profile_dependencies": ["neow_intro_seen", "spirits", "highest_unlocked_ascension", "last_ascension_level"],
     }
 
 
@@ -1009,6 +1074,17 @@ def _event_runtime_description(event: Event) -> str:
     return " | ".join(snippets)
 
 
+def _neow_runtime_description() -> str:
+    event_strings = get_official_neow_event_strings()
+    reward_strings = get_official_neow_reward_strings()
+    snippets = [
+        str(event_strings.text_zhs[0] if event_strings.text_zhs else event_strings.text_en[0] if event_strings.text_en else "").strip(),
+        str(reward_strings.text_zhs[28] if len(reward_strings.text_zhs) > 28 else "").strip(),
+        str(reward_strings.unique_rewards_zhs[0] if reward_strings.unique_rewards_zhs else reward_strings.unique_rewards_en[0] if reward_strings.unique_rewards_en else "").strip(),
+    ]
+    return " | ".join(text for text in snippets if text)
+
+
 def _source_inventory_from_repo(repo_root: Path) -> dict[str, list[str]]:
     return {
         "card": sorted(_decompiled_card_runtime_inventory(repo_root)),
@@ -1017,6 +1093,7 @@ def _source_inventory_from_repo(repo_root: Path) -> dict[str, list[str]]:
         "power": sorted(power_id for power_id, _ in _power_class_inventory()),
         "monster": sorted(_monster_inventory().keys()),
         "event": sorted(_event_inventory().keys()),
+        "neow": ["NeowEvent"],
         "room_type": sorted(room_type.name for room_type in RoomType),
         "ui_term": sorted(CLI_UI_TERMS.keys()),
     }
@@ -1216,6 +1293,36 @@ def build_cli_raw_snapshot(
                 cn_wiki=cn_wiki,
             )
         )
+
+    neow_event_strings = get_official_neow_event_strings()
+    neow_name_en = str(neow_event_strings.names_en[0] if neow_event_strings.names_en else "Neow")
+    neow_name_cn = str(neow_event_strings.names_zhs[0] if neow_event_strings.names_zhs else neow_name_en)
+    neow_facts = build_neow_source_facts()
+    en_wiki, cn_wiki = (
+        _fetch_entity_wiki_pages(
+            scraper,
+            entity_type="neow",
+            entity_id="NeowEvent",
+            runtime_name_en=neow_name_en,
+            runtime_name_cn=neow_name_cn,
+            enable_network=enable_network,
+        )
+        if scraper is not None
+        else (WikiPageSnapshot(), WikiPageSnapshot())
+    )
+    records.append(
+        RawEntitySnapshot(
+            entity_type="neow",
+            entity_id="NeowEvent",
+            runtime_name_en=neow_name_en,
+            runtime_name_cn=neow_name_cn,
+            runtime_desc_runtime=_neow_runtime_description(),
+            runtime_facts=neow_facts,
+            java_facts=neow_facts,
+            en_wiki=en_wiki,
+            cn_wiki=cn_wiki,
+        )
+    )
 
     for room_type in RoomType:
         runtime_name_en = _humanize_identifier(room_type.name.title())

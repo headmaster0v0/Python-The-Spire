@@ -21,6 +21,19 @@ from sts_py.engine.combat.combat_state import Player
 from sts_py.engine.core.rng import MutableRNG
 from sts_py.engine.content.cards_min import STARTER_DECK_CARD_IDS
 from sts_py.engine.content.relics import RelicSource, get_starter_relic_pool
+from sts_py.engine.run.official_neow_strings import (
+    get_official_neow_event_strings,
+    get_official_neow_reward_strings,
+)
+from sts_py.engine.run.player_profile import (
+    LEGACY_NOTE_FOR_YOURSELF_PATH,
+    PLAYER_PROFILE_PATH,
+    CharacterProgress,
+    NoteForYourselfProfile,
+    PlayerProfile,
+    load_player_profile,
+    save_player_profile,
+)
 from sts_py.engine.run.run_rng import RunRngState
 
 if TYPE_CHECKING:
@@ -62,7 +75,7 @@ CHARACTER_STARTING_STATS: dict[str, dict[str, int]] = {
     "WATCHER": {"hp": 72, "max_hp": 72, "gold": 99},
 }
 
-NOTE_FOR_YOURSELF_PREFS_PATH = Path.home() / ".sts_py_note_for_yourself.json"
+NOTE_FOR_YOURSELF_PREFS_PATH = LEGACY_NOTE_FOR_YOURSELF_PATH
 
 
 def _new_relic_pool_consumed() -> dict[str, list[str]]:
@@ -172,6 +185,13 @@ class RunState:
     dead_adventurer_state: dict[str, Any] = field(default_factory=dict)
     current_event_combat: dict[str, Any] | None = None
     note_for_yourself_payload: dict[str, Any] = field(default_factory=dict)
+    character_spirits: int = 0
+    highest_unlocked_ascension: int = 1
+    last_ascension_level: int = 1
+    neow_intro_seen: bool = False
+    neow_screen: str = ""
+    neow_body: str = ""
+    neow_body_cn: str = ""
     spire_heart_meta: dict[str, Any] = field(default_factory=dict)
     neow_options: list[dict[str, Any]] = field(default_factory=list)
     pending_neow_choice: dict[str, Any] | None = None
@@ -222,6 +242,13 @@ class RunState:
             "pending_card_choice": self.pending_card_choice,
             "current_event_combat": self.current_event_combat,
             "note_for_yourself_payload": self.note_for_yourself_payload,
+            "character_spirits": self.character_spirits,
+            "highest_unlocked_ascension": self.highest_unlocked_ascension,
+            "last_ascension_level": self.last_ascension_level,
+            "neow_intro_seen": self.neow_intro_seen,
+            "neow_screen": self.neow_screen,
+            "neow_body": self.neow_body,
+            "neow_body_cn": self.neow_body_cn,
             "spire_heart_meta": self.spire_heart_meta,
             "neow_options": self.neow_options,
             "pending_neow_choice": self.pending_neow_choice,
@@ -481,6 +508,7 @@ class RunEngine:
     ai_rng: MutableRNG
     hp_rng: MutableRNG
     _neow_rng: MutableRNG | None = None
+    _player_profile: PlayerProfile | None = None
     _pending_gold_reward: int = 0
     _pending_potion_reward: str | None = None
     _pending_relic_reward: str | None = None
@@ -494,6 +522,8 @@ class RunEngine:
         seed = seed_string_to_long(seed_string)
         rng = RunRngState.generate_seeds(seed)
         character_key = character_class.upper()
+        player_profile = load_player_profile(path=PLAYER_PROFILE_PATH, legacy_note_path=NOTE_FOR_YOURSELF_PREFS_PATH)
+        character_progress = player_profile.character_progress(character_key)
         starting_stats = CHARACTER_STARTING_STATS.get(character_key, CHARACTER_STARTING_STATS["IRONCLAD"])
         starter_deck = list(STARTER_DECK_CARD_IDS.get(character_key, STARTER_DECK_CARD_IDS["IRONCLAD"]))
         starter_relic_pool = get_starter_relic_pool(character_key)
@@ -509,6 +539,14 @@ class RunEngine:
             player_gold=starting_stats["gold"],
             deck=starter_deck,
             relics=starter_relics,
+            note_for_yourself_payload={
+                "card_id": player_profile.note_for_yourself.card_id,
+                "upgrades": player_profile.note_for_yourself.upgrades,
+            },
+            character_spirits=character_progress.spirits,
+            highest_unlocked_ascension=character_progress.highest_unlocked_ascension,
+            last_ascension_level=character_progress.last_ascension_level,
+            neow_intro_seen=player_profile.neow_intro_seen,
         )
         state.rng = rng
 
@@ -520,8 +558,8 @@ class RunEngine:
             ai_rng=ai_rng,
             hp_rng=hp_rng,
             _neow_rng=MutableRNG.from_seed(seed, rng_type="neowRng"),
+            _player_profile=player_profile,
         )
-        engine.state.note_for_yourself_payload = engine._load_note_for_yourself_payload()
         engine._init_run()
         return engine
 
@@ -539,11 +577,19 @@ class RunEngine:
 
         if self.state.special_one_time_event_list:
             return
-        include_note = int(getattr(self.state, "ascension", 0) or 0) < 15
         self.state.special_one_time_event_list = [
             key for key in SPECIAL_ONE_TIME_EVENT_KEYS
-            if key != "NoteForYourself" or include_note
+            if key != "NoteForYourself" or self._is_note_for_yourself_available()
         ]
+
+    def _is_note_for_yourself_available(self) -> bool:
+        ascension_level = int(getattr(self.state, "ascension", 0) or 0)
+        if ascension_level >= 15:
+            return False
+        if ascension_level == 0:
+            return True
+        highest_unlocked = max(1, int(getattr(self.state, "highest_unlocked_ascension", 1) or 1))
+        return ascension_level < highest_unlocked
 
     def _initialize_event_pools_for_act(self) -> None:
         from sts_py.engine.run.events import ACT_EVENT_KEYS_BY_ACT, SHRINE_EVENT_KEYS_BY_ACT
@@ -582,25 +628,92 @@ class RunEngine:
         rng_state = getattr(self.state, "rng", None)
         return getattr(rng_state, "event_rng", None)
 
+    def _misc_rng(self) -> MutableRNG | None:
+        rng_state = getattr(self.state, "rng", None)
+        return getattr(rng_state, "misc_rng", None)
+
     def _normalize_note_for_yourself_payload(self, payload: Any) -> dict[str, Any]:
         raw = payload if isinstance(payload, dict) else {}
         card_id = str(raw.get("card_id", "IronWave") or "IronWave")
         upgrades = max(0, int(raw.get("upgrades", 0) or 0))
         return {"card_id": card_id, "upgrades": upgrades}
 
-    def _load_note_for_yourself_payload(self) -> dict[str, Any]:
-        path = NOTE_FOR_YOURSELF_PREFS_PATH
-        if not path.exists():
-            return self._normalize_note_for_yourself_payload({})
+    def _normalize_character_progress(self, progress: Any) -> CharacterProgress:
+        if isinstance(progress, CharacterProgress):
+            return progress
+        return CharacterProgress.from_raw(progress)
+
+    def _load_player_profile(self) -> PlayerProfile:
+        if self._player_profile is None:
+            self._player_profile = load_player_profile(
+                path=PLAYER_PROFILE_PATH,
+                legacy_note_path=NOTE_FOR_YOURSELF_PREFS_PATH,
+            )
+        return self._player_profile
+
+    def _current_character_progress(self) -> CharacterProgress:
+        profile = self._load_player_profile()
+        progress = self._normalize_character_progress(profile.character_progress(self.state.character_class))
+        profile.characters[self.state.character_class] = progress
+        self.state.character_spirits = progress.spirits
+        self.state.highest_unlocked_ascension = progress.highest_unlocked_ascension
+        self.state.last_ascension_level = progress.last_ascension_level
+        return progress
+
+    def _save_player_profile(self) -> None:
+        profile = self._load_player_profile()
+        profile.neow_intro_seen = bool(self.state.neow_intro_seen)
+        note_payload = self._normalize_note_for_yourself_payload(self.state.note_for_yourself_payload)
+        profile.note_for_yourself = NoteForYourselfProfile(
+            card_id=note_payload["card_id"],
+            upgrades=int(note_payload["upgrades"]),
+        )
+        progress = profile.character_progress(self.state.character_class)
+        progress.spirits = max(0, int(self.state.character_spirits or 0))
+        progress.highest_unlocked_ascension = max(1, int(self.state.highest_unlocked_ascension or 1))
+        progress.last_ascension_level = max(1, int(self.state.last_ascension_level or progress.highest_unlocked_ascension))
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            save_player_profile(profile, path=PLAYER_PROFILE_PATH)
         except Exception:
-            return self._normalize_note_for_yourself_payload({})
-        return self._normalize_note_for_yourself_payload(payload)
+            pass
+
+    def _record_standard_run_profile_outcome(self, *, victory: bool) -> None:
+        progress = self._current_character_progress()
+        ascension_level = max(0, int(getattr(self.state, "ascension", 0) or 0))
+        if victory:
+            progress.spirits = 1
+            if ascension_level > 0 and ascension_level == progress.highest_unlocked_ascension:
+                progress.highest_unlocked_ascension = min(20, ascension_level + 1)
+                progress.last_ascension_level = progress.highest_unlocked_ascension
+            elif ascension_level > 0:
+                progress.last_ascension_level = ascension_level
+        else:
+            progress.spirits = 1 if int(getattr(self.state, "floor", 0) or 0) >= 16 else 0
+            if ascension_level > 0:
+                progress.last_ascension_level = ascension_level
+
+        self.state.character_spirits = progress.spirits
+        self.state.highest_unlocked_ascension = progress.highest_unlocked_ascension
+        self.state.last_ascension_level = progress.last_ascension_level
+        self._save_player_profile()
+
+    def _load_note_for_yourself_payload(self) -> dict[str, Any]:
+        profile = self._load_player_profile()
+        return self._normalize_note_for_yourself_payload({
+            "card_id": profile.note_for_yourself.card_id,
+            "upgrades": profile.note_for_yourself.upgrades,
+        })
 
     def _save_note_for_yourself_payload(self, *, card_id: str, upgrades: int = 0) -> None:
         payload = self._normalize_note_for_yourself_payload({"card_id": card_id, "upgrades": upgrades})
         self.state.note_for_yourself_payload = payload
+        try:
+            profile = self._load_player_profile()
+            profile.note_for_yourself.card_id = payload["card_id"]
+            profile.note_for_yourself.upgrades = int(payload["upgrades"])
+            self._save_player_profile()
+        except Exception:
+            pass
         path = NOTE_FOR_YOURSELF_PREFS_PATH
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -633,7 +746,7 @@ class RunEngine:
             and str(COLORLESS_ALL_DEFS[card_id].rarity).rsplit(".", 1)[-1].upper() in allowed
         ]
         chosen: list[str] = []
-        rng = self._event_rng()
+        rng = self._misc_rng()
         while pool and len(chosen) < count:
             idx = rng.random_int(len(pool) - 1) if rng is not None else 0
             chosen.append(pool.pop(idx))
@@ -1046,7 +1159,7 @@ class RunEngine:
         event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
 
     def _configure_designer_event(self, event: "Event") -> None:
-        rng = self._event_rng()
+        rng = self._misc_rng()
         adjustment_upgrades_one = bool(rng.random_boolean() if rng is not None else True)
         clean_up_removes_cards = bool(rng.random_boolean() if rng is not None else True)
         if self.state.ascension >= 15:
@@ -1170,7 +1283,7 @@ class RunEngine:
         event.choices = [self._make_event_choice(description=self._event_opt(event, 0), description_cn=self._event_opt(event, 0, cn=True))]
 
     def _configure_nloth_event(self, event: "Event") -> None:
-        rng = self._event_rng()
+        rng = self._misc_rng()
         relics = list(self.state.relics)
         if rng is not None:
             for idx in range(len(relics) - 1, 0, -1):
@@ -1202,7 +1315,7 @@ class RunEngine:
         ]
 
     def _configure_we_meet_again_event(self, event: "Event") -> None:
-        rng = self._event_rng()
+        rng = self._misc_rng()
         potion_ids = [p for p in self.state.potions if p != "EmptyPotionSlot"]
         potion_id = None
         if potion_ids:
@@ -1564,7 +1677,7 @@ class RunEngine:
         if event_key == "SecretPortal":
             return self.state.act == 3 and float(getattr(self.state, "playtime_seconds", 0.0) or 0.0) >= 800.0
         if event_key == "NoteForYourself":
-            return int(getattr(self.state, "ascension", 0) or 0) < 15
+            return self._is_note_for_yourself_available()
         return True
 
     def _draw_event_key_from_pool(self, *, shrine: bool) -> str | None:
@@ -2097,6 +2210,494 @@ class RunEngine:
         self._record_neow_choice(option_index=option_index, option=option, details={**drawback_result, **details})
         self._finish_neow()
         return {"success": True, "action": action, **details}
+
+    def _init_neow(self) -> None:
+        self.state.pending_neow_choice = None
+        greeting_idx = 1 + (abs(int(self.state.seed or 0)) % 3)
+        if self.state.neow_intro_seen:
+            self._set_neow_surface(
+                screen="greeting",
+                body_en=self._neow_event_text(greeting_idx),
+                body_cn=self._neow_event_text(greeting_idx, cn=True),
+                options=[self._make_neow_dialog_option(1)],
+            )
+            return
+        self._set_neow_surface(
+            screen="intro",
+            body_en=self._neow_event_text(0),
+            body_cn=self._neow_event_text(0, cn=True),
+            options=[self._make_neow_dialog_option(1)],
+        )
+
+    def _neow_event_text(self, idx: int, *, cn: bool = False) -> str:
+        entry = get_official_neow_event_strings()
+        values = entry.text_zhs if cn else entry.text_en
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return ""
+
+    def _neow_event_option(self, idx: int, *, cn: bool = False) -> str:
+        entry = get_official_neow_event_strings()
+        values = entry.options_zhs if cn else entry.options_en
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return ""
+
+    def _neow_reward_text_piece(self, idx: int, *, cn: bool = False) -> str:
+        entry = get_official_neow_reward_strings()
+        values = entry.text_zhs if cn else entry.text_en
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return ""
+
+    def _neow_unique_reward_text(self, idx: int, *, cn: bool = False) -> str:
+        entry = get_official_neow_reward_strings()
+        values = entry.unique_rewards_zhs if cn else entry.unique_rewards_en
+        if 0 <= idx < len(values):
+            return str(values[idx] or "")
+        return ""
+
+    def _compose_neow_reward_text(self, reward_type: str, reward_value: int, *, cn: bool = False) -> str:
+        if reward_type == "THREE_CARDS":
+            return self._neow_reward_text_piece(0, cn=cn)
+        if reward_type == "ONE_RANDOM_RARE_CARD":
+            return self._neow_reward_text_piece(1, cn=cn)
+        if reward_type == "REMOVE_CARD":
+            return self._neow_reward_text_piece(2, cn=cn)
+        if reward_type == "UPGRADE_CARD":
+            return self._neow_reward_text_piece(3, cn=cn)
+        if reward_type == "TRANSFORM_CARD":
+            return self._neow_reward_text_piece(4, cn=cn)
+        if reward_type == "THREE_SMALL_POTIONS":
+            return self._neow_reward_text_piece(5, cn=cn)
+        if reward_type == "RANDOM_COMMON_RELIC":
+            return self._neow_reward_text_piece(6, cn=cn)
+        if reward_type == "TEN_PERCENT_HP_BONUS":
+            return f"{self._neow_reward_text_piece(7, cn=cn)}{reward_value} ]"
+        if reward_type == "THREE_ENEMY_KILL":
+            return self._neow_reward_text_piece(28, cn=cn)
+        if reward_type == "HUNDRED_GOLD":
+            return f"{self._neow_reward_text_piece(8, cn=cn)}100{self._neow_reward_text_piece(9, cn=cn)}"
+        if reward_type == "RANDOM_COLORLESS":
+            return self._neow_reward_text_piece(30, cn=cn)
+        if reward_type == "RANDOM_COLORLESS_2":
+            return self._neow_reward_text_piece(31, cn=cn)
+        if reward_type == "REMOVE_TWO":
+            return self._neow_reward_text_piece(10, cn=cn)
+        if reward_type == "ONE_RARE_RELIC":
+            return self._neow_reward_text_piece(11, cn=cn)
+        if reward_type == "THREE_RARE_CARDS":
+            return self._neow_reward_text_piece(12, cn=cn)
+        if reward_type == "TWO_FIFTY_GOLD":
+            return f"{self._neow_reward_text_piece(13, cn=cn)}250{self._neow_reward_text_piece(14, cn=cn)}"
+        if reward_type == "TRANSFORM_TWO_CARDS":
+            return self._neow_reward_text_piece(15, cn=cn)
+        if reward_type == "TWENTY_PERCENT_HP_BONUS":
+            return f"{self._neow_reward_text_piece(16, cn=cn)}{reward_value} ]"
+        if reward_type == "BOSS_RELIC":
+            return self._neow_unique_reward_text(0, cn=cn)
+        return reward_type
+
+    def _compose_neow_drawback_text(self, drawback: str, drawback_value: int, *, cn: bool = False) -> str:
+        if drawback == "NONE":
+            return ""
+        if drawback == "TEN_PERCENT_HP_LOSS":
+            return f"{self._neow_reward_text_piece(17, cn=cn)}{drawback_value}{self._neow_reward_text_piece(18, cn=cn)}"
+        if drawback == "NO_GOLD":
+            return self._neow_reward_text_piece(19, cn=cn)
+        if drawback == "CURSE":
+            return self._neow_reward_text_piece(20, cn=cn)
+        if drawback == "PERCENT_DAMAGE":
+            return f"{self._neow_reward_text_piece(21, cn=cn)}{drawback_value}{self._neow_reward_text_piece(29, cn=cn)} "
+        return drawback
+
+    def _make_neow_dialog_option(self, option_idx: int) -> dict[str, Any]:
+        label_en = self._neow_event_option(option_idx)
+        label_cn = self._neow_event_option(option_idx, cn=True)
+        return {
+            "label": label_cn or label_en,
+            "label_en": label_en,
+            "label_cn": label_cn,
+            "dialog_option_index": option_idx,
+        }
+
+    def _set_neow_surface(
+        self,
+        *,
+        screen: str,
+        body_en: str,
+        body_cn: str,
+        options: list[dict[str, Any]],
+    ) -> None:
+        self.state.neow_screen = screen
+        self.state.neow_body = body_en
+        self.state.neow_body_cn = body_cn
+        self.state.neow_options = [dict(option) for option in options]
+
+    def _prepare_neow_leave_screen(self, option: dict[str, Any]) -> None:
+        text_index = int(option.get("completion_text_index", 8) or 8)
+        self._set_neow_surface(
+            screen="complete",
+            body_en=self._neow_event_text(text_index),
+            body_cn=self._neow_event_text(text_index, cn=True),
+            options=[self._make_neow_dialog_option(3)],
+        )
+
+    def _leave_neow(self) -> None:
+        self.state.pending_neow_choice = None
+        self.state.neow_options = []
+        self.state.neow_screen = ""
+        self.state.neow_body = ""
+        self.state.neow_body_cn = ""
+        if self.state.phase != RunPhase.GAME_OVER:
+            self.state.phase = RunPhase.MAP
+
+    def _begin_mini_neow_blessing(self) -> None:
+        hp_bonus = self._neow_hp_bonus(10)
+        choices = [
+            {
+                "category": 1,
+                "reward_type": "THREE_ENEMY_KILL",
+                "reward_value": 0,
+                "drawback": "NONE",
+                "drawback_value": 0,
+                "completion_text_index": 8,
+            },
+            {
+                "category": 1,
+                "reward_type": "TEN_PERCENT_HP_BONUS",
+                "reward_value": hp_bonus,
+                "drawback": "NONE",
+                "drawback_value": 0,
+                "completion_text_index": 8,
+            },
+        ]
+        for option in choices:
+            option["label_en"] = self._compose_neow_reward_text(str(option["reward_type"]), int(option["reward_value"]), cn=False)
+            option["label_cn"] = self._compose_neow_reward_text(str(option["reward_type"]), int(option["reward_value"]), cn=True)
+            option["label"] = option["label_cn"] or option["label_en"]
+        prompt_idx = 4 + (abs(int(self.state.seed or 0)) % 3)
+        self._set_neow_surface(
+            screen="reward_select",
+            body_en=self._neow_event_text(prompt_idx),
+            body_cn=self._neow_event_text(prompt_idx, cn=True),
+            options=choices,
+        )
+
+    def _begin_full_neow_blessing(self) -> None:
+        self._neow_rng = MutableRNG.from_seed(self.state.seed, rng_type="neowRng")
+        self._set_neow_surface(
+            screen="reward_select",
+            body_en=self._neow_event_text(7),
+            body_cn=self._neow_event_text(7, cn=True),
+            options=[self._build_neow_option(category) for category in range(4)],
+        )
+
+    def _build_neow_option(self, category: int) -> dict[str, Any]:
+        reward_value = 0
+        drawback = "NONE"
+        drawback_value = 0
+
+        if category == 0:
+            reward_types = [
+                "THREE_CARDS",
+                "ONE_RANDOM_RARE_CARD",
+                "REMOVE_CARD",
+                "UPGRADE_CARD",
+                "TRANSFORM_CARD",
+                "RANDOM_COLORLESS",
+            ]
+        elif category == 1:
+            reward_types = [
+                "THREE_SMALL_POTIONS",
+                "RANDOM_COMMON_RELIC",
+                "TEN_PERCENT_HP_BONUS",
+                "THREE_ENEMY_KILL",
+                "HUNDRED_GOLD",
+            ]
+        elif category == 2:
+            drawback_defs = [
+                ("TEN_PERCENT_HP_LOSS", self._neow_hp_bonus(10)),
+                ("NO_GOLD", 0),
+                ("CURSE", 0),
+                ("PERCENT_DAMAGE", self._neow_percent_damage()),
+            ]
+            drawback, drawback_value = drawback_defs[self._neow_random_index(len(drawback_defs))]
+            reward_types = ["RANDOM_COLORLESS_2", "ONE_RARE_RELIC", "THREE_RARE_CARDS", "TRANSFORM_TWO_CARDS"]
+            if drawback != "CURSE":
+                reward_types.append("REMOVE_TWO")
+            if drawback != "NO_GOLD":
+                reward_types.append("TWO_FIFTY_GOLD")
+            if drawback != "TEN_PERCENT_HP_LOSS":
+                reward_types.append("TWENTY_PERCENT_HP_BONUS")
+        else:
+            reward_types = ["BOSS_RELIC"]
+
+        reward_type = reward_types[self._neow_random_index(len(reward_types))]
+        if reward_type == "TEN_PERCENT_HP_BONUS":
+            reward_value = self._neow_hp_bonus(10)
+        elif reward_type == "TWENTY_PERCENT_HP_BONUS":
+            reward_value = self._neow_hp_bonus(20)
+        elif reward_type == "HUNDRED_GOLD":
+            reward_value = 100
+        elif reward_type == "TWO_FIFTY_GOLD":
+            reward_value = 250
+
+        reward_text_en = self._compose_neow_reward_text(reward_type, reward_value, cn=False)
+        reward_text_cn = self._compose_neow_reward_text(reward_type, reward_value, cn=True)
+        drawback_text_en = self._compose_neow_drawback_text(drawback, drawback_value, cn=False)
+        drawback_text_cn = self._compose_neow_drawback_text(drawback, drawback_value, cn=True)
+        label_en = reward_text_en if not drawback_text_en else f"{drawback_text_en}{reward_text_en}"
+        label_cn = reward_text_cn if not drawback_text_cn else f"{drawback_text_cn}{reward_text_cn}"
+        return {
+            "category": category,
+            "reward_type": reward_type,
+            "reward_value": reward_value,
+            "drawback": drawback,
+            "drawback_value": drawback_value,
+            "label": label_cn or label_en,
+            "label_en": label_en,
+            "label_cn": label_cn,
+            "completion_text_index": 8 if category in {0, 1} else 9,
+        }
+
+    def get_neow_options(self) -> list[dict[str, Any]]:
+        return [dict(option) for option in list(getattr(self.state, "neow_options", []) or [])]
+
+    def choose_neow_option(self, index: int) -> dict[str, Any]:
+        if self.state.phase != RunPhase.NEOW:
+            return {"success": False, "reason": "not_in_neow"}
+        if self.state.pending_neow_choice is not None:
+            return {"success": False, "reason": "pending_neow_choice"}
+
+        options = list(getattr(self.state, "neow_options", []) or [])
+        if index < 0 or index >= len(options):
+            return {"success": False, "reason": "invalid_neow_option"}
+
+        screen = str(getattr(self.state, "neow_screen", "") or "")
+        option = dict(options[index])
+
+        if screen in {"intro", "greeting"} and not option.get("reward_type"):
+            self.state.neow_intro_seen = True
+            self._save_player_profile()
+            if int(getattr(self.state, "character_spirits", 0) or 0) > 0:
+                self._begin_full_neow_blessing()
+            else:
+                self._begin_mini_neow_blessing()
+            return {"success": True, "action": "dialog_advance", "event_continues": True}
+
+        if screen == "complete":
+            self._leave_neow()
+            return {"success": True, "action": "leave"}
+
+        drawback_result = self._apply_neow_drawback(option)
+        if self.state.phase == RunPhase.GAME_OVER:
+            self._record_neow_choice(option_index=index, option=option, details=drawback_result)
+            return {"success": True, "game_over": True, "option": option, "drawback_result": drawback_result}
+
+        reward_type = str(option.get("reward_type", ""))
+        if reward_type == "THREE_CARDS":
+            cards = self._draw_unique_neow_cards(3, rare_only=False, colorless=False)
+            self.state.pending_neow_choice = {
+                "action": "reward_pick",
+                "cards": cards,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
+        if reward_type == "THREE_RARE_CARDS":
+            cards = self._draw_unique_neow_cards(3, rare_only=True, colorless=False)
+            self.state.pending_neow_choice = {
+                "action": "reward_pick",
+                "cards": cards,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
+        if reward_type == "RANDOM_COLORLESS":
+            cards = self._draw_unique_neow_cards(3, rare_only=False, colorless=True)
+            self.state.pending_neow_choice = {
+                "action": "reward_pick",
+                "cards": cards,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
+        if reward_type == "RANDOM_COLORLESS_2":
+            cards = self._draw_unique_neow_cards(3, rare_only=True, colorless=True)
+            self.state.pending_neow_choice = {
+                "action": "reward_pick",
+                "cards": cards,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "reward_pick", "cards": cards}
+        if reward_type == "REMOVE_CARD":
+            self.state.pending_neow_choice = {
+                "action": "remove",
+                "remaining": 1,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "remove", "remaining": 1}
+        if reward_type == "REMOVE_TWO":
+            self.state.pending_neow_choice = {
+                "action": "remove",
+                "remaining": 2,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "remove", "remaining": 2}
+        if reward_type == "UPGRADE_CARD":
+            self.state.pending_neow_choice = {
+                "action": "upgrade",
+                "remaining": 1,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "upgrade", "remaining": 1}
+        if reward_type == "TRANSFORM_CARD":
+            self.state.pending_neow_choice = {
+                "action": "transform",
+                "remaining": 1,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "transform", "remaining": 1}
+        if reward_type == "TRANSFORM_TWO_CARDS":
+            self.state.pending_neow_choice = {
+                "action": "transform",
+                "remaining": 2,
+                "option": option,
+                "option_index": index,
+                "drawback_result": drawback_result,
+            }
+            return {"success": True, "requires_card_choice": True, "action": "transform", "remaining": 2}
+
+        details: dict[str, Any] = {}
+        if reward_type == "ONE_RANDOM_RARE_CARD":
+            cards = self._draw_unique_neow_cards(1, rare_only=True, colorless=False)
+            if cards:
+                self.state.deck.append(cards[0])
+                details["card_id"] = cards[0]
+        elif reward_type == "THREE_SMALL_POTIONS":
+            details["potions"] = self._grant_neow_potions(3)
+        elif reward_type == "RANDOM_COMMON_RELIC":
+            details["relic_id"] = self._grant_neow_random_relic("COMMON")
+        elif reward_type == "ONE_RARE_RELIC":
+            details["relic_id"] = self._grant_neow_random_relic("RARE")
+        elif reward_type == "TEN_PERCENT_HP_BONUS":
+            bonus = int(option.get("reward_value", 0) or 0)
+            self.state.player_max_hp += bonus
+            self.state.player_hp += bonus
+            details["max_hp_gained"] = bonus
+        elif reward_type == "TWENTY_PERCENT_HP_BONUS":
+            bonus = int(option.get("reward_value", 0) or 0)
+            self.state.player_max_hp += bonus
+            self.state.player_hp += bonus
+            details["max_hp_gained"] = bonus
+        elif reward_type == "THREE_ENEMY_KILL":
+            self.state.neow_blessing = True
+            self.state.neow_blessing_remaining = 3
+            if "NeowsLament" not in self.state.relics:
+                self.state.relics.append("NeowsLament")
+                self._record_relic_history("NeowsLament", source=RelicSource.NEOW)
+            details["relic_id"] = "NeowsLament"
+        elif reward_type == "HUNDRED_GOLD":
+            self.state.player_gold += 100
+            details["gold_gained"] = 100
+        elif reward_type == "TWO_FIFTY_GOLD":
+            self.state.player_gold += 250
+            details["gold_gained"] = 250
+        elif reward_type == "BOSS_RELIC":
+            from sts_py.engine.content.relics import RelicTier, get_relic_pool
+
+            replaced = self.state.relics.pop(0) if self.state.relics else None
+            if replaced is not None:
+                details["replaced_relic"] = replaced
+            exclude = self._current_relic_ids()
+            exclude.update(self._consumed_relic_ids(["boss"]))
+            chosen = self._choose_random_relic_offer(get_relic_pool(RelicTier.BOSS), exclude=exclude, rng=self._neow_rng)
+            if chosen is not None:
+                self._mark_relic_consumed(chosen.id, "boss")
+                details["relic_id"] = self._acquire_relic(chosen.id, source=RelicSource.NEOW, record_pending=False)
+
+        self._record_neow_choice(option_index=index, option=option, details={**drawback_result, **details})
+        self._prepare_neow_leave_screen(option)
+        return {"success": True, "option": option, "drawback_result": drawback_result, "details": details, "event_continues": True}
+
+    def choose_card_for_neow(self, card_index: int) -> dict[str, Any]:
+        if self.state.phase != RunPhase.NEOW:
+            return {"success": False, "reason": "not_in_neow"}
+        pending = getattr(self.state, "pending_neow_choice", None)
+        if not isinstance(pending, dict):
+            return {"success": False, "reason": "no_pending_neow_choice"}
+
+        candidates = self.get_neow_choice_cards()
+        if card_index < 0 or card_index >= len(candidates):
+            return {"success": False, "reason": "invalid_card_index"}
+        selected_card = candidates[card_index]
+        action = str(pending.get("action", ""))
+        option = dict(pending.get("option") or {})
+        option_index = int(pending.get("option_index", 0) or 0)
+        drawback_result = dict(pending.get("drawback_result") or {})
+        details: dict[str, Any] = {}
+
+        if action == "reward_pick":
+            not_picked = [card_id for idx, card_id in enumerate(candidates) if idx != card_index]
+            self.state.deck.append(selected_card)
+            self.state.card_choices.append({
+                "floor": self.state.floor,
+                "picked": selected_card,
+                "upgraded": selected_card.endswith("+"),
+                "skipped": False,
+                "not_picked": not_picked,
+            })
+            details = {"picked_card": selected_card, "not_picked": not_picked}
+            self._record_neow_choice(option_index=option_index, option=option, details={**drawback_result, **details})
+            self.state.pending_neow_choice = None
+            self._prepare_neow_leave_screen(option)
+            return {"success": True, "action": action, "event_continues": True, **details}
+
+        if action == "remove":
+            from sts_py.engine.run.events import _apply_parasite_penalty
+
+            _apply_parasite_penalty(self.state, selected_card)
+            self.state.deck.remove(selected_card)
+            details = {"removed_card": selected_card}
+        elif action == "transform":
+            deck_idx = self.state.deck.index(selected_card)
+            new_card = self._transform_deck_card(selected_card)
+            self.state.deck[deck_idx] = new_card
+            details = {"old_card": selected_card, "new_card": new_card}
+        elif action == "upgrade":
+            deck_idx = self.state.deck.index(selected_card)
+            upgraded_card = self._upgrade_card(selected_card)
+            if upgraded_card is None or upgraded_card == selected_card:
+                return {"success": False, "reason": "card_cannot_be_upgraded", "card_id": selected_card}
+            self.state.deck[deck_idx] = upgraded_card
+            details = {"old_card": selected_card, "new_card": upgraded_card}
+        else:
+            return {"success": False, "reason": "unknown_pending_neow_action"}
+
+        remaining = max(0, int(pending.get("remaining", 1) or 1) - 1)
+        if remaining > 0:
+            pending["remaining"] = remaining
+            self.state.pending_neow_choice = pending
+            return {"success": True, "action": action, "remaining": remaining, **details}
+
+        self._record_neow_choice(option_index=option_index, option=option, details={**drawback_result, **details})
+        self.state.pending_neow_choice = None
+        self._prepare_neow_leave_screen(option)
+        return {"success": True, "action": action, "event_continues": True, **details}
 
     def _normalize_room_type(self, symbol: str) -> RoomType:
         mapping = {
@@ -3345,6 +3946,8 @@ class RunEngine:
 
         custom_result = self._dispatch_event_handler(handler_key, choice_index)
         if custom_result is not None:
+            if self.state.phase == RunPhase.GAME_OVER:
+                self._record_standard_run_profile_outcome(victory=False)
             return custom_result
 
         if event_id in {"DeadAdventurer", "Dead Adventurer"} or event_key == "Dead Adventurer":
@@ -3419,6 +4022,7 @@ class RunEngine:
 
         if self.state.player_hp <= 0:
             self.state.phase = RunPhase.GAME_OVER
+            self._record_standard_run_profile_outcome(victory=False)
 
         return result
 
@@ -3463,9 +4067,13 @@ class RunEngine:
             result = {"success": True, "action": "card_removed", "card_id": card_id}
         elif effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM.value:
             _apply_parasite_penalty(self.state, card_id)
-            rng = getattr(getattr(self.state, "rng", None), "card_random_rng", None)
-            if rng is None:
-                rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
+            handler_key = self._event_handler_key(event)
+            if handler_key in {"Living Wall", "Transmorgrifier"}:
+                rng = self._misc_rng()
+            else:
+                rng = getattr(getattr(self.state, "rng", None), "card_random_rng", None)
+                if rng is None:
+                    rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
             transformed_card = _get_transformed_card(card_id, rng)
             self.state.deck[deck_index] = transformed_card
             result = {
@@ -3639,7 +4247,7 @@ class RunEngine:
                 return {"success": True, "action": "select_next_card", "remaining": 2 - len(selected)}
             from sts_py.engine.run.events import _get_transformed_card
 
-            rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
+            rng = self._misc_rng()
             transformed: list[dict[str, str]] = []
             for deck_index in sorted(selected):
                 old_card = self.state.deck[deck_index]
@@ -3988,7 +4596,7 @@ class RunEngine:
                 book_pool = [relic_id for relic_id in ["Necronomicon", "Enchiridion", "NilrysCodex"] if not self._has_relic(relic_id)]
                 if not book_pool:
                     book_pool = ["Circlet"]
-                relic_id = str(self._event_random_choice(book_pool) or book_pool[0])
+                relic_id = str(self._event_random_choice(book_pool, rng=self._misc_rng()) or book_pool[0])
                 self._acquire_relic(relic_id, source=RelicSource.EVENT, record_pending=True)
                 state["damage_taken"] = int(state.get("damage_taken", 0) or 0) + final_damage
                 self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id, damage_taken=state["damage_taken"])
@@ -4245,7 +4853,7 @@ class RunEngine:
             self._finish_event()
             return {"success": True, "action": "left"}
         if choice_index == 0:
-            cursed = True if self.state.ascension >= 15 else bool(self._event_rng().random_boolean() if self._event_rng() is not None else False)
+            cursed = True if self.state.ascension >= 15 else bool(self._misc_rng().random_boolean() if self._misc_rng() is not None else False)
             relic_id = self._grant_random_relic(source=RelicSource.EVENT, record_pending=True)
             if cursed:
                 self.state.deck.append("Writhe")
@@ -4465,23 +5073,23 @@ class RunEngine:
             common_pool = [card.id for card in pools.get(CardRarity.COMMON, [])]
             start_card = {"IRONCLAD": "Bash", "SILENT": "Neutralize", "DEFECT": "Zap", "WATCHER": "Eruption"}.get(self.state.character_class, "Bash")
             unique_cards: list[str] = [
-                str(self._event_random_choice(rare_pool) or rare_pool[0]),
-                str(self._event_random_choice(uncommon_pool) or uncommon_pool[0]),
-                str(self._event_random_choice(common_pool) or common_pool[0]),
+                str(self._event_random_choice(rare_pool, rng=self._misc_rng()) or rare_pool[0]),
+                str(self._event_random_choice(uncommon_pool, rng=self._misc_rng()) or uncommon_pool[0]),
+                str(self._event_random_choice(common_pool, rng=self._misc_rng()) or common_pool[0]),
             ]
             curse_pool = [card_id for card_id in ALL_CURSE_DEFS if card_id not in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}]
             if self.state.ascension >= 15:
-                first_curse = str(self._event_random_choice(curse_pool) or curse_pool[0])
+                first_curse = str(self._event_random_choice(curse_pool, rng=self._misc_rng()) or curse_pool[0])
                 second_pool = [card_id for card_id in curse_pool if card_id != first_curse] or curse_pool
-                unique_cards.extend([first_curse, str(self._event_random_choice(second_pool) or second_pool[0])])
+                unique_cards.extend([first_curse, str(self._event_random_choice(second_pool, rng=self._misc_rng()) or second_pool[0])])
             else:
                 colorless = self._draw_unique_colorless_event_cards(1, allowed_rarities={"UNCOMMON"})
                 unique_cards.append(colorless[0] if colorless else "Madness")
-                unique_cards.append(str(self._event_random_choice(curse_pool) or curse_pool[0]))
+                unique_cards.append(str(self._event_random_choice(curse_pool, rng=self._misc_rng()) or curse_pool[0]))
             unique_cards = unique_cards[:5]
             unique_cards.append(start_card)
             board = unique_cards + list(unique_cards)
-            rng = self._event_rng()
+            rng = self._misc_rng()
             if rng is not None:
                 for idx in range(len(board) - 1, 0, -1):
                     swap_idx = rng.random_int(idx)
@@ -4601,7 +5209,7 @@ class RunEngine:
             return {"success": True, "action": "recalled", "cards": gained_cards, "hp_loss": hp_loss, "event_continues": True}
         memories_en = [self._event_desc(event, idx) for idx in range(2, 6)]
         memories_cn = [self._event_desc(event, idx, cn=True) for idx in range(2, 6)]
-        pick_idx = self._event_rng().random_int(len(memories_en) - 1) if self._event_rng() is not None else 0
+        pick_idx = self._misc_rng().random_int(len(memories_en) - 1) if self._misc_rng() is not None else 0
         state["memory_description"] = memories_en[pick_idx]
         state["memory_description_cn"] = memories_cn[pick_idx]
         state["stage"] = "choice"
@@ -4693,7 +5301,7 @@ class RunEngine:
             event.choices = [self._make_event_choice(description=self._event_opt(event, 8), description_cn=self._event_opt(event, 8, cn=True))]
             state["stage"] = "leave"
             return {"success": True, "action": "resolved", "event_continues": True}
-        wheel_result = self._event_rng().random_int(5) if self._event_rng() is not None else 0
+        wheel_result = self._misc_rng().random_int(5) if self._misc_rng() is not None else 0
         state["wheel_result"] = wheel_result
         descriptions = {0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
         event.description = self._event_desc(event, descriptions[wheel_result])
@@ -4950,7 +5558,7 @@ class RunEngine:
                 return {"success": True, "requires_card_choice": True, "choice_index": choice_index}
             upgraded_cards: list[str] = []
             candidates = [idx for idx, card_id in enumerate(self.state.deck) if self._upgrade_card(card_id) is not None]
-            rng = self._event_rng()
+            rng = self._misc_rng()
             while candidates and len(upgraded_cards) < 2:
                 pick = rng.random_int(len(candidates) - 1) if rng is not None else 0
                 deck_index = candidates.pop(pick)
@@ -5242,7 +5850,7 @@ class RunEngine:
             return {"success": False, "reason": "no_event"}
         event_state = self._event_state()
         stage = str(event_state.get("stage", "intro"))
-        rng = self._event_rng()
+        rng = self._misc_rng()
         if stage == "intro":
             event_state["stage"] = "bet"
             event.description = self._event_desc(event, 1)
@@ -5279,7 +5887,7 @@ class RunEngine:
             return {"success": False, "reason": "no_event"}
         rich_branch = (self.state.floor % 50) <= 40
         if choice_index == 0:
-            rng = self._event_rng()
+            rng = self._misc_rng()
             bosses = ["The Guardian", "Hexaghost", "Slime Boss"]
             boss_encounter = bosses[rng.random_int(len(bosses) - 1)] if rng is not None else bosses[0]
             rare_relic = self._draw_random_relic_of_tier("RARE")
@@ -5328,7 +5936,7 @@ class RunEngine:
             return {"success": False, "reason": "no_event"}
         event_state = self._event_state()
         stage = str(event_state.get("stage", "intro"))
-        rng = self._event_rng()
+        rng = self._misc_rng()
         if stage == "intro":
             from sts_py.engine.content.cards_min import ALL_CARD_DEFS
 
@@ -5512,11 +6120,11 @@ class RunEngine:
 
         encounter_chance = choice.encounter_chance
 
-        roll = self.state.rng.event_rng.random_int(99) if self.state.rng else 0
+        roll = self._misc_rng().random_int(99) if self._misc_rng() is not None else 0
         if roll < encounter_chance:
             da_state["encounter_triggered"] = True
             da_state["searches_done"] += 1
-            variant_idx = self.state.rng.event_rng.random_int(2) if self.state.rng else 0
+            variant_idx = self._misc_rng().random_int(2) if self._misc_rng() is not None else 0
             monsters = ["Sentry", "GremlinNob", "LegSweeper"]
             da_state["monster_type"] = monsters[variant_idx]
             self.state.event_choices.append({
@@ -5556,7 +6164,7 @@ class RunEngine:
                 self.state.dead_adventurer_state = {}
                 self.state.phase = RunPhase.MAP
                 return {"success": True, "action": "all_rewards_taken"}
-            reward = available_rewards[self.state.rng.event_rng.random_int(len(available_rewards) - 1) if self.state.rng else 0]
+            reward = available_rewards[self._misc_rng().random_int(len(available_rewards) - 1) if self._misc_rng() is not None else 0]
             da_state["rewards_given"][reward] = True
             reward_result = {}
             if reward == "gold":
@@ -5727,7 +6335,7 @@ class RunEngine:
             return {"success": False, "reason": "invalid_choice"}
 
         if choice_index == 1:
-            gold_lost = self.state.rng.event_rng.random_int(30) + 20 if self.state.rng else 20
+            gold_lost = self._misc_rng().random_int(30) + 20 if self._misc_rng() is not None else 20
             gold_lost = min(gold_lost, self.state.player_gold)
             self.state.player_gold -= gold_lost
             result = {"action": "leave", "gold_lost": gold_lost}
@@ -5795,7 +6403,7 @@ class RunEngine:
             }
         elif choice_index == 1:
             gold_min, gold_max = 50, 80
-            gold_gained = self.state.rng.event_rng.random_int(gold_max - gold_min) + gold_min if self.state.rng else gold_min
+            gold_gained = self._misc_rng().random_int(gold_max - gold_min) + gold_min if self._misc_rng() is not None else gold_min
             self.state.player_gold += gold_gained
             result = {"action": "destroy", "gold_gained": gold_gained}
             self._current_event = None
@@ -5977,7 +6585,7 @@ class RunEngine:
         self.state.player_hp -= damage
         survival_result = self._check_survival_relics(damage)
 
-        roll = self.state.rng.event_rng.random_int(99) if self.state.rng else 0
+        roll = self._misc_rng().random_int(99) if self._misc_rng() is not None else 0
         found_relic = roll < chance
 
         if found_relic:
@@ -6073,7 +6681,6 @@ class RunEngine:
             self.state.phase = RunPhase.MAP
             return {"success": True, "action": "no_upgradeable_cards"}
 
-        import random
         if len(upgradeable_cards) == 1:
             card_idx = upgradeable_cards[0]
             card_id = self.state.deck[card_idx]
@@ -6082,7 +6689,12 @@ class RunEngine:
                 self.state.deck[card_idx] = upgraded_card
             upgraded_cards = [card_id]
         else:
-            to_upgrade = random.sample(upgradeable_cards, min(2, len(upgradeable_cards)))
+            rng = self._misc_rng()
+            candidate_indexes = list(upgradeable_cards)
+            to_upgrade: list[int] = []
+            while candidate_indexes and len(to_upgrade) < min(2, len(upgradeable_cards)):
+                pick_idx = rng.random_int(len(candidate_indexes) - 1) if rng is not None else 0
+                to_upgrade.append(candidate_indexes.pop(pick_idx))
             upgraded_cards = []
             for card_idx in to_upgrade:
                 card_id = self.state.deck[card_idx]
@@ -6193,7 +6805,7 @@ class RunEngine:
         elif choice_index == 1:
             mask_ids = ["CultistMask", "FaceOfCleric", "GremlinMask", "NlothsMask", "SsserpentHead"]
             available = [mask_id for mask_id in mask_ids if not self._has_relic(mask_id)] or ["Circlet"]
-            relic_id = str(self._event_random_choice(available) or available[0])
+            relic_id = str(self._event_random_choice(available, rng=self._misc_rng()) or available[0])
             self._acquire_relic(relic_id, source=RelicSource.EVENT, record_pending=True)
             self._record_current_event_choice(event, choice_index=choice_index, choice_text=event.choices[choice_index].description, relic_id=relic_id)
             event.description = self._event_desc(event, 3)
@@ -6650,8 +7262,10 @@ class RunEngine:
                 self.state.phase = RunPhase.VICTORY
                 if self.state.act == 4:
                     self._clear_pending_campaign_state()
+                    self._record_standard_run_profile_outcome(victory=True)
                 elif self.state.act == 3 and not self.has_all_act4_keys():
                     self._clear_pending_campaign_state()
+                    self._record_standard_run_profile_outcome(victory=True)
                 else:
                     self.state.pending_boss_relic_choices = self._generate_boss_relic_choices(3)
                 if self.state.act == 3 and self.has_all_act4_keys() and not self.state.pending_boss_relic_choices:
@@ -6670,6 +7284,7 @@ class RunEngine:
                 self.state.phase = RunPhase.REWARD if self._has_pending_reward_surface() else RunPhase.MAP
         else:
             self.state.phase = RunPhase.GAME_OVER
+            self._record_standard_run_profile_outcome(victory=False)
 
         self.state.combat = None
         self._clear_current_event_combat()
@@ -6769,7 +7384,7 @@ class RunEngine:
                 _, low, high = str(reward_type).split(":", 2)
                 low_int = int(low or 0)
                 high_int = int(high or low_int)
-                amount = self._event_rng().random_int_between(low_int, high_int) if self._event_rng() is not None else low_int
+                amount = self._misc_rng().random_int_between(low_int, high_int) if self._misc_rng() is not None else low_int
                 self.state.player_gold += amount
                 self._pending_gold_reward += amount
             elif reward_type == "relic":

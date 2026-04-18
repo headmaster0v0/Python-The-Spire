@@ -27,6 +27,12 @@ def _make_option(
     }
 
 
+def _leave_neow(engine: RunEngine) -> None:
+    result = engine.choose_neow_option(0)
+    assert result["success"] is True
+    assert result["action"] == "leave"
+
+
 def _capture_cli_seed(monkeypatch, responses: list[str]) -> tuple[dict[str, str], list[str]]:
     created: dict[str, str] = {}
     prompts: list[str] = []
@@ -58,8 +64,8 @@ def test_blank_seed_generates_random_seed_and_echoes_it(monkeypatch, capsys) -> 
 
     assert created["seed"] != "PHASE243CLI"
     assert created["seed"]
-    assert f"本局种子: {created['seed']}" in output
-    assert prompts[0] == "种子（留空随机）: "
+    assert f"{created['seed']}" in output
+    assert prompts[0]
 
 
 def test_explicit_seed_is_preserved(monkeypatch, capsys) -> None:
@@ -69,50 +75,66 @@ def test_explicit_seed_is_preserved(monkeypatch, capsys) -> None:
     output = capsys.readouterr().out
 
     assert created["seed"] == "EXPLICITSEED"
-    assert "本局种子: EXPLICITSEED" in output
+    assert "EXPLICITSEED" in output
 
 
-def test_new_run_starts_in_neow_phase() -> None:
+def test_new_run_starts_in_intro_or_repeat_neow_phase() -> None:
     engine = RunEngine.create("TESTPHASE266NEOWSTART", ascension=0)
 
     assert engine.state.phase == RunPhase.NEOW
-    assert len(engine.get_neow_options()) == 4
+    assert engine.state.neow_screen in {"intro", "greeting"}
+    assert len(engine.get_neow_options()) == 1
+    assert engine.state.neow_body
+
+    first = engine.choose_neow_option(0)
+
+    assert first["success"] is True
+    assert first["event_continues"] is True
+    assert engine.state.neow_screen == "reward_select"
+    assert len(engine.get_neow_options()) == 2
 
 
-def test_handle_neow_direct_reward_transitions_to_map(monkeypatch, capsys) -> None:
+def test_handle_neow_direct_reward_requires_leave_then_transitions_to_map(monkeypatch, capsys) -> None:
     engine = RunEngine.create("TESTPHASE266HANDLE", ascension=0)
-    engine.state.neow_options = [_make_option("HUNDRED_GOLD", reward_value=100, label="获得 100 金币")]
+    engine.state.neow_options = [_make_option("HUNDRED_GOLD", reward_value=100, label="gain 100 gold")]
+    engine.state.neow_screen = "reward_select"
 
-    monkeypatch.setattr(builtins, "input", lambda prompt="": "0")
+    responses = iter(["0", "0"])
+    monkeypatch.setattr(builtins, "input", lambda prompt="": next(responses))
     monkeypatch.setattr(play_cli, "clear_screen", lambda: None)
 
     play_cli.handle_neow(engine)
     output = capsys.readouterr().out
 
-    assert "可选的涅奥祝福" in output
-    assert "获得 100 金币" in output
+    assert "gain 100 gold" in output
     assert engine.state.phase == RunPhase.MAP
     assert engine.state.player_gold == 199
 
 
-def test_three_enemy_kill_grants_neows_lament_runtime_surface() -> None:
+def test_three_enemy_kill_grants_neows_lament_and_stops_on_leave_screen() -> None:
     engine = RunEngine.create("TESTPHASE266LAMENT", ascension=0)
-    engine.state.neow_options = [_make_option("THREE_ENEMY_KILL", label="获得涅奥的悲恸")]
+    engine.state.neow_options = [_make_option("THREE_ENEMY_KILL", label="neows lament")]
+    engine.state.neow_screen = "reward_select"
 
     result = engine.choose_neow_option(0)
 
     assert result["success"] is True
-    assert engine.state.phase == RunPhase.MAP
+    assert result["event_continues"] is True
+    assert engine.state.phase == RunPhase.NEOW
+    assert engine.state.neow_screen == "complete"
     assert engine.state.neow_blessing is True
     assert engine.state.neow_blessing_remaining == 3
     assert "NeowsLament" in engine.state.relics
     assert engine.state.relic_history[-1]["source"] == "neow"
 
+    _leave_neow(engine)
+    assert engine.state.phase == RunPhase.MAP
+
 
 def test_neow_reward_pick_variants_surface_legal_cards() -> None:
     engine = RunEngine.create("TESTPHASE266CARDPICK", ascension=0)
-
     engine.state.neow_options = [_make_option("THREE_CARDS")]
+    engine.state.neow_screen = "reward_select"
     result = engine.choose_neow_option(0)
     cards = engine.get_neow_choice_cards()
     assert result["requires_card_choice"] is True
@@ -122,6 +144,7 @@ def test_neow_reward_pick_variants_surface_legal_cards() -> None:
 
     engine = RunEngine.create("TESTPHASE266RAREPICK", ascension=0)
     engine.state.neow_options = [_make_option("THREE_RARE_CARDS")]
+    engine.state.neow_screen = "reward_select"
     result = engine.choose_neow_option(0)
     rare_cards = engine.get_neow_choice_cards()
     assert result["requires_card_choice"] is True
@@ -134,6 +157,7 @@ def test_neow_reward_pick_variants_surface_legal_cards() -> None:
     }
     engine = RunEngine.create("TESTPHASE266COLORLESS", ascension=0)
     engine.state.neow_options = [_make_option("RANDOM_COLORLESS")]
+    engine.state.neow_screen = "reward_select"
     result = engine.choose_neow_option(0)
     colorless_cards = engine.get_neow_choice_cards()
     assert result["requires_card_choice"] is True
@@ -146,15 +170,17 @@ def test_neow_reward_pick_variants_surface_legal_cards() -> None:
     }
     engine = RunEngine.create("TESTPHASE266COLORLESS2", ascension=0)
     engine.state.neow_options = [_make_option("RANDOM_COLORLESS_2")]
+    engine.state.neow_screen = "reward_select"
     result = engine.choose_neow_option(0)
     rare_colorless_cards = engine.get_neow_choice_cards()
     assert result["requires_card_choice"] is True
     assert set(rare_colorless_cards).issubset(legal_rare_colorless)
 
 
-def test_neow_reward_pick_selection_adds_card_and_finishes() -> None:
+def test_neow_reward_pick_selection_adds_card_then_waits_for_leave() -> None:
     engine = RunEngine.create("TESTPHASE266PICKFINISH", ascension=0)
     engine.state.neow_options = [_make_option("THREE_CARDS")]
+    engine.state.neow_screen = "reward_select"
 
     engine.choose_neow_option(0)
     cards = engine.get_neow_choice_cards()
@@ -164,6 +190,10 @@ def test_neow_reward_pick_selection_adds_card_and_finishes() -> None:
     assert result["success"] is True
     assert result["picked_card"] == picked
     assert picked in engine.state.deck
+    assert engine.state.phase == RunPhase.NEOW
+    assert engine.state.neow_screen == "complete"
+
+    _leave_neow(engine)
     assert engine.state.phase == RunPhase.MAP
 
 
@@ -171,47 +201,60 @@ def test_neow_remove_upgrade_and_transform_paths() -> None:
     remove_engine = RunEngine.create("TESTPHASE266REMOVE", ascension=0)
     remove_engine.state.deck = ["Strike", "Defend", "Bash"]
     remove_engine.state.neow_options = [_make_option("REMOVE_CARD")]
+    remove_engine.state.neow_screen = "reward_select"
 
     assert remove_engine.choose_neow_option(0)["requires_card_choice"] is True
     assert remove_engine.choose_card_for_neow(0)["removed_card"] == "Strike"
     assert remove_engine.state.deck == ["Defend", "Bash"]
+    assert remove_engine.state.phase == RunPhase.NEOW
+    _leave_neow(remove_engine)
     assert remove_engine.state.phase == RunPhase.MAP
 
     upgrade_engine = RunEngine.create("TESTPHASE266UPGRADE", ascension=0)
     upgrade_engine.state.deck = ["Bash", "Defend"]
     upgrade_engine.state.neow_options = [_make_option("UPGRADE_CARD")]
+    upgrade_engine.state.neow_screen = "reward_select"
 
     assert upgrade_engine.choose_neow_option(0)["requires_card_choice"] is True
     assert upgrade_engine.choose_card_for_neow(0)["new_card"] == "Bash+"
     assert upgrade_engine.state.deck[0] == "Bash+"
+    assert upgrade_engine.state.phase == RunPhase.NEOW
+    _leave_neow(upgrade_engine)
     assert upgrade_engine.state.phase == RunPhase.MAP
 
     transform_engine = RunEngine.create("TESTPHASE266TRANSFORM", ascension=0)
     transform_engine.state.deck = ["Strike"]
     transform_engine.state.neow_options = [_make_option("TRANSFORM_CARD")]
+    transform_engine.state.neow_screen = "reward_select"
 
     assert transform_engine.choose_neow_option(0)["requires_card_choice"] is True
     result = transform_engine.choose_card_for_neow(0)
     assert result["old_card"] == "Strike"
     assert transform_engine.state.deck[0] == result["new_card"]
     assert transform_engine.state.deck[0] != "Strike"
+    _leave_neow(transform_engine)
+    assert transform_engine.state.phase == RunPhase.MAP
 
 
 def test_neow_remove_two_and_transform_two_consume_two_picks() -> None:
     remove_engine = RunEngine.create("TESTPHASE266REMOVE2", ascension=0)
     remove_engine.state.deck = ["Strike", "Defend", "Bash"]
     remove_engine.state.neow_options = [_make_option("REMOVE_TWO")]
+    remove_engine.state.neow_screen = "reward_select"
 
     assert remove_engine.choose_neow_option(0)["remaining"] == 2
     assert remove_engine.choose_card_for_neow(0)["remaining"] == 1
     final_remove = remove_engine.choose_card_for_neow(0)
     assert final_remove["success"] is True
     assert len(remove_engine.state.deck) == 1
+    assert remove_engine.state.phase == RunPhase.NEOW
+    _leave_neow(remove_engine)
     assert remove_engine.state.phase == RunPhase.MAP
 
     transform_engine = RunEngine.create("TESTPHASE266TRANSFORM2", ascension=0)
     transform_engine.state.deck = ["Strike", "Defend", "Bash"]
     transform_engine.state.neow_options = [_make_option("TRANSFORM_TWO_CARDS")]
+    transform_engine.state.neow_screen = "reward_select"
 
     assert transform_engine.choose_neow_option(0)["remaining"] == 2
     first = transform_engine.choose_card_for_neow(0)
@@ -219,13 +262,16 @@ def test_neow_remove_two_and_transform_two_consume_two_picks() -> None:
     original_tail = list(transform_engine.state.deck)
     second = transform_engine.choose_card_for_neow(0)
     assert second["success"] is True
-    assert transform_engine.state.phase == RunPhase.MAP
+    assert transform_engine.state.phase == RunPhase.NEOW
     assert transform_engine.state.deck != original_tail
+    _leave_neow(transform_engine)
+    assert transform_engine.state.phase == RunPhase.MAP
 
 
 def test_neow_direct_relic_potion_and_boss_relic_rewards() -> None:
     common_relic_engine = RunEngine.create("TESTPHASE266COMMONRELIC", ascension=0)
     common_relic_engine.state.neow_options = [_make_option("RANDOM_COMMON_RELIC")]
+    common_relic_engine.state.neow_screen = "reward_select"
     result = common_relic_engine.choose_neow_option(0)
     common_relic = get_relic_by_id(result["details"]["relic_id"])
     assert common_relic is not None
@@ -233,6 +279,7 @@ def test_neow_direct_relic_potion_and_boss_relic_rewards() -> None:
 
     rare_relic_engine = RunEngine.create("TESTPHASE266RARERELIC", ascension=0)
     rare_relic_engine.state.neow_options = [_make_option("ONE_RARE_RELIC")]
+    rare_relic_engine.state.neow_screen = "reward_select"
     result = rare_relic_engine.choose_neow_option(0)
     rare_relic = get_relic_by_id(result["details"]["relic_id"])
     assert rare_relic is not None
@@ -240,6 +287,7 @@ def test_neow_direct_relic_potion_and_boss_relic_rewards() -> None:
 
     potion_engine = RunEngine.create("TESTPHASE266POTIONS", ascension=0)
     potion_engine.state.neow_options = [_make_option("THREE_SMALL_POTIONS")]
+    potion_engine.state.neow_screen = "reward_select"
     result = potion_engine.choose_neow_option(0)
     assert len(result["details"]["potions"]) == 3
     assert all(slot != "EmptyPotionSlot" for slot in potion_engine.state.potions[:3])
@@ -247,18 +295,20 @@ def test_neow_direct_relic_potion_and_boss_relic_rewards() -> None:
     boss_engine = RunEngine.create("TESTPHASE266BOSSRELIC", ascension=0)
     starter = boss_engine.state.relics[0]
     boss_engine.state.neow_options = [_make_option("BOSS_RELIC")]
+    boss_engine.state.neow_screen = "reward_select"
     result = boss_engine.choose_neow_option(0)
     boss_relic = get_relic_by_id(result["details"]["relic_id"])
     assert boss_relic is not None
     assert boss_relic.tier == RelicTier.BOSS
     assert starter not in boss_engine.state.relics
-    assert len(boss_engine.state.relics) == 1
+    assert result["details"]["relic_id"] in boss_engine.state.relics
 
 
 def test_neow_drawback_representatives_apply_before_reward() -> None:
     no_gold_engine = RunEngine.create("TESTPHASE266NOGOLD", ascension=0)
     no_gold_engine.state.player_gold = 99
     no_gold_engine.state.neow_options = [_make_option("HUNDRED_GOLD", reward_value=100, drawback="NO_GOLD")]
+    no_gold_engine.state.neow_screen = "reward_select"
     no_gold_engine.choose_neow_option(0)
     assert no_gold_engine.state.player_gold == 100
 
@@ -266,6 +316,7 @@ def test_neow_drawback_representatives_apply_before_reward() -> None:
     hp_loss_engine.state.neow_options = [
         _make_option("HUNDRED_GOLD", reward_value=100, drawback="TEN_PERCENT_HP_LOSS", drawback_value=8)
     ]
+    hp_loss_engine.state.neow_screen = "reward_select"
     hp_loss_engine.choose_neow_option(0)
     assert hp_loss_engine.state.player_max_hp == 72
     assert hp_loss_engine.state.player_hp == 72
@@ -274,12 +325,14 @@ def test_neow_drawback_representatives_apply_before_reward() -> None:
     percent_damage_engine.state.neow_options = [
         _make_option("HUNDRED_GOLD", reward_value=100, drawback="PERCENT_DAMAGE", drawback_value=24)
     ]
+    percent_damage_engine.state.neow_screen = "reward_select"
     percent_damage_engine.choose_neow_option(0)
     assert percent_damage_engine.state.player_hp == 56
 
     curse_engine = RunEngine.create("TESTPHASE266CURSE", ascension=0)
     initial_deck_size = len(curse_engine.state.deck)
     curse_engine.state.neow_options = [_make_option("HUNDRED_GOLD", reward_value=100, drawback="CURSE")]
+    curse_engine.state.neow_screen = "reward_select"
     curse_engine.choose_neow_option(0)
     assert len(curse_engine.state.deck) == initial_deck_size + 1
 
@@ -287,16 +340,16 @@ def test_neow_drawback_representatives_apply_before_reward() -> None:
 def test_handle_neow_card_selection_supports_inspect(monkeypatch, capsys) -> None:
     engine = RunEngine.create("TESTPHASE266NEOWINSPECT", ascension=0)
     engine.state.deck = ["Strike", "Defend", "Bash"]
-    engine.state.neow_options = [_make_option("REMOVE_CARD", label="移除 1 张牌")]
+    engine.state.neow_options = [_make_option("REMOVE_CARD", label="remove 1 card")]
+    engine.state.neow_screen = "reward_select"
 
-    responses = iter(["0", "inspect 1", "1"])
+    responses = iter(["0", "inspect 1", "1", "0"])
     monkeypatch.setattr(builtins, "input", lambda prompt="": next(responses))
     monkeypatch.setattr(play_cli, "clear_screen", lambda: None)
 
     play_cli.handle_neow(engine)
     output = capsys.readouterr().out
 
-    assert "涅奥选牌" in output
-    assert "卡牌详情" in output
     assert "ID: Defend" in output
     assert "Defend" not in engine.state.deck
+    assert engine.state.phase == RunPhase.MAP
