@@ -270,10 +270,14 @@
       "runtime_aliases": [
         "BronzeOrb"
       ],
-      "category": "NORMAL",
+      "category": "SUMMON",
       "act": 2,
-      "encounters": [],
-      "pool_buckets": [],
+      "encounters": [
+        "Automaton"
+      ],
+      "pool_buckets": [
+        "pool:act2:boss"
+      ],
       "official_name_en": "Orb",
       "official_name_zhs": "铜球",
       "official_moves_en": [
@@ -1863,9 +1867,11 @@
       ],
       "category": "SUMMON",
       "act": 2,
-      "encounters": [],
+      "encounters": [
+        "Collector"
+      ],
       "pool_buckets": [
-        "pool:summon"
+        "pool:act2:boss"
       ],
       "official_name_en": "Torch Head",
       "official_name_zhs": "火炬头",

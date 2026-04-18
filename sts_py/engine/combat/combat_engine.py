@@ -845,6 +845,12 @@ class CombatEngine:
                 card,
                 active_powers=active_player_powers,
             )
+            for monster in self.state.monsters:
+                if monster.is_dead():
+                    continue
+                monster.powers.on_player_power_played(monster, card)
+                if hasattr(monster, "on_player_power_played"):
+                    monster.on_player_power_played(card)
             self.state.player._power_cards_played_this_combat = int(
                 getattr(self.state.player, "_power_cards_played_this_combat", 0) or 0
             ) + 1
@@ -1305,6 +1311,12 @@ class CombatEngine:
                 card,
                 active_powers=active_player_powers,
             )
+            for monster in self.state.monsters:
+                if monster.is_dead():
+                    continue
+                monster.powers.on_player_power_played(monster, card)
+                if hasattr(monster, "on_player_power_played"):
+                    monster.on_player_power_played(card)
             self.state.player._power_cards_played_this_combat = int(
                 getattr(self.state.player, "_power_cards_played_this_combat", 0) or 0
             ) + 1
@@ -1447,6 +1459,9 @@ class CombatEngine:
         """Handle effects when a monster dies, including The Specimen poison transfer and Spore Cloud."""
         if hasattr(monster, 'on_death'):
             monster.on_death()
+        for power in list(getattr(monster.powers, "powers", []) or []):
+            if hasattr(power, "on_death"):
+                power.on_death()
 
         corpse_explosion = monster.powers.get_power_amount("CorpseExplosion")
         if corpse_explosion > 0:
@@ -3349,6 +3364,8 @@ class CombatEngine:
                             power.skip_first = False
 
                 monster.powers.at_end_of_round()
+                if hasattr(monster, "on_end_of_round"):
+                    monster.on_end_of_round()
 
                 monster.roll_move(self.ai_rng)
 
@@ -3398,6 +3415,9 @@ class CombatEngine:
             self.state.card_manager.set_energy(self.state.player.energy)
             self.state.card_manager.set_max_energy(self.state.player.max_energy)
             draw_count = 5 + int(getattr(self.state.player, "_draw_per_turn_bonus", 0) or 0)
+            draw_count -= int(getattr(self.state.player, "_draw_reduction_next_turn", 0) or 0)
+            draw_count = max(0, draw_count)
+            self.state.player._draw_reduction_next_turn = 0
             self.state.card_manager.start_turn(draw_count=draw_count, rng=self.ai_rng)
         self._process_player_start_of_turn_post_draw_powers()
         self._apply_normality_limit()

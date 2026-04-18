@@ -211,6 +211,7 @@ MONSTER_CATEGORY_OVERRIDES: dict[str, str] = {
     "CorruptHeart": "BOSS",
     "SpireShield": "ELITE",
     "SpireSpear": "ELITE",
+    "BronzeOrb": "SUMMON",
     "TorchHead": "SUMMON",
     "SnakeDagger": "SUMMON",
     "BanditBear": "SPECIAL",
@@ -344,6 +345,12 @@ FIXED_ENCOUNTER_MEMBERS: dict[str, tuple[str, ...]] = {
 }
 
 
+SUMMONED_ENCOUNTER_MEMBERS: dict[str, tuple[str, ...]] = {
+    "Automaton": ("BronzeOrb",),
+    "Collector": ("TorchHead",),
+}
+
+
 POSSIBLE_ENCOUNTER_MEMBERS: dict[str, tuple[str, ...]] = {
     "2 Louse": ("FuzzyLouseNormal", "LouseDefensive"),
     "3 Louse": ("FuzzyLouseNormal", "LouseDefensive"),
@@ -466,6 +473,9 @@ def _runtime_aliases_for_entry(canonical_id: str, official_key: str, java_class:
 def _encounters_for_canonical_id(canonical_id: str) -> tuple[str, ...]:
     encounters: set[str] = set()
     for encounter_name, members in FIXED_ENCOUNTER_MEMBERS.items():
+        if canonical_id in members:
+            encounters.add(encounter_name)
+    for encounter_name, members in SUMMONED_ENCOUNTER_MEMBERS.items():
         if canonical_id in members:
             encounters.add(encounter_name)
     for encounter_name, possible_members in POSSIBLE_ENCOUNTER_MEMBERS.items():

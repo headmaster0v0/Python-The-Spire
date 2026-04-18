@@ -462,15 +462,15 @@ JAVA_MONSTER_ID_ALIASES = {
 
 
 def _runtime_monster_id_for_logged_id(monster_id: str) -> str:
+    alias_key = _normalize_monster_lookup_id(monster_id)
+    for source, target in JAVA_MONSTER_ID_ALIASES.items():
+        if alias_key == _normalize_monster_lookup_id(source):
+            return target
     from sts_py.engine.monsters.monster_truth import canonicalize_monster_id
 
     canonical = canonicalize_monster_id(monster_id)
     if canonical is not None:
         return canonical
-    alias_key = _normalize_monster_lookup_id(monster_id)
-    for source, target in JAVA_MONSTER_ID_ALIASES.items():
-        if alias_key == _normalize_monster_lookup_id(source):
-            return target
     return monster_id
 
 

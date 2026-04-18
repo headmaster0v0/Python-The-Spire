@@ -814,6 +814,43 @@ MONSTER_MOVE_NAME_ALIASES: dict[tuple[str, str], str] = {
 }
 
 
+MONSTER_MOVE_NAME_ALIASES.update(
+    {
+        ("BanditPointy", "Pointy Special"): "尖尖连击",
+        ("Collector", "Fireball"): "火球",
+        ("Collector", "Buff"): "强化",
+        ("Collector", "Mega Debuff"): "终极诅咒",
+        ("Automaton", "Hyper Beam"): "超能光束",
+        ("Automaton", "Spawn Orbs"): "召唤球体",
+        ("Automaton", "Boost"): "强化",
+        ("Automaton", "Flail"): "连枷",
+        ("Automaton", "Stunned"): "晕眩",
+        ("BronzeOrb", "Beam"): "光束",
+        ("BronzeOrb", "Support Beam"): "支援光束",
+        ("BronzeOrb", "Stasis"): "停滞",
+        ("Dagger", "Wound"): "刺伤",
+        ("GremlinLeader", "Rally"): "集合",
+        ("GremlinLeader", "Encourage"): "鼓舞",
+        ("GremlinLeader", "Stab"): "连刺",
+        ("Healer", "Attack"): "魔法攻击",
+        ("Healer", "Heal"): "治疗",
+        ("Healer", "Buff"): "强化",
+        ("ShellParasite", "Stun"): "惊吓",
+        ("SpireGrowth", "Quick Tackle"): "快速扑击",
+        ("SpireGrowth", "Smash"): "重击",
+        ("Taskmaster", "Scouring Whip"): "鞭笞",
+        ("AwakenedOne", "Soul Strike"): "灵魂打击",
+        ("AwakenedOne", "Dark Echo"): "黑暗回响",
+        ("AwakenedOne", "Sludge"): "污泥",
+        ("AwakenedOne", "Tackle"): "撞击",
+        ("TimeEater", "Reverberate"): "回响",
+        ("TimeEater", "Ripple"): "波纹",
+        ("TimeEater", "Head Slam"): "头槌",
+        ("TimeEater", "Haste"): "加速",
+    }
+)
+
+
 def translate_monster_move(monster_id: str, move_name: str | None) -> str | None:
     if move_name is None:
         return None

@@ -48,6 +48,50 @@ MONSTER_NAME_MAP = {
 }
 
 
+MONSTER_NAME_MAP.update(
+    {
+        "Cultist": "邪教徒",
+        "JawWorm": "大颚虫",
+        "FuzzyLouseNormal": "毛毛虫（普通）",
+        "FuzzyLouseDefensive": "毛毛虫（防御）",
+        "SlaverRed": "红色奴隶贩子",
+        "SlaverBlue": "蓝色奴隶贩子",
+        "GremlinNob": "地精大块头",
+        "Lagavulin": "乐加维林",
+        "Sentry": "哨卫",
+        "Hexaghost": "六火幽魂",
+        "SlimeBoss": "史莱姆老大",
+        "TheGuardian": "守护者",
+        "GremlinFat": "胖地精",
+        "GremlinWizard": "地精巫师",
+        "FungiBeast": "真菌兽",
+        "Champ": "冠军",
+        "Collector": "收藏家",
+        "Automaton": "铜制机械人偶",
+        "AwakenedOne": "觉醒者",
+        "TimeEater": "时间吞噬者",
+        "DonuAndDeca": "多努与德卡",
+        "Chosen": "天选者",
+        "SphericGuardian": "球形守护者",
+        "ShellParasite": "壳寄生虫",
+        "SnakePlant": "蛇草",
+        "Snecko": "蛇眼怪",
+        "Centurion": "百夫长",
+        "Healer": "治疗师",
+        "Darkling": "黑暗生物",
+        "OrbWalker": "球行者",
+        "Transient": "短暂者",
+        "Maw": "巨口",
+        "WrithingMass": "蠕动之块",
+        "GiantHead": "巨型头颅",
+        "Nemesis": "复仇女神",
+        "Reptomancer": "蜥蜴法师",
+        "Byrd": "伯德",
+        "Slime": "史莱姆",
+    }
+)
+
+
 def translate_monster(m_id: str) -> str:
     """Translate monster ID to Chinese name."""
     return official_monster_name_zhs(m_id) or MONSTER_NAME_MAP.get(m_id, m_id)

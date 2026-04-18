@@ -11,10 +11,10 @@ from sts_py.engine.monsters.exordium import (
 )
 from sts_py.engine.monsters.bosses import (
     Hexaghost, SlimeBoss, TheGuardian, Champ, Collector,
-    Automaton, AwakenedOne, TimeEater, DonuAndDeca, Deca, Donu
+    Automaton, BronzeOrb, TorchHead, AwakenedOne, TimeEater, DonuAndDeca, Deca, Donu
 )
 from sts_py.engine.monsters.city_beyond import (
-    SphericGuardian, Chosen, ShellParasite, Byrd, SnakePlant,
+    GremlinLeader, SphericGuardian, Chosen, ShellParasite, Byrd, SnakePlant,
     Snecko, Centurion, Healer, Darkling, OrbWalker, Maw,
     GiantHead, Nemesis, Reptomancer, WrithingMass
 )
@@ -211,6 +211,136 @@ class TestBossAI:
             donu.roll_move(rng)
             assert donu.next_move is not None
 
+    def test_collector_script_summons_minions_and_unlocks_mega_debuff(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+
+        rng = MutableRNG.from_seed(1010, rng_type="monster")
+        collector = Collector.create(rng, ascension=0)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[collector],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(1010, counter=0),
+            hp_rng=MutableRNG.from_seed(1010, counter=100),
+        )
+        player = combat.state.player
+
+        collector.set_move(MonsterMove(1, MonsterIntent.UNKNOWN, name="Summon"))
+        collector.take_turn(player)
+        assert [monster.id for monster in combat.state.monsters].count("TorchHead") == 2
+
+        collector.initial_spawn = False
+        collector.turns_taken = 3
+        collector.get_move(0)
+        assert collector.next_move is not None
+        assert collector.next_move.move_id == 4
+        assert collector.next_move.intent == MonsterIntent.STRONG_DEBUFF
+
+    def test_automaton_script_spawns_bronze_orbs_and_reaches_hyper_beam(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+
+        rng = MutableRNG.from_seed(1011, rng_type="monster")
+        automaton = Automaton.create(rng, ascension=0)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[automaton],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(1011, counter=0),
+            hp_rng=MutableRNG.from_seed(1011, counter=100),
+        )
+        player = combat.state.player
+
+        automaton.set_move(MonsterMove(4, MonsterIntent.UNKNOWN, name="Spawn Orbs"))
+        automaton.take_turn(player)
+        assert sum(1 for monster in combat.state.monsters if monster.id == "BronzeOrb") == 2
+
+        automaton.num_turns = 4
+        automaton.get_move(0)
+        assert automaton.next_move is not None
+        assert automaton.next_move.move_id == 2
+        assert automaton.next_move.base_damage == automaton.hyper_beam_dmg
+
+    def test_bronze_orb_stasis_steals_and_returns_a_card_on_death(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+        from sts_py.engine.content.card_instance import CardInstance
+
+        rng = MutableRNG.from_seed(10115, rng_type="monster")
+        automaton = Automaton.create(rng, ascension=0)
+        orb = BronzeOrb.create(rng, ascension=0)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[automaton, orb],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(10115, counter=0),
+            hp_rng=MutableRNG.from_seed(10115, counter=100),
+        )
+        combat.state.card_manager.draw_pile.clear()
+        combat.state.card_manager.draw_pile.add(CardInstance(card_id="Bash"))
+        hand_before = combat.state.card_manager.hand.size()
+
+        orb.set_move(MonsterMove(3, MonsterIntent.STRONG_DEBUFF, name="Stasis"))
+        orb.take_turn(combat.state.player)
+        assert combat.state.card_manager.draw_pile.is_empty()
+        assert orb.stasis_card is not None
+
+        orb.on_death()
+        assert combat.state.card_manager.hand.size() == hand_before + 1
+        assert any(card.card_id == "Bash" for card in combat.state.card_manager.hand.cards)
+
+    def test_awakened_one_rebirth_and_curiosity_strength_gain(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+        from sts_py.engine.content.card_instance import CardInstance
+
+        rng = MutableRNG.from_seed(1012, rng_type="monster")
+        awakened = AwakenedOne.create(rng, ascension=4)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[awakened],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(1012, counter=0),
+            hp_rng=MutableRNG.from_seed(1012, counter=100),
+        )
+        assert awakened.get_effective_strength() >= 2
+
+        awakened.on_player_power_played(CardInstance(card_id="Inflame"))
+        assert awakened.get_effective_strength() >= 3
+
+        awakened.take_damage(awakened.max_hp + 50)
+        assert awakened.half_dead is True
+        assert awakened.next_move is not None
+        assert awakened.next_move.move_id == 3
+
+        awakened.take_turn(combat.state.player)
+        assert awakened.form1 is False
+        assert awakened.half_dead is False
+        assert awakened.hp == awakened.max_hp
+
+    def test_time_eater_haste_and_head_slam_side_effects(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+
+        rng = MutableRNG.from_seed(1013, rng_type="monster")
+        eater = TimeEater.create(rng, ascension=19)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[eater],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(1013, counter=0),
+            hp_rng=MutableRNG.from_seed(1013, counter=100),
+        )
+        player = combat.state.player
+
+        assert int(getattr(player, "_cards_play_limit", 0) or 0) == 12
+
+        eater.hp = eater.max_hp // 2 - 1
+        eater.get_move(0)
+        assert eater.next_move is not None
+        assert eater.next_move.move_id == 5
+
+        eater.set_move(MonsterMove(4, MonsterIntent.ATTACK_DEBUFF, eater.head_slam_dmg, name="Head Slam"))
+        eater.take_turn(player)
+        assert int(getattr(player, "_draw_reduction_next_turn", 0) or 0) == 1
+        assert combat.state.card_manager.discard_pile.size() >= 2
+
 
 class TestAct2Act3MonsterAI:
     """Test ACT 2 and ACT 3 monster AI."""
@@ -222,6 +352,40 @@ class TestAct2Act3MonsterAI:
         for _ in range(5):
             m.roll_move(rng)
             assert m.next_move is not None
+
+    def test_spheric_guardian_prebattle_and_java_move_cycle(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+
+        rng = MutableRNG.from_seed(20015, rng_type="monster")
+        guardian = SphericGuardian.create(rng, 17)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[guardian],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(20015, counter=0),
+            hp_rng=MutableRNG.from_seed(20015, counter=100),
+        )
+
+        assert guardian.block == 40
+        assert guardian.get_power_amount("Artifact") == 3
+
+        guardian.move_history.clear()
+        guardian.first_move = True
+        guardian.second_move = True
+        guardian.get_move(0)
+        assert guardian.next_move is not None
+        assert guardian.next_move.move_id == 2
+        assert guardian.next_move.intent == MonsterIntent.DEFEND
+
+        guardian.get_move(99)
+        assert guardian.next_move is not None
+        assert guardian.next_move.move_id == 4
+        assert guardian.next_move.intent == MonsterIntent.ATTACK_DEBUFF
+
+        guardian.get_move(99)
+        assert guardian.next_move is not None
+        assert guardian.next_move.move_id == 1
+        assert guardian.next_move.multiplier == 2
 
     def test_chosen_ai(self):
         """Chosen AI can execute get_move()."""
@@ -326,6 +490,29 @@ class TestAct2Act3MonsterAI:
         for _ in range(5):
             m.roll_move(rng)
             assert m.next_move is not None
+
+    def test_gremlin_leader_can_choose_attack_branch_when_gremlins_are_alive(self):
+        from sts_py.engine.combat.combat_engine import CombatEngine
+        from sts_py.engine.monsters.exordium import GremlinFat, GremlinWar
+
+        rng = MutableRNG.from_seed(30065, rng_type="monster")
+        leader = GremlinLeader.create(rng, 0)
+        combat = CombatEngine.create_with_monsters(
+            monsters=[GremlinFat.create(rng, 0), GremlinWar.create(rng, 0), leader],
+            player_hp=80,
+            player_max_hp=80,
+            ai_rng=MutableRNG.from_seed(30065, counter=0),
+            hp_rng=MutableRNG.from_seed(30065, counter=100),
+        )
+
+        leader.move_history.clear()
+        leader.first_move = False
+        leader.get_move(90)
+        assert leader.next_move is not None
+        assert leader.next_move.move_id == 4
+        assert leader.next_move.intent == MonsterIntent.ATTACK
+        assert leader.next_move.multiplier == 3
+        assert len(combat.state.monsters) == 3
 
     def test_writhing_mass_first_move_matches_java_branches(self):
         rng = MutableRNG.from_seed(3007, rng_type="monster")

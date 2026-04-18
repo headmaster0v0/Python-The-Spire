@@ -111,14 +111,111 @@ class GremlinLeader(MonsterBase):
             if monster is not self and not monster.is_dead() and _is_gremlin_monster_id(getattr(monster, "id", None))
         )
 
+    def _reroll(self, minimum: int, maximum: int) -> int:
+        ai_rng = getattr(self, "ai_rng", None)
+        if ai_rng is None:
+            return minimum
+        return ai_rng.random_int_between(minimum, maximum)
+
     def get_move(self, roll: int) -> None:
         alive_gremlins = self._num_alive_gremlins()
         if alive_gremlins <= 0:
+            if roll < 75:
+                if not self.last_move(2):
+                    self.set_move(MonsterMove(2, MonsterIntent.UNKNOWN, name="Rally"))
+                    return
+                self.set_move(
+                    MonsterMove(
+                        4,
+                        MonsterIntent.ATTACK,
+                        self.stab_dmg,
+                        multiplier=self.stab_hits,
+                        is_multi_damage=True,
+                        name="Stab",
+                    )
+                )
+                return
+            if not self.last_move(4):
+                self.set_move(
+                    MonsterMove(
+                        4,
+                        MonsterIntent.ATTACK,
+                        self.stab_dmg,
+                        multiplier=self.stab_hits,
+                        is_multi_damage=True,
+                        name="Stab",
+                    )
+                )
+                return
             self.set_move(MonsterMove(2, MonsterIntent.UNKNOWN, name="Rally"))
-        elif alive_gremlins < 2:
-            self.set_move(MonsterMove(3, MonsterIntent.DEFEND_BUFF, name="Encourage"))
-        else:
-            self.set_move(MonsterMove(3, MonsterIntent.DEFEND_BUFF, name="Encourage"))
+            return
+
+        if alive_gremlins < 2:
+            if roll < 50:
+                if not self.last_move(2):
+                    self.set_move(MonsterMove(2, MonsterIntent.UNKNOWN, name="Rally"))
+                else:
+                    self.get_move(self._reroll(50, 99))
+                return
+            if roll < 80:
+                if not self.last_move(3):
+                    self.set_move(MonsterMove(3, MonsterIntent.DEFEND_BUFF, name="Encourage"))
+                else:
+                    self.set_move(
+                        MonsterMove(
+                            4,
+                            MonsterIntent.ATTACK,
+                            self.stab_dmg,
+                            multiplier=self.stab_hits,
+                            is_multi_damage=True,
+                            name="Stab",
+                        )
+                    )
+                return
+            if not self.last_move(4):
+                self.set_move(
+                    MonsterMove(
+                        4,
+                        MonsterIntent.ATTACK,
+                        self.stab_dmg,
+                        multiplier=self.stab_hits,
+                        is_multi_damage=True,
+                        name="Stab",
+                    )
+                )
+            else:
+                self.get_move(self._reroll(0, 80))
+            return
+
+        if roll < 66:
+            if not self.last_move(3):
+                self.set_move(MonsterMove(3, MonsterIntent.DEFEND_BUFF, name="Encourage"))
+            else:
+                self.set_move(
+                    MonsterMove(
+                        4,
+                        MonsterIntent.ATTACK,
+                        self.stab_dmg,
+                        multiplier=self.stab_hits,
+                        is_multi_damage=True,
+                        name="Stab",
+                    )
+                )
+            return
+
+        if not self.last_move(4):
+            self.set_move(
+                MonsterMove(
+                    4,
+                    MonsterIntent.ATTACK,
+                    self.stab_dmg,
+                    multiplier=self.stab_hits,
+                    is_multi_damage=True,
+                    name="Stab",
+                )
+            )
+            return
+        self.set_move(MonsterMove(3, MonsterIntent.DEFEND_BUFF, name="Encourage"))
 
     def _record_spawn_event(self, event: dict[str, object]) -> None:
         java_turn = int(getattr(self.state, "_replay_java_turn", -1) or -1)
@@ -205,45 +302,73 @@ class SphericGuardian(MonsterBase):
     slam_dmg: int = 10
     activate_block: int = 25
     harden_block: int = 15
+    frail_amount: int = 5
+    second_move: bool = True
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "SphericGuardian":
-        hp = hp_rng.random_int_between(14, 18) if ascension >= 7 else hp_rng.random_int_between(20, 24)
-        if ascension >= 2:
-            slam_dmg = 11
-        else:
-            slam_dmg = 10
-        return cls(id="SphericGuardian", name="Spheric Guardian", hp=hp, max_hp=hp, slam_dmg=slam_dmg)
+        slam_dmg = 11 if ascension >= 2 else 10
+        activate_block = 35 if ascension >= 17 else 25
+        return cls(
+            id="SphericGuardian",
+            name="Spheric Guardian",
+            hp=20,
+            max_hp=20,
+            slam_dmg=slam_dmg,
+            activate_block=activate_block,
+        )
+
+    def use_pre_battle_action(self) -> None:
+        self.gain_block(40)
+        self.add_power(create_power("Artifact", 3, self.id))
 
     def get_move(self, roll: int) -> None:
-        MOVE_SLAM = 1
-        MOVE_ACTIVATE = 2
-        MOVE_HARDEN = 3
         if self.first_move:
             self.first_move = False
-            self.set_move(MonsterMove(MOVE_ACTIVATE, MonsterIntent.DEFEND_BUFF, name="Activate"))
+            self.set_move(MonsterMove(2, MonsterIntent.DEFEND, name="Activate"))
             return
-        if roll < 50:
-            if self.last_two_moves(MOVE_SLAM):
-                self.set_move(MonsterMove(MOVE_HARDEN, MonsterIntent.DEFEND, name="Harden"))
-            else:
-                self.set_move(MonsterMove(MOVE_SLAM, MonsterIntent.ATTACK, self.slam_dmg, name="Slam"))
-        else:
-            if self.last_move(MOVE_HARDEN):
-                self.set_move(MonsterMove(MOVE_SLAM, MonsterIntent.ATTACK, self.slam_dmg, name="Slam"))
-            else:
-                self.set_move(MonsterMove(MOVE_HARDEN, MonsterIntent.DEFEND, name="Harden"))
+        if self.second_move:
+            self.second_move = False
+            self.set_move(MonsterMove(4, MonsterIntent.ATTACK_DEBUFF, self.slam_dmg, name="Slam"))
+            return
+        if self.last_move(1):
+            self.set_move(MonsterMove(3, MonsterIntent.ATTACK_DEFEND, self.slam_dmg, name="Harden"))
+            return
+        self.set_move(
+            MonsterMove(
+                1,
+                MonsterIntent.ATTACK,
+                self.slam_dmg,
+                multiplier=2,
+                is_multi_damage=True,
+                name="Slam",
+            )
+        )
 
     def take_turn(self, player) -> None:
         if self.next_move is None:
             return
-        move = self.next_move
-        if move.intent.is_attack():  # Slam
-            player.take_damage(self.get_intent_damage())
-        elif move.intent == MonsterIntent.DEFEND_BUFF:  # Activate
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        if move_id == 1:
+            damage = self.get_intent_damage()
+            if damage > 0:
+                player.take_damage(damage)
+                player.take_damage(damage)
+            return
+        if move_id == 2:
             self.gain_block(self.activate_block)
-        elif move.intent.is_defend():  # Harden
+            return
+        if move_id == 3:
             self.gain_block(self.harden_block)
+            damage = self.get_intent_damage()
+            if damage > 0:
+                player.take_damage(damage)
+            return
+        if move_id == 4:
+            damage = self.get_intent_damage()
+            if damage > 0:
+                player.take_damage(damage)
+            player.add_power(create_power("Frail", self.frail_amount, player.id, is_source_monster=True))
 
 
 @dataclass

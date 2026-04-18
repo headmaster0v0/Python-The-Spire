@@ -42,6 +42,21 @@ def test_monster_truth_canonicalizes_runtime_and_official_aliases() -> None:
     assert get_monster_truth("Serpent").official_name_zhs == "塔内增生组织"
 
 
+def test_summoned_monster_truth_tracks_boss_encounter_membership() -> None:
+    bronze_orb = get_monster_truth("BronzeOrb")
+    torch_head = get_monster_truth("TorchHead")
+
+    assert bronze_orb is not None
+    assert bronze_orb.category == "SUMMON"
+    assert bronze_orb.encounters == ("Automaton",)
+    assert bronze_orb.pool_buckets == ("pool:act2:boss",)
+
+    assert torch_head is not None
+    assert torch_head.category == "SUMMON"
+    assert torch_head.encounters == ("Collector",)
+    assert torch_head.pool_buckets == ("pool:act2:boss",)
+
+
 def test_act1_weak_pool_uses_official_small_slimes_entry() -> None:
     assert [(item.name, item.weight) for item in WEAK_MONSTERS_ACT1.encounters] == [
         ("Cultist", 2.0),
