@@ -1,0 +1,2086 @@
+{
+  "schema_version": 1,
+  "records": {
+    "AcidSlimeLarge": {
+      "canonical_id": "AcidSlimeLarge",
+      "official_key": "AcidSlime_L",
+      "java_class": "AcidSlimeLarge",
+      "runtime_aliases": [
+        "AcidSlimeLarge",
+        "AcidSlime_L"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Large Slime"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong"
+      ],
+      "official_name_en": "Acid Slime (L)",
+      "official_name_zhs": "酸液史莱姆（大）",
+      "official_moves_en": [
+        "Corrosive Spit",
+        "Split",
+        "Lick"
+      ],
+      "official_moves_zhs": [
+        "腐蚀喷吐",
+        "分裂",
+        "舔舔"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "AcidSlimeMedium": {
+      "canonical_id": "AcidSlimeMedium",
+      "official_key": "AcidSlime_M",
+      "java_class": "AcidSlimeMedium",
+      "runtime_aliases": [
+        "AcidSlimeMedium",
+        "AcidSlime_M"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Exordium Thugs",
+        "Exordium Wildlife",
+        "Small Slimes"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Acid Slime (M)",
+      "official_name_zhs": "酸液史莱姆（中）",
+      "official_moves_en": [
+        "Corrosive Spit",
+        "Lick"
+      ],
+      "official_moves_zhs": [
+        "腐蚀喷吐",
+        "舔舔"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "AcidSlimeSmall": {
+      "canonical_id": "AcidSlimeSmall",
+      "official_key": "AcidSlime_S",
+      "java_class": "AcidSlimeSmall",
+      "runtime_aliases": [
+        "AcidSlimeSmall",
+        "AcidSlime_S"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Lots of Slimes",
+        "Small Slimes"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Acid Slime (S)",
+      "official_name_zhs": "酸液史莱姆（小）",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Automaton": {
+      "canonical_id": "Automaton",
+      "official_key": "BronzeAutomaton",
+      "java_class": "Automaton",
+      "runtime_aliases": [
+        "Automaton",
+        "Bronze Automaton",
+        "BronzeAutomaton"
+      ],
+      "category": "BOSS",
+      "act": 2,
+      "encounters": [
+        "Automaton"
+      ],
+      "pool_buckets": [
+        "pool:act2:boss"
+      ],
+      "official_name_en": "Bronze Automaton",
+      "official_name_zhs": "铜制机械人偶",
+      "official_moves_en": [
+        "HYPER BEAM"
+      ],
+      "official_moves_zhs": [
+        "超能光束"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "AwakenedOne": {
+      "canonical_id": "AwakenedOne",
+      "official_key": "AwakenedOne",
+      "java_class": "AwakenedOne",
+      "runtime_aliases": [
+        "AwakenedOne"
+      ],
+      "category": "BOSS",
+      "act": 3,
+      "encounters": [
+        "Awakened One"
+      ],
+      "pool_buckets": [
+        "pool:act3:boss"
+      ],
+      "official_name_en": "Awakened One",
+      "official_name_zhs": "觉醒者",
+      "official_moves_en": [
+        "Soul Strike",
+        "Dark Echo",
+        "Cleanse",
+        "Sludge"
+      ],
+      "official_moves_zhs": [
+        "灵魂攻击",
+        "黑暗回音",
+        "净化",
+        "污泥"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "BanditBear": {
+      "canonical_id": "BanditBear",
+      "official_key": "BanditBear",
+      "java_class": "BanditBear",
+      "runtime_aliases": [
+        "BanditBear"
+      ],
+      "category": "SPECIAL",
+      "act": 2,
+      "encounters": [
+        "Masked Bandits"
+      ],
+      "pool_buckets": [
+        "pool:event:special"
+      ],
+      "official_name_en": "Bear",
+      "official_name_zhs": "熊",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "BanditLeader": {
+      "canonical_id": "BanditLeader",
+      "official_key": "BanditLeader",
+      "java_class": "BanditLeader",
+      "runtime_aliases": [
+        "BanditLeader"
+      ],
+      "category": "SPECIAL",
+      "act": 2,
+      "encounters": [
+        "Masked Bandits"
+      ],
+      "pool_buckets": [
+        "pool:event:special"
+      ],
+      "official_name_en": "Romeo",
+      "official_name_zhs": "罗密欧",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "BanditPointy": {
+      "canonical_id": "BanditPointy",
+      "official_key": "BanditChild",
+      "java_class": "BanditPointy",
+      "runtime_aliases": [
+        "BanditChild",
+        "BanditPointy"
+      ],
+      "category": "SPECIAL",
+      "act": 2,
+      "encounters": [
+        "Masked Bandits"
+      ],
+      "pool_buckets": [
+        "pool:event:special"
+      ],
+      "official_name_en": "Pointy",
+      "official_name_zhs": "尖尖",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "BookOfStabbing": {
+      "canonical_id": "BookOfStabbing",
+      "official_key": "BookOfStabbing",
+      "java_class": "BookOfStabbing",
+      "runtime_aliases": [
+        "BookOfStabbing"
+      ],
+      "category": "ELITE",
+      "act": 2,
+      "encounters": [
+        "Book of Stabbing"
+      ],
+      "pool_buckets": [
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Book of Stabbing",
+      "official_name_zhs": "扎人的书",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "BronzeOrb": {
+      "canonical_id": "BronzeOrb",
+      "official_key": "BronzeOrb",
+      "java_class": "BronzeOrb",
+      "runtime_aliases": [
+        "BronzeOrb"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "Orb",
+      "official_name_zhs": "铜球",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Byrd": {
+      "canonical_id": "Byrd",
+      "official_key": "Byrd",
+      "java_class": "Byrd",
+      "runtime_aliases": [
+        "Byrd"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "3 Byrds",
+        "4 Byrds",
+        "Chosen and Byrds"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:act2:weak"
+      ],
+      "official_name_en": "Byrd",
+      "official_name_zhs": "异鸟",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Centurion": {
+      "canonical_id": "Centurion",
+      "official_key": "Centurion",
+      "java_class": "Centurion",
+      "runtime_aliases": [
+        "Centurion"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Centurion and Healer"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong"
+      ],
+      "official_name_en": "Centurion",
+      "official_name_zhs": "百夫长",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Champ": {
+      "canonical_id": "Champ",
+      "official_key": "Champ",
+      "java_class": "Champ",
+      "runtime_aliases": [
+        "Champ"
+      ],
+      "category": "BOSS",
+      "act": 2,
+      "encounters": [
+        "Champ"
+      ],
+      "pool_buckets": [
+        "pool:act2:boss"
+      ],
+      "official_name_en": "The Champ",
+      "official_name_zhs": "第一勇士",
+      "official_moves_en": [
+        "Defensive Stance",
+        "Execute",
+        "Face Slap"
+      ],
+      "official_moves_zhs": [
+        "防御态势",
+        "处决",
+        "打脸"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Chosen": {
+      "canonical_id": "Chosen",
+      "official_key": "Chosen",
+      "java_class": "Chosen",
+      "runtime_aliases": [
+        "Chosen"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Chosen",
+        "Chosen and Byrds",
+        "Cultist and Chosen"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:act2:weak"
+      ],
+      "official_name_en": "Chosen",
+      "official_name_zhs": "被拣选者",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Collector": {
+      "canonical_id": "Collector",
+      "official_key": "TheCollector",
+      "java_class": "Collector",
+      "runtime_aliases": [
+        "Collector",
+        "The Collector",
+        "TheCollector"
+      ],
+      "category": "BOSS",
+      "act": 2,
+      "encounters": [
+        "Collector"
+      ],
+      "pool_buckets": [
+        "pool:act2:boss"
+      ],
+      "official_name_en": "The Collector",
+      "official_name_zhs": "收藏家",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "CorruptHeart": {
+      "canonical_id": "CorruptHeart",
+      "official_key": "CorruptHeart",
+      "java_class": "CorruptHeart",
+      "runtime_aliases": [
+        "CorruptHeart"
+      ],
+      "category": "BOSS",
+      "act": 4,
+      "encounters": [
+        "The Heart"
+      ],
+      "pool_buckets": [
+        "pool:act4:boss"
+      ],
+      "official_name_en": "Corrupt Heart",
+      "official_name_zhs": "腐化之心",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Cultist": {
+      "canonical_id": "Cultist",
+      "official_key": "Cultist",
+      "java_class": "Cultist",
+      "runtime_aliases": [
+        "Cultist"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "3 Cultists",
+        "Awakened One",
+        "Cultist",
+        "Cultist and Chosen",
+        "Exordium Thugs"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak",
+        "pool:act2:strong",
+        "pool:act3:boss"
+      ],
+      "official_name_en": "Cultist",
+      "official_name_zhs": "邪教徒",
+      "official_moves_en": [
+        "",
+        "",
+        "Incantation"
+      ],
+      "official_moves_zhs": [
+        "",
+        "",
+        "念咒"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Darkling": {
+      "canonical_id": "Darkling",
+      "official_key": "Darkling",
+      "java_class": "Darkling",
+      "runtime_aliases": [
+        "Darkling"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "3 Darklings"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong",
+        "pool:act3:weak"
+      ],
+      "official_name_en": "Darkling",
+      "official_name_zhs": "小黑",
+      "official_moves_en": [
+        "Chomp! Chomp!"
+      ],
+      "official_moves_zhs": [
+        "啊呜！啊呜！"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Deca": {
+      "canonical_id": "Deca",
+      "official_key": "Deca",
+      "java_class": "Deca",
+      "runtime_aliases": [
+        "Deca"
+      ],
+      "category": "BOSS",
+      "act": 3,
+      "encounters": [
+        "Donu and Deca"
+      ],
+      "pool_buckets": [
+        "pool:act3:boss"
+      ],
+      "official_name_en": "Deca",
+      "official_name_zhs": "八体",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Donu": {
+      "canonical_id": "Donu",
+      "official_key": "Donu",
+      "java_class": "Donu",
+      "runtime_aliases": [
+        "Donu"
+      ],
+      "category": "BOSS",
+      "act": 3,
+      "encounters": [
+        "Donu and Deca"
+      ],
+      "pool_buckets": [
+        "pool:act3:boss"
+      ],
+      "official_name_en": "Donu",
+      "official_name_zhs": "甜圈",
+      "official_moves_en": [
+        "Circle of Power"
+      ],
+      "official_moves_zhs": [
+        "力量之环"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Exploder": {
+      "canonical_id": "Exploder",
+      "official_key": "Exploder",
+      "java_class": "Exploder",
+      "runtime_aliases": [
+        "Exploder"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "3 Shapes",
+        "4 Shapes",
+        "Mysterious Sphere",
+        "Sphere and 2 Shapes"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong",
+        "pool:act3:weak",
+        "pool:event:special"
+      ],
+      "official_name_en": "Exploder",
+      "official_name_zhs": "爆炸机",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "FungiBeast": {
+      "canonical_id": "FungiBeast",
+      "official_key": "FungiBeast",
+      "java_class": "FungiBeast",
+      "runtime_aliases": [
+        "FungiBeast"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "2 Fungi Beasts",
+        "Exordium Wildlife",
+        "Shelled Parasite and Fungi",
+        "The Mushroom Lair"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:strong",
+        "pool:event:special"
+      ],
+      "official_name_en": "Fungi Beast",
+      "official_name_zhs": "真菌兽",
+      "official_moves_en": [
+        "Grow"
+      ],
+      "official_moves_zhs": [
+        "生长"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "FuzzyLouseNormal": {
+      "canonical_id": "FuzzyLouseNormal",
+      "official_key": "FuzzyLouseNormal",
+      "java_class": "FuzzyLouseNormal",
+      "runtime_aliases": [
+        "FuzzyLouseNormal",
+        "Louse",
+        "LouseNormal"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "2 Louse",
+        "3 Louse",
+        "Exordium Thugs",
+        "Exordium Wildlife"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Louse",
+      "official_name_zhs": "虱虫",
+      "official_moves_en": [
+        "Grow"
+      ],
+      "official_moves_zhs": [
+        "成长"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GiantHead": {
+      "canonical_id": "GiantHead",
+      "official_key": "GiantHead",
+      "java_class": "GiantHead",
+      "runtime_aliases": [
+        "GiantHead"
+      ],
+      "category": "ELITE",
+      "act": 3,
+      "encounters": [
+        "Giant Head"
+      ],
+      "pool_buckets": [
+        "pool:act3:elite"
+      ],
+      "official_name_en": "Giant Head",
+      "official_name_zhs": "大脑袋",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinFat": {
+      "canonical_id": "GremlinFat",
+      "official_key": "GremlinFat",
+      "java_class": "GremlinFat",
+      "runtime_aliases": [
+        "GremlinFat"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Gremlin Gang",
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Fat Gremlin",
+      "official_name_zhs": "胖地精",
+      "official_moves_en": [
+        "Smash"
+      ],
+      "official_moves_zhs": [
+        "粉碎"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinLeader": {
+      "canonical_id": "GremlinLeader",
+      "official_key": "GremlinLeader",
+      "java_class": "GremlinLeader",
+      "runtime_aliases": [
+        "GremlinLeader"
+      ],
+      "category": "ELITE",
+      "act": 2,
+      "encounters": [
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Gremlin Leader",
+      "official_name_zhs": "地精首领",
+      "official_moves_en": [
+        "Rally!"
+      ],
+      "official_moves_zhs": [
+        "集合！"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinNob": {
+      "canonical_id": "GremlinNob",
+      "official_key": "GremlinNob",
+      "java_class": "GremlinNob",
+      "runtime_aliases": [
+        "GremlinNob"
+      ],
+      "category": "ELITE",
+      "act": 1,
+      "encounters": [
+        "Colosseum Nobs",
+        "Gremlin Nob"
+      ],
+      "pool_buckets": [
+        "pool:act1:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Gremlin Nob",
+      "official_name_zhs": "地精大块头",
+      "official_moves_en": [
+        "Skull Bash",
+        "Bull Rush"
+      ],
+      "official_moves_zhs": [
+        "颅骨重击",
+        "蛮牛冲撞"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinSneaky": {
+      "canonical_id": "GremlinSneaky",
+      "official_key": "GremlinThief",
+      "java_class": "GremlinSneaky",
+      "runtime_aliases": [
+        "GremlinSneaky",
+        "GremlinThief"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Gremlin Gang",
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Sneaky Gremlin",
+      "official_name_zhs": "卑鄙地精",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinTsundere": {
+      "canonical_id": "GremlinTsundere",
+      "official_key": "GremlinTsundere",
+      "java_class": "GremlinTsundere",
+      "runtime_aliases": [
+        "GremlinTsundere"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Gremlin Gang",
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Shield Gremlin",
+      "official_name_zhs": "持盾地精",
+      "official_moves_en": [
+        "Protect",
+        "Shield Bash"
+      ],
+      "official_moves_zhs": [
+        "保护",
+        "盾击"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinWar": {
+      "canonical_id": "GremlinWar",
+      "official_key": "GremlinWarrior",
+      "java_class": "GremlinWar",
+      "runtime_aliases": [
+        "GremlinWar",
+        "GremlinWarrior"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Gremlin Gang",
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Mad Gremlin",
+      "official_name_zhs": "火大地精",
+      "official_moves_en": [
+        "Claw"
+      ],
+      "official_moves_zhs": [
+        "爪挠"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "GremlinWizard": {
+      "canonical_id": "GremlinWizard",
+      "official_key": "GremlinWizard",
+      "java_class": "GremlinWizard",
+      "runtime_aliases": [
+        "GremlinWizard"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Gremlin Gang",
+        "Gremlin Leader"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite"
+      ],
+      "official_name_en": "Gremlin Wizard",
+      "official_name_zhs": "地精法师",
+      "official_moves_en": [
+        "Charging",
+        "Ultimate Blast"
+      ],
+      "official_moves_zhs": [
+        "蓄能",
+        "终极大爆炸"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Healer": {
+      "canonical_id": "Healer",
+      "official_key": "Healer",
+      "java_class": "Healer",
+      "runtime_aliases": [
+        "Healer"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Centurion and Healer",
+        "Snecko and Mystics"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:event:special"
+      ],
+      "official_name_en": "Mystic",
+      "official_name_zhs": "神秘术士",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Hexaghost": {
+      "canonical_id": "Hexaghost",
+      "official_key": "Hexaghost",
+      "java_class": "Hexaghost",
+      "runtime_aliases": [
+        "Hexaghost"
+      ],
+      "category": "BOSS",
+      "act": 1,
+      "encounters": [
+        "Hexaghost"
+      ],
+      "pool_buckets": [
+        "pool:act1:boss"
+      ],
+      "official_name_en": "Hexaghost",
+      "official_name_zhs": "六火亡魂",
+      "official_moves_en": [
+        "Inflame",
+        "Sear",
+        "Inferno"
+      ],
+      "official_moves_zhs": [
+        "高热",
+        "灼烧",
+        "地狱火"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "JawWorm": {
+      "canonical_id": "JawWorm",
+      "official_key": "JawWorm",
+      "java_class": "JawWorm",
+      "runtime_aliases": [
+        "JawWorm"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Exordium Wildlife",
+        "Jaw Worm",
+        "Jaw Worm Horde"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak",
+        "pool:act3:strong"
+      ],
+      "official_name_en": "Jaw Worm",
+      "official_name_zhs": "大颚虫",
+      "official_moves_en": [
+        "Bellow",
+        "Thrash"
+      ],
+      "official_moves_zhs": [
+        "咆哮",
+        "抽打"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Lagavulin": {
+      "canonical_id": "Lagavulin",
+      "official_key": "Lagavulin",
+      "java_class": "Lagavulin",
+      "runtime_aliases": [
+        "Lagavulin"
+      ],
+      "category": "ELITE",
+      "act": 1,
+      "encounters": [
+        "Lagavulin",
+        "Lagavulin Event"
+      ],
+      "pool_buckets": [
+        "pool:act1:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Lagavulin",
+      "official_name_zhs": "乐加维林",
+      "official_moves_en": [
+        "Siphon Soul"
+      ],
+      "official_moves_zhs": [
+        "灵魂吸取"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Looter": {
+      "canonical_id": "Looter",
+      "official_key": "Looter",
+      "java_class": "Looter",
+      "runtime_aliases": [
+        "Looter"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "2 Thieves",
+        "Exordium Thugs",
+        "Looter"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:weak"
+      ],
+      "official_name_en": "Looter",
+      "official_name_zhs": "抢劫的",
+      "official_moves_en": [
+        "Lunge",
+        "Mug"
+      ],
+      "official_moves_zhs": [
+        "突刺",
+        "打劫"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "LouseDefensive": {
+      "canonical_id": "LouseDefensive",
+      "official_key": "FuzzyLouseDefensive",
+      "java_class": "LouseDefensive",
+      "runtime_aliases": [
+        "FuzzyLouseDefensive",
+        "LouseDefensive"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "2 Louse",
+        "3 Louse",
+        "Exordium Thugs",
+        "Exordium Wildlife"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Louse",
+      "official_name_zhs": "虱虫",
+      "official_moves_en": [
+        "Spit Web"
+      ],
+      "official_moves_zhs": [
+        "吐网"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Maw": {
+      "canonical_id": "Maw",
+      "official_key": "Maw",
+      "java_class": "Maw",
+      "runtime_aliases": [
+        "Maw"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "Maw"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong"
+      ],
+      "official_name_en": "The Maw",
+      "official_name_zhs": "巨口",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Mugger": {
+      "canonical_id": "Mugger",
+      "official_key": "Mugger",
+      "java_class": "Mugger",
+      "runtime_aliases": [
+        "Mugger"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "2 Thieves"
+      ],
+      "pool_buckets": [
+        "pool:act2:weak"
+      ],
+      "official_name_en": "Mugger",
+      "official_name_zhs": "打劫的",
+      "official_moves_en": [
+        "Lunge",
+        "Mug"
+      ],
+      "official_moves_zhs": [
+        "猛冲",
+        "抢劫"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Nemesis": {
+      "canonical_id": "Nemesis",
+      "official_key": "Nemesis",
+      "java_class": "Nemesis",
+      "runtime_aliases": [
+        "Nemesis"
+      ],
+      "category": "ELITE",
+      "act": 3,
+      "encounters": [
+        "Nemesis"
+      ],
+      "pool_buckets": [
+        "pool:act3:elite"
+      ],
+      "official_name_en": "Nemesis",
+      "official_name_zhs": "天罚",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "OrbWalker": {
+      "canonical_id": "OrbWalker",
+      "official_key": "Orb Walker",
+      "java_class": "OrbWalker",
+      "runtime_aliases": [
+        "Orb Walker",
+        "OrbWalker"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "2 Orb Walkers",
+        "Mysterious Sphere",
+        "Orb Walker"
+      ],
+      "pool_buckets": [
+        "pool:act3:weak",
+        "pool:event:special"
+      ],
+      "official_name_en": "Orb Walker",
+      "official_name_zhs": "圆球行者",
+      "official_moves_en": [
+        "Strength Up"
+      ],
+      "official_moves_zhs": [
+        "强化"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Reptomancer": {
+      "canonical_id": "Reptomancer",
+      "official_key": "Reptomancer",
+      "java_class": "Reptomancer",
+      "runtime_aliases": [
+        "Reptomancer"
+      ],
+      "category": "ELITE",
+      "act": 3,
+      "encounters": [
+        "Flame Bruiser 1 Orb",
+        "Flame Bruiser 2 Orb",
+        "Reptomancer"
+      ],
+      "pool_buckets": [
+        "pool:act3:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Reptomancer",
+      "official_name_zhs": "拜蛇术士",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Repulsor": {
+      "canonical_id": "Repulsor",
+      "official_key": "Repulsor",
+      "java_class": "Repulsor",
+      "runtime_aliases": [
+        "Repulsor"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "3 Shapes",
+        "4 Shapes",
+        "Mysterious Sphere",
+        "Sphere and 2 Shapes"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong",
+        "pool:act3:weak",
+        "pool:event:special"
+      ],
+      "official_name_en": "Repulsor",
+      "official_name_zhs": "反冲机",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Sentry": {
+      "canonical_id": "Sentry",
+      "official_key": "Sentry",
+      "java_class": "Sentry",
+      "runtime_aliases": [
+        "Sentry"
+      ],
+      "category": "ELITE",
+      "act": 1,
+      "encounters": [
+        "3 Sentries",
+        "Sentry and Sphere"
+      ],
+      "pool_buckets": [
+        "pool:act1:elite",
+        "pool:act2:strong"
+      ],
+      "official_name_en": "Sentry",
+      "official_name_zhs": "哨卫",
+      "official_moves_en": [
+        "Disintegrate"
+      ],
+      "official_moves_zhs": [
+        "粉碎"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "ShellParasite": {
+      "canonical_id": "ShellParasite",
+      "official_key": "Shelled Parasite",
+      "java_class": "ShellParasite",
+      "runtime_aliases": [
+        "Shell Parasite",
+        "ShellParasite",
+        "Shelled Parasite",
+        "ShelledParasite"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Shell Parasite",
+        "Shelled Parasite and Fungi"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:act2:weak"
+      ],
+      "official_name_en": "Shelled Parasite",
+      "official_name_zhs": "带壳寄生怪",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SlaverBlue": {
+      "canonical_id": "SlaverBlue",
+      "official_key": "SlaverBlue",
+      "java_class": "SlaverBlue",
+      "runtime_aliases": [
+        "SlaverBlue"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Blue Slaver",
+        "Colosseum Slavers",
+        "Exordium Thugs",
+        "Slavers"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Slaver",
+      "official_name_zhs": "奴隶贩子",
+      "official_moves_en": [
+        "Rake"
+      ],
+      "official_moves_zhs": [
+        "耙伤"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SlaverRed": {
+      "canonical_id": "SlaverRed",
+      "official_key": "SlaverRed",
+      "java_class": "SlaverRed",
+      "runtime_aliases": [
+        "SlaverRed"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Colosseum Slavers",
+        "Exordium Thugs",
+        "Red Slaver",
+        "Slavers"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act2:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Slaver",
+      "official_name_zhs": "奴隶贩子",
+      "official_moves_en": [
+        "Scrape",
+        "Entangle"
+      ],
+      "official_moves_zhs": [
+        "刮伤",
+        "丢网"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SlimeBoss": {
+      "canonical_id": "SlimeBoss",
+      "official_key": "SlimeBoss",
+      "java_class": "SlimeBoss",
+      "runtime_aliases": [
+        "SlimeBoss"
+      ],
+      "category": "BOSS",
+      "act": 1,
+      "encounters": [
+        "Slime Boss"
+      ],
+      "pool_buckets": [
+        "pool:act1:boss"
+      ],
+      "official_name_en": "Slime Boss",
+      "official_name_zhs": "史莱姆老大",
+      "official_moves_en": [
+        "Slam",
+        "Preparing",
+        "Split",
+        "Goop Spray"
+      ],
+      "official_moves_zhs": [
+        "猛撞",
+        "准备",
+        "分裂",
+        "黏液喷射"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SnakeDagger": {
+      "canonical_id": "SnakeDagger",
+      "official_key": "Dagger",
+      "java_class": "SnakeDagger",
+      "runtime_aliases": [
+        "Dagger",
+        "SnakeDagger"
+      ],
+      "category": "SUMMON",
+      "act": 3,
+      "encounters": [
+        "Flame Bruiser 1 Orb",
+        "Flame Bruiser 2 Orb",
+        "Reptomancer"
+      ],
+      "pool_buckets": [
+        "pool:act3:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Dagger",
+      "official_name_zhs": "匕首",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SnakePlant": {
+      "canonical_id": "SnakePlant",
+      "official_key": "SnakePlant",
+      "java_class": "SnakePlant",
+      "runtime_aliases": [
+        "SnakePlant"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Snake Plant"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong"
+      ],
+      "official_name_en": "Snake Plant",
+      "official_name_zhs": "蛇花",
+      "official_moves_en": [
+        "Enfeebling Spores"
+      ],
+      "official_moves_zhs": [
+        "虚弱孢子"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Snecko": {
+      "canonical_id": "Snecko",
+      "official_key": "Snecko",
+      "java_class": "Snecko",
+      "runtime_aliases": [
+        "Snecko"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Snecko",
+        "Snecko and Mystics"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:event:special"
+      ],
+      "official_name_en": "Snecko",
+      "official_name_zhs": "异蛇",
+      "official_moves_en": [
+        "Perplexing Glare",
+        "Tail Whip",
+        "Bite"
+      ],
+      "official_moves_zhs": [
+        "困惑瞪视",
+        "扫尾",
+        "噬咬"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SphericGuardian": {
+      "canonical_id": "SphericGuardian",
+      "official_key": "SphericGuardian",
+      "java_class": "SphericGuardian",
+      "runtime_aliases": [
+        "SphericGuardian"
+      ],
+      "category": "NORMAL",
+      "act": 2,
+      "encounters": [
+        "Sentry and Sphere",
+        "Sphere and 2 Shapes",
+        "Spheric Guardian"
+      ],
+      "pool_buckets": [
+        "pool:act2:strong",
+        "pool:act2:weak",
+        "pool:act3:strong"
+      ],
+      "official_name_en": "Spheric Guardian",
+      "official_name_zhs": "圆球守护者",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpikeSlimeLarge": {
+      "canonical_id": "SpikeSlimeLarge",
+      "official_key": "SpikeSlime_L",
+      "java_class": "SpikeSlimeLarge",
+      "runtime_aliases": [
+        "SpikeSlimeLarge",
+        "SpikeSlime_L"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Large Slime"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong"
+      ],
+      "official_name_en": "Spike Slime (L)",
+      "official_name_zhs": "尖刺史莱姆（大）",
+      "official_moves_en": [
+        "Lick",
+        "Split"
+      ],
+      "official_moves_zhs": [
+        "舔舔",
+        "分裂"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpikeSlimeMedium": {
+      "canonical_id": "SpikeSlimeMedium",
+      "official_key": "SpikeSlime_M",
+      "java_class": "SpikeSlimeMedium",
+      "runtime_aliases": [
+        "SpikeSlimeMedium",
+        "SpikeSlime_M"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Exordium Thugs",
+        "Exordium Wildlife",
+        "Small Slimes"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Spike Slime (M)",
+      "official_name_zhs": "尖刺史莱姆（中）",
+      "official_moves_en": [
+        "Lick"
+      ],
+      "official_moves_zhs": [
+        "舔舔"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpikeSlimeSmall": {
+      "canonical_id": "SpikeSlimeSmall",
+      "official_key": "SpikeSlime_S",
+      "java_class": "SpikeSlimeSmall",
+      "runtime_aliases": [
+        "SpikeSlimeSmall",
+        "SpikeSlime_S"
+      ],
+      "category": "NORMAL",
+      "act": 1,
+      "encounters": [
+        "Lots of Slimes",
+        "Small Slimes"
+      ],
+      "pool_buckets": [
+        "pool:act1:strong",
+        "pool:act1:weak"
+      ],
+      "official_name_en": "Spike Slime (S)",
+      "official_name_zhs": "尖刺史莱姆（小）",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Spiker": {
+      "canonical_id": "Spiker",
+      "official_key": "Spiker",
+      "java_class": "Spiker",
+      "runtime_aliases": [
+        "Spiker"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "3 Shapes",
+        "4 Shapes",
+        "Mysterious Sphere",
+        "Sphere and 2 Shapes"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong",
+        "pool:act3:weak",
+        "pool:event:special"
+      ],
+      "official_name_en": "Spiker",
+      "official_name_zhs": "钉刺机",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpireGrowth": {
+      "canonical_id": "SpireGrowth",
+      "official_key": "Serpent",
+      "java_class": "SpireGrowth",
+      "runtime_aliases": [
+        "Serpent",
+        "SpireGrowth"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "Spire Growth"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong"
+      ],
+      "official_name_en": "Spire Growth",
+      "official_name_zhs": "塔内增生组织",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpireShield": {
+      "canonical_id": "SpireShield",
+      "official_key": "SpireShield",
+      "java_class": "SpireShield",
+      "runtime_aliases": [
+        "SpireShield"
+      ],
+      "category": "ELITE",
+      "act": 4,
+      "encounters": [
+        "Shield and Spear"
+      ],
+      "pool_buckets": [
+        "pool:act4:elite"
+      ],
+      "official_name_en": "Spire Shield",
+      "official_name_zhs": "高塔之盾",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "SpireSpear": {
+      "canonical_id": "SpireSpear",
+      "official_key": "SpireSpear",
+      "java_class": "SpireSpear",
+      "runtime_aliases": [
+        "SpireSpear"
+      ],
+      "category": "ELITE",
+      "act": 4,
+      "encounters": [
+        "Shield and Spear"
+      ],
+      "pool_buckets": [
+        "pool:act4:elite"
+      ],
+      "official_name_en": "Spire Spear",
+      "official_name_zhs": "高塔之矛",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Taskmaster": {
+      "canonical_id": "Taskmaster",
+      "official_key": "SlaverBoss",
+      "java_class": "Taskmaster",
+      "runtime_aliases": [
+        "SlaverBoss",
+        "Taskmaster"
+      ],
+      "category": "ELITE",
+      "act": 2,
+      "encounters": [
+        "Colosseum Nobs",
+        "Slavers"
+      ],
+      "pool_buckets": [
+        "pool:act2:elite",
+        "pool:event:special"
+      ],
+      "official_name_en": "Taskmaster",
+      "official_name_zhs": "奴隶头子",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "TheGuardian": {
+      "canonical_id": "TheGuardian",
+      "official_key": "TheGuardian",
+      "java_class": "TheGuardian",
+      "runtime_aliases": [
+        "TheGuardian"
+      ],
+      "category": "BOSS",
+      "act": 1,
+      "encounters": [
+        "The Guardian"
+      ],
+      "pool_buckets": [
+        "pool:act1:boss"
+      ],
+      "official_name_en": "The Guardian",
+      "official_name_zhs": "守护者",
+      "official_moves_en": [
+        "Defensive Mode",
+        "Fierce Bash",
+        "Roll",
+        "Twin Slam",
+        "Whirlwind",
+        "Charging Up",
+        "Vent Steam"
+      ],
+      "official_moves_zhs": [
+        "防御模式",
+        "猛烈痛击",
+        "滚动",
+        "双斩",
+        "旋风",
+        "蓄能",
+        "蒸汽喷射"
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "TimeEater": {
+      "canonical_id": "TimeEater",
+      "official_key": "TimeEater",
+      "java_class": "TimeEater",
+      "runtime_aliases": [
+        "TimeEater"
+      ],
+      "category": "BOSS",
+      "act": 3,
+      "encounters": [
+        "Time Eater"
+      ],
+      "pool_buckets": [
+        "pool:act3:boss"
+      ],
+      "official_name_en": "Time Eater",
+      "official_name_zhs": "时间吞噬者",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "TorchHead": {
+      "canonical_id": "TorchHead",
+      "official_key": "TorchHead",
+      "java_class": "TorchHead",
+      "runtime_aliases": [
+        "TorchHead"
+      ],
+      "category": "SUMMON",
+      "act": 2,
+      "encounters": [],
+      "pool_buckets": [
+        "pool:summon"
+      ],
+      "official_name_en": "Torch Head",
+      "official_name_zhs": "火炬头",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "Transient": {
+      "canonical_id": "Transient",
+      "official_key": "Transient",
+      "java_class": "Transient",
+      "runtime_aliases": [
+        "Transient"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "Transient"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong"
+      ],
+      "official_name_en": "Transient",
+      "official_name_zhs": "倏忽魔",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "WrithingMass": {
+      "canonical_id": "WrithingMass",
+      "official_key": "WrithingMass",
+      "java_class": "WrithingMass",
+      "runtime_aliases": [
+        "WrithingMass"
+      ],
+      "category": "NORMAL",
+      "act": 3,
+      "encounters": [
+        "Writhing Mass"
+      ],
+      "pool_buckets": [
+        "pool:act3:strong"
+      ],
+      "official_name_en": "Writhing Mass",
+      "official_name_zhs": "扭曲团块",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "runtime_combat",
+      "combat_capable": true,
+      "translation_authority": "official_localization"
+    },
+    "ApologySlime": {
+      "canonical_id": "ApologySlime",
+      "official_key": "Apology Slime",
+      "java_class": "ApologySlime",
+      "runtime_aliases": [
+        "Apology Slime",
+        "ApologySlime"
+      ],
+      "category": "SPECIAL",
+      "act": 1,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "Apology Slime",
+      "official_name_zhs": "抱歉史莱姆",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "special_fallback",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "FireOrb": {
+      "canonical_id": "FireOrb",
+      "official_key": "FireOrb",
+      "java_class": "HexaghostOrb",
+      "runtime_aliases": [
+        "FireOrb",
+        "HexaghostOrb"
+      ],
+      "category": "SPECIAL",
+      "act": 1,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "Fire Orb",
+      "official_name_zhs": "烈焰球",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "internal_visual",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "HexaghostBody": {
+      "canonical_id": "HexaghostBody",
+      "official_key": "HexaghostBody",
+      "java_class": "HexaghostBody",
+      "runtime_aliases": [
+        "HexaghostBody"
+      ],
+      "category": "SPECIAL",
+      "act": 1,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "HexaghostBody",
+      "official_name_zhs": "",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "internal_visual",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "HexaghostOrb": {
+      "canonical_id": "HexaghostOrb",
+      "official_key": "HexaghostOrb",
+      "java_class": "HexaghostOrb",
+      "runtime_aliases": [
+        "HexaghostOrb"
+      ],
+      "category": "SPECIAL",
+      "act": 1,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "HexaghostOrb",
+      "official_name_zhs": "",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "internal_visual",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "Puppeteer": {
+      "canonical_id": "Puppeteer",
+      "official_key": "Puppeteer",
+      "java_class": "TheCollector",
+      "runtime_aliases": [
+        "Puppeteer",
+        "TheCollector"
+      ],
+      "category": "SPECIAL",
+      "act": 2,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "Puppeteer",
+      "official_name_zhs": "人偶师",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "internal_script",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "FlameBruiser": {
+      "canonical_id": "FlameBruiser",
+      "official_key": "FlameBruiser",
+      "java_class": "Reptomancer",
+      "runtime_aliases": [
+        "FlameBruiser",
+        "Reptomancer"
+      ],
+      "category": "SPECIAL",
+      "act": 3,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "Flame Bruiser",
+      "official_name_zhs": "烈焰蛮汉",
+      "official_moves_en": [
+        ""
+      ],
+      "official_moves_zhs": [
+        ""
+      ],
+      "internal_surface": "internal_script",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    },
+    "TheGuardianOrb": {
+      "canonical_id": "TheGuardianOrb",
+      "official_key": "TheGuardianOrb",
+      "java_class": "TheGuardianOrb",
+      "runtime_aliases": [
+        "TheGuardianOrb"
+      ],
+      "category": "SPECIAL",
+      "act": 1,
+      "encounters": [],
+      "pool_buckets": [],
+      "official_name_en": "TheGuardianOrb",
+      "official_name_zhs": "",
+      "official_moves_en": [],
+      "official_moves_zhs": [],
+      "internal_surface": "internal_visual",
+      "combat_capable": false,
+      "translation_authority": "official_localization"
+    }
+  }
+}

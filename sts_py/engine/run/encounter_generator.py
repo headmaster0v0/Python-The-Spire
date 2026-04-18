@@ -67,8 +67,7 @@ WEAK_MONSTERS_ACT1 = EncounterPool([
     MonsterInfo("Cultist", 2.0),
     MonsterInfo("Jaw Worm", 2.0),
     MonsterInfo("2 Louse", 2.0),
-    MonsterInfo("AcidM + SpikeS", 1.0),
-    MonsterInfo("SpikeM + AcidS", 1.0),
+    MonsterInfo("Small Slimes", 2.0),
 ])
 
 STRONG_MONSTERS_ACT1 = EncounterPool([

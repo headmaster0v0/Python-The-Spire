@@ -19,6 +19,7 @@ from sts_py.terminal.catalog import (
     get_power_str,
     get_relic_info,
     translate_monster,
+    translate_monster_move,
     translate_room_type,
 )
 
@@ -418,13 +419,15 @@ def _format_intent(monster) -> str:
     if move is None:
         return "意图 未知"
     label = INTENT_LABELS.get(move.intent, move.intent.name)
+    move_name = translate_monster_move(getattr(monster, "id", ""), getattr(move, "name", None))
+    move_prefix = f"{move_name} | " if move_name else ""
     if move.intent.is_attack():
         damage = monster.get_intent_damage()
         hits = int(getattr(move, "multiplier", 0) or 0)
         if bool(getattr(move, "is_multi_damage", False)) or hits > 1:
-            return f"意图 {label} {damage}x{max(1, hits)}"
-        return f"意图 {label} {damage}"
-    return f"意图 {label}"
+            return f"意图 {move_prefix}{label} {damage}x{max(1, hits)}"
+        return f"意图 {move_prefix}{label} {damage}"
+    return f"意图 {move_prefix}{label}"
 
 
 def render_combat_player_lines(player) -> list[str]:

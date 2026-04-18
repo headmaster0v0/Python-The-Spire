@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from sts_py.engine.monsters.monster_truth import official_monster_name_zhs
+
 
 MONSTER_NAME_MAP = {
     "Cultist": "邪教徒",
@@ -48,7 +50,7 @@ MONSTER_NAME_MAP = {
 
 def translate_monster(m_id: str) -> str:
     """Translate monster ID to Chinese name."""
-    return MONSTER_NAME_MAP.get(m_id, m_id)
+    return official_monster_name_zhs(m_id) or MONSTER_NAME_MAP.get(m_id, m_id)
 
 
 CARD_NAME_MAP = {

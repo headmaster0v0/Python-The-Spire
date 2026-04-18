@@ -63,7 +63,36 @@ from sts_py.engine.monsters.exordium import (
 from sts_py.engine.monsters.bosses import (
     Hexaghost, SlimeBoss, TheGuardian,
     Champ, Collector, Automaton,
-    AwakenedOne, TimeEater, DonuAndDeca,
+    AwakenedOne, TimeEater, DonuAndDeca, Deca, Donu, BronzeOrb, TorchHead,
+)
+from sts_py.engine.monsters.city_beyond import (
+    BanditBear,
+    BanditLeader,
+    BanditPointy,
+    BookOfStabbing,
+    Byrd,
+    Centurion,
+    Chosen,
+    Darkling,
+    Exploder,
+    GremlinLeader,
+    GiantHead,
+    Healer,
+    Maw,
+    Nemesis,
+    OrbWalker,
+    Reptomancer,
+    Repulsor,
+    ShellParasite,
+    SnakeDagger,
+    SnakePlant,
+    Snecko,
+    Spiker,
+    SpireGrowth,
+    SphericGuardian,
+    Taskmaster,
+    Transient,
+    WrithingMass,
 )
 from sts_py.engine.monsters.ending import CorruptHeart, SpireShield, SpireSpear
 
@@ -153,6 +182,64 @@ def generate_exordium_wildlife(rng) -> list[EncounterSpec]:
     weak_idx = rng.random_int(len(WEAK_WILDLIFE_POOL) - 1)
     return [(STRONG_WILDLIFE_POOL[strong_idx], {}), (WEAK_WILDLIFE_POOL[weak_idx], {})]
 
+
+def generate_small_slimes(rng: MutableRNG) -> list[EncounterSpec]:
+    if rng.random_boolean():
+        return [(SpikeSlimeSmall, {}), (AcidSlimeMedium, {})]
+    return [(AcidSlimeSmall, {}), (SpikeSlimeMedium, {})]
+
+
+def generate_large_slime(rng: MutableRNG) -> list[EncounterSpec]:
+    if rng.random_boolean():
+        return [(AcidSlimeLarge, {})]
+    return [(SpikeSlimeLarge, {})]
+
+
+def generate_lots_of_slimes(rng: MutableRNG) -> list[EncounterSpec]:
+    pool: list[Type[MonsterBase]] = [SpikeSlimeSmall, SpikeSlimeSmall, SpikeSlimeSmall, AcidSlimeSmall, AcidSlimeSmall]
+    result: list[EncounterSpec] = []
+    while pool:
+        idx = rng.random_int(len(pool) - 1)
+        result.append((pool.pop(idx), {}))
+    return result
+
+
+def generate_three_byrds(_: MutableRNG) -> list[EncounterSpec]:
+    return [(Byrd, {}), (Byrd, {}), (Byrd, {})]
+
+
+def generate_four_byrds(_: MutableRNG) -> list[EncounterSpec]:
+    return [(Byrd, {}), (Byrd, {}), (Byrd, {}), (Byrd, {})]
+
+
+def generate_gremlin_leader(rng: MutableRNG) -> list[EncounterSpec]:
+    return generate_gremlin_gang(rng)[:2] + [(GremlinLeader, {})]
+
+
+def generate_shapes(rng: MutableRNG, count: int) -> list[EncounterSpec]:
+    pool: list[Type[MonsterBase]] = [Repulsor, Repulsor, Exploder, Exploder, Spiker, Spiker]
+    result: list[EncounterSpec] = []
+    for _ in range(count):
+        idx = rng.random_int(len(pool) - 1)
+        result.append((pool.pop(idx), {}))
+    return result
+
+
+def generate_sphere_and_shapes(rng: MutableRNG) -> list[EncounterSpec]:
+    return generate_shapes(rng, 2) + [(SphericGuardian, {})]
+
+
+def generate_mysterious_sphere(rng: MutableRNG) -> list[EncounterSpec]:
+    return generate_shapes(rng, 2) + [(OrbWalker, {})]
+
+
+def generate_reptomancer_roster(_: MutableRNG) -> list[EncounterSpec]:
+    return [(SnakeDagger, {}), (Reptomancer, {}), (SnakeDagger, {})]
+
+
+def generate_flame_bruiser_one_orb(_: MutableRNG) -> list[EncounterSpec]:
+    return [(Reptomancer, {}), (SnakeDagger, {})]
+
 STRONG_ENCOUNTER_TEMPLATES_ACT1: list[tuple[str, list[EncounterSpec] | str, int]] = [
     ("Gremlin Gang", "GREMLIN_GANG", 2),
     ("Large Slime", [(AcidSlimeLarge, {})], 4),
@@ -170,36 +257,40 @@ STRONG_ENCOUNTER_TEMPLATES_ACT1: list[tuple[str, list[EncounterSpec] | str, int]
 WEAK_MONSTER_POOLS: dict[int, list[WeakEncounterType]] = {
     1: WEAK_ENCOUNTER_TEMPLATES_ACT1,
     2: [
-        ("2 Louse", "TWO_LOUSE", 1),
-        ("2 Louse", "TWO_LOUSE", 1),
-        ("Fungi Beast", [(FungiBeast, {})]),
-        ("2 Slimes", [(AcidSlimeMedium, {}), (AcidSlimeSmall, {})]),
+        ("Spheric Guardian", [(SphericGuardian, {})], 2),
+        ("Chosen", [(Chosen, {})], 2),
+        ("Shell Parasite", [(ShellParasite, {})], 2),
+        ("3 Byrds", "THREE_BYRDS", 2),
+        ("2 Thieves", [(Looter, {}), (Mugger, {})], 2),
     ],
     3: [
-        ("2 Louse", "TWO_LOUSE", 1),
-        ("2 Louse", "TWO_LOUSE", 1),
-        ("Fungi Beast", [(FungiBeast, {})]),
-        ("2 Slimes", [(AcidSlimeMedium, {}), (AcidSlimeSmall, {})]),
+        ("3 Darklings", [(Darkling, {}), (Darkling, {}), (Darkling, {})], 2),
+        ("Orb Walker", [(OrbWalker, {})], 2),
+        ("3 Shapes", "THREE_SHAPES", 2),
     ],
 }
 
 STRONG_MONSTER_POOLS: dict[int, list[tuple[str, list[EncounterSpec], int]]] = {
     1: STRONG_ENCOUNTER_TEMPLATES_ACT1,
     2: [
-        ("Blue Slaver", [(SlaverBlue, {})], 1),
-        ("Red Slaver", [(SlaverRed, {})], 1),
-        ("2 Louse", [(LouseRed, {}), (LouseGreen, {})], 1),
-        ("Lots of Slimes", [(AcidSlimeMedium, {}), (AcidSlimeSmall, {}), (SpikeSlimeSmall, {})], 1),
-        ("Exordium Wildlife", [(FungiBeast, {}), (JawWorm, {})], 1),
-        ("Gremlin Gang", [(LouseRed, {}), (LouseDefensive, {})], 1),
+        ("Chosen and Byrds", [(Byrd, {}), (Chosen, {})], 2),
+        ("Sentry and Sphere", [(Sentry, {}), (SphericGuardian, {})], 2),
+        ("Snake Plant", [(SnakePlant, {})], 6),
+        ("Snecko", [(Snecko, {})], 4),
+        ("Centurion and Healer", [(Centurion, {}), (Healer, {})], 6),
+        ("Cultist and Chosen", [(Cultist, {}), (Chosen, {})], 3),
+        ("3 Cultists", [(Cultist, {}), (Cultist, {}), (Cultist, {})], 3),
+        ("Shelled Parasite and Fungi", [(ShellParasite, {}), (FungiBeast, {})], 3),
     ],
     3: [
-        ("Blue Slaver", [(SlaverBlue, {})], 1),
-        ("Red Slaver", [(SlaverRed, {})], 1),
-        ("2 Louse", [(LouseRed, {}), (LouseGreen, {})], 1),
-        ("Lots of Slimes", [(AcidSlimeMedium, {}), (AcidSlimeSmall, {}), (SpikeSlimeSmall, {})], 1),
-        ("Exordium Wildlife", [(FungiBeast, {}), (JawWorm, {})], 1),
-        ("Gremlin Gang", [(LouseRed, {}), (LouseDefensive, {})], 1),
+        ("Spire Growth", [(SpireGrowth, {})], 1),
+        ("Transient", [(Transient, {})], 1),
+        ("4 Shapes", "FOUR_SHAPES", 1),
+        ("Maw", [(Maw, {})], 1),
+        ("Sphere and 2 Shapes", "SPHERE_AND_TWO_SHAPES", 1),
+        ("Jaw Worm Horde", [(JawWorm, {}), (JawWorm, {}), (JawWorm, {})], 1),
+        ("3 Darklings", [(Darkling, {}), (Darkling, {}), (Darkling, {})], 1),
+        ("Writhing Mass", [(WrithingMass, {})], 1),
     ],
 }
 
@@ -234,59 +325,112 @@ def generate_random_encounter(
             break
 
     if encounter_name == "Large Slime":
-        return hp_rng.random_choice(LARGE_SLIME_ENCOUNTERS)
+        return generate_large_slime(hp_rng)
     if encounter_name == "Gremlin Gang":
         return generate_gremlin_gang(hp_rng)
     if encounter_name == "3 Louse":
         return generate_three_louse(hp_rng)
-    if encounter_name == "Slimes":
-        return hp_rng.random_choice(SLIME_ENCOUNTERS)
+    if encounter_name in {"Slimes", "Small Slimes"}:
+        return generate_small_slimes(hp_rng)
     if encounter_name == "2 Louse":
         return generate_two_louse(hp_rng)
+    if encounter_name == "3 Byrds" or encounter_name == "THREE_BYRDS":
+        return generate_three_byrds(hp_rng)
+    if encounter_name == "3 Shapes" or encounter_name == "THREE_SHAPES":
+        return generate_shapes(hp_rng, 3)
+    if encounter_name == "4 Shapes" or encounter_name == "FOUR_SHAPES":
+        return generate_shapes(hp_rng, 4)
+    if encounter_name == "Sphere and 2 Shapes" or encounter_name == "SPHERE_AND_TWO_SHAPES":
+        return generate_sphere_and_shapes(hp_rng)
     if encounter_name == "Exordium Thugs":
         return generate_exordium_thugs(hp_rng)
     if encounter_name == "Exordium Wildlife":
         return generate_exordium_wildlife(hp_rng)
+    if encounter_name == "Lots of Slimes":
+        return generate_lots_of_slimes(hp_rng)
     return encounter_specs
 
 
+GENERATED_ENCOUNTER_BUILDERS: dict[str, callable] = {
+    "2 Louse": generate_two_louse,
+    "3 Louse": generate_three_louse,
+    "Small Slimes": generate_small_slimes,
+    "Large Slime": generate_large_slime,
+    "Lots of Slimes": generate_lots_of_slimes,
+    "Gremlin Gang": generate_gremlin_gang,
+    "Exordium Thugs": generate_exordium_thugs,
+    "Exordium Wildlife": generate_exordium_wildlife,
+    "3 Byrds": generate_three_byrds,
+    "4 Byrds": generate_four_byrds,
+    "Gremlin Leader": generate_gremlin_leader,
+    "Flame Bruiser 1 Orb": generate_flame_bruiser_one_orb,
+    "Flame Bruiser 2 Orb": generate_reptomancer_roster,
+    "Reptomancer": generate_reptomancer_roster,
+    "3 Shapes": lambda rng: generate_shapes(rng, 3),
+    "4 Shapes": lambda rng: generate_shapes(rng, 4),
+    "Sphere and 2 Shapes": generate_sphere_and_shapes,
+    "Mysterious Sphere": generate_mysterious_sphere,
+}
+
+
 MONSTER_ENCOUNTERS: dict[str, list[EncounterSpec]] = {
-    # === ACT 1 Weak ===
-    "Jaw Worm": [(JawWorm, {})],
-    "2 Louse": [(LouseRed, {}), (LouseGreen, {})],
     "Cultist": [(Cultist, {})],
-    "AcidM + SpikeS": [(AcidSlimeMedium, {}), (SpikeSlimeSmall, {})],
-    "SpikeM + AcidS": [(SpikeSlimeMedium, {}), (AcidSlimeSmall, {})],
-    # === ACT 1 Strong ===
+    "Jaw Worm": [(JawWorm, {})],
     "Blue Slaver": [(SlaverBlue, {})],
     "Red Slaver": [(SlaverRed, {})],
-    "Looter": [(JawWorm, {})],
-    "Large Slime": [(AcidSlimeLarge, {})],
-    "Lots of Slimes": [(AcidSlimeMedium, {}), (AcidSlimeSmall, {}), (SpikeSlimeSmall, {})],
-    "Gremlin Gang": [(LouseRed, {}), (LouseDefensive, {})],
-    "Exordium Thugs": [(SlaverRed, {}), (LouseRed, {})],
-    "Exordium Wildlife": [(FungiBeast, {}), (JawWorm, {})],
-    "3 Louse": [(LouseRed, {}), (LouseGreen, {}), (LouseDefensive, {})],
+    "Looter": [(Looter, {})],
     "2 Fungi Beasts": [(FungiBeast, {}), (FungiBeast, {})],
-    # === ACT 1 Elite ===
     "Gremlin Nob": [(GremlinNob, {})],
     "Lagavulin": [(Lagavulin, {})],
-    "3 Sentries": [(Sentry, {"position": 0}), (Sentry, {"position": 1}), (Sentry, {"position": 2})],
-    # === ACT 1 Boss ===
+    "3 Sentries": [(Sentry, {}), (Sentry, {}), (Sentry, {})],
+    "Lagavulin Event": [(Lagavulin, {"asleep": False})],
+    "The Mushroom Lair": [(FungiBeast, {}), (FungiBeast, {}), (FungiBeast, {})],
+    "The Guardian": [(TheGuardian, {})],
     "Hexaghost": [(Hexaghost, {})],
     "Slime Boss": [(SlimeBoss, {})],
-    "The Guardian": [(TheGuardian, {})],
-    # === ACT 2 Boss ===
+    "2 Thieves": [(Looter, {}), (Mugger, {})],
+    "Chosen": [(Chosen, {})],
+    "Shell Parasite": [(ShellParasite, {})],
+    "Spheric Guardian": [(SphericGuardian, {})],
+    "Cultist and Chosen": [(Cultist, {}), (Chosen, {})],
+    "3 Cultists": [(Cultist, {}), (Cultist, {}), (Cultist, {})],
+    "Chosen and Byrds": [(Byrd, {}), (Chosen, {})],
+    "Sentry and Sphere": [(Sentry, {}), (SphericGuardian, {})],
+    "Snake Plant": [(SnakePlant, {})],
+    "Snecko": [(Snecko, {})],
+    "Centurion and Healer": [(Centurion, {}), (Healer, {})],
+    "Shelled Parasite and Fungi": [(ShellParasite, {}), (FungiBeast, {})],
+    "Book of Stabbing": [(BookOfStabbing, {})],
+    "Slavers": [(SlaverBlue, {}), (Taskmaster, {}), (SlaverRed, {})],
+    "Masked Bandits": [(BanditPointy, {}), (BanditLeader, {}), (BanditBear, {})],
+    "Colosseum Nobs": [(Taskmaster, {}), (GremlinNob, {})],
+    "Colosseum Slavers": [(SlaverBlue, {}), (SlaverRed, {})],
+    "Automaton": [(Automaton, {})],
     "Champ": [(Champ, {})],
     "Collector": [(Collector, {})],
-    "Automaton": [(Automaton, {})],
-    # === ACT 3 Boss ===
-    "Awakened One": [(AwakenedOne, {})],
+    "Transient": [(Transient, {})],
+    "3 Darklings": [(Darkling, {}), (Darkling, {}), (Darkling, {})],
+    "Jaw Worm Horde": [(JawWorm, {}), (JawWorm, {}), (JawWorm, {})],
+    "Snecko and Mystics": [(Healer, {}), (Snecko, {}), (Healer, {})],
+    "Orb Walker": [(OrbWalker, {})],
+    "Spire Growth": [(SpireGrowth, {})],
+    "Maw": [(Maw, {})],
+    "2 Orb Walkers": [(OrbWalker, {}), (OrbWalker, {})],
+    "Nemesis": [(Nemesis, {})],
+    "Writhing Mass": [(WrithingMass, {})],
+    "Giant Head": [(GiantHead, {})],
     "Time Eater": [(TimeEater, {})],
-    "Donu and Deca": [(DonuAndDeca, {})],
-    # === ACT 4 ===
+    "Awakened One": [(Cultist, {}), (Cultist, {}), (AwakenedOne, {})],
+    "Donu and Deca": [(Deca, {}), (Donu, {})],
     "Shield and Spear": [(SpireShield, {}), (SpireSpear, {})],
     "The Heart": [(CorruptHeart, {})],
+    # Direct monster ids used by replay/event setup
+    "Taskmaster": [(Taskmaster, {})],
+    "BanditPointy": [(BanditPointy, {})],
+    "BanditLeader": [(BanditLeader, {})],
+    "BanditBear": [(BanditBear, {})],
+    "SnakeDagger": [(SnakeDagger, {})],
+    "SpireGrowth": [(SpireGrowth, {})],
 }
 
 
@@ -320,8 +464,18 @@ class CombatEngine:
             for monster_cls, kwargs in encounter_specs:
                 monster = monster_cls.create(hp_rng, ascension, **kwargs)
                 monsters.append(monster)
+        elif encounter_name in GENERATED_ENCOUNTER_BUILDERS:
+            encounter_specs = GENERATED_ENCOUNTER_BUILDERS[encounter_name](hp_rng)
+            for monster_cls, kwargs in encounter_specs:
+                monster = monster_cls.create(hp_rng, ascension, **kwargs)
+                monsters.append(monster)
         else:
             from sts_py.engine.monsters.city_beyond import GenericMonsterProxy
+            from sts_py.engine.monsters.monster_truth import get_monster_truth
+
+            truth = get_monster_truth(encounter_name)
+            if truth is not None and truth.combat_capable:
+                raise ValueError(f"Missing explicit combat encounter mapping for official monster or encounter: {encounter_name}")
             
             act = 1
             if encounter_name in ["Automaton", "Collector", "Champ", "Chosen", "3 Byrds", "Spheric Guardian", "Shell Parasite", "2 Thieves", "Chosen and Byrds", "Sentry and Sphere", "Snake Plant", "Snecko", "Centurion and Healer", "Cultist and Chosen", "3 Cultists", "Shelled Parasite and Fungi", "Gremlin Leader", "Slavers", "Book of Stabbing"]: act = 2

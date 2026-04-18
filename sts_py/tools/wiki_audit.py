@@ -19,6 +19,7 @@ from sts_py.engine.content.official_card_strings import get_official_card_string
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import ALL_RELICS, RelicDef
 from sts_py.engine.core.rng import MutableRNG
+from sts_py.engine.monsters.monster_truth import load_monster_truth_matrix
 from sts_py.engine.run.events import (
     EVENT_FLOW_FACTS_BY_KEY as RUNTIME_EVENT_FLOW_FACTS_BY_KEY,
     EVENT_ID_BY_KEY,
@@ -153,6 +154,7 @@ ACT1_MONSTER_IDS = {
     "GremlinSneaky",
     "GremlinTsundere",
     "GremlinWar",
+    "GremlinWizard",
     "Hexaghost",
     "JawWorm",
     "Lagavulin",
@@ -171,6 +173,9 @@ ACT1_MONSTER_IDS = {
 }
 
 ACT2_MONSTER_IDS = {
+    "BanditBear",
+    "BanditLeader",
+    "BanditPointy",
     "BookOfStabbing",
     "BronzeAutomaton",
     "BronzeOrb",
@@ -182,13 +187,12 @@ ACT2_MONSTER_IDS = {
     "Dagger",
     "GremlinLeader",
     "Healer",
-    "Repulsor",
     "ShellParasite",
     "SnakePlant",
     "Snecko",
     "SphericGuardian",
-    "Spiker",
     "Taskmaster",
+    "TorchHead",
 }
 
 ACT3_MONSTER_IDS = {
@@ -202,8 +206,11 @@ ACT3_MONSTER_IDS = {
     "Maw",
     "Nemesis",
     "OrbWalker",
+    "Repulsor",
     "Reptomancer",
+    "SnakeDagger",
     "SpireGrowth",
+    "Spiker",
     "TimeEater",
     "Transient",
     "WrithingMass",
@@ -349,7 +356,7 @@ MECHANICS_FIELDS_BY_ENTITY = {
     "relic": ["tier", "price", "character_class", "effects", "effect_signatures"],
     "potion": ["rarity", "character_class", "potency", "sacred_bark_potency", "is_thrown", "effect_signatures"],
     "power": ["power_type", "turn_based", "can_go_negative", "callback_signatures"],
-    "monster": ["act", "elite", "boss", "sample_intents", "state_signatures"],
+    "monster": ["act", "elite", "boss", "category", "encounters", "pool_buckets", "internal_surface", "combat_capable", "sample_intents", "state_signatures"],
     "event": [
         "act",
         "pool_bucket",
@@ -750,7 +757,7 @@ def _monster_act(monster_id: str) -> int | None:
 
 
 def _monster_is_elite(monster_id: str) -> bool:
-    return monster_id in {"GremlinNob", "Lagavulin", "Sentry", "BookOfStabbing", "GremlinLeader", "Nemesis", "Reptomancer", "GiantHead"}
+    return monster_id in {"GremlinNob", "Lagavulin", "Sentry", "BookOfStabbing", "GremlinLeader", "Nemesis", "Reptomancer", "GiantHead", "Taskmaster", "SpireShield", "SpireSpear"}
 
 
 def _monster_is_boss(monster_id: str) -> bool:
@@ -786,6 +793,14 @@ def _monster_inventory() -> dict[str, type[Any]]:
             monster_id = _humanize_identifier(registry_id).replace(" ", "")
         inventory[monster_id] = monster_cls
     return inventory
+
+
+def _monster_source_inventory() -> set[str]:
+    return {
+        canonical_id
+        for canonical_id, entry in load_monster_truth_matrix().items()
+        if bool(getattr(entry, "combat_capable", False))
+    }
 
 
 def _resolve_java_card_class_name(card_id: str) -> str:
@@ -1074,15 +1089,55 @@ def build_monster_source_facts(monster_id: str, monster_cls: type[Any]) -> dict[
     if source_file:
         source_text = Path(source_file).read_text(encoding="utf-8", errors="ignore")
         sample_intents = sorted(set(re.findall(r"MonsterIntent\.([A-Z_]+)", source_text)))
+    truth_entry = load_monster_truth_matrix().get(monster_id)
     return {
         "source_kind": "python_monster_source",
         "display_name": str(getattr(monster, "name", monster_id)),
-        "act": _monster_act(monster_id),
-        "elite": _monster_is_elite(monster_id),
-        "boss": _monster_is_boss(monster_id),
+        "act": getattr(truth_entry, "act", None) if truth_entry is not None else _monster_act(monster_id),
+        "elite": getattr(truth_entry, "category", "") == "ELITE" if truth_entry is not None else _monster_is_elite(monster_id),
+        "boss": getattr(truth_entry, "category", "") == "BOSS" if truth_entry is not None else _monster_is_boss(monster_id),
+        "category": str(getattr(truth_entry, "category", "")),
+        "encounters": list(getattr(truth_entry, "encounters", ()) or ()),
+        "pool_buckets": list(getattr(truth_entry, "pool_buckets", ()) or ()),
+        "internal_surface": str(getattr(truth_entry, "internal_surface", "")),
+        "combat_capable": bool(getattr(truth_entry, "combat_capable", True)),
         "sample_intents": sample_intents,
         "state_signatures": build_monster_state_signatures(monster_id, monster_cls),
         "source_path": source_file,
+    }
+
+
+def build_monster_java_facts(monster_id: str) -> dict[str, Any]:
+    truth_entry = load_monster_truth_matrix().get(monster_id)
+    if truth_entry is None:
+        return {
+            "source_kind": "monster_truth_matrix",
+            "missing": True,
+        }
+    sample_intents: list[str] = []
+    state_signatures: list[str] = []
+    monster_cls = _monster_inventory().get(monster_id)
+    if monster_cls is not None:
+        runtime_facts = build_monster_source_facts(monster_id, monster_cls)
+        sample_intents = list(runtime_facts.get("sample_intents") or [])
+        state_signatures = list(runtime_facts.get("state_signatures") or [])
+    return {
+        "source_kind": "monster_truth_matrix",
+        "display_name": truth_entry.official_name_en or monster_id,
+        "official_name_en": truth_entry.official_name_en,
+        "official_name_zhs": truth_entry.official_name_zhs,
+        "official_key": truth_entry.official_key,
+        "java_class": truth_entry.java_class,
+        "act": truth_entry.act,
+        "elite": truth_entry.category == "ELITE",
+        "boss": truth_entry.category == "BOSS",
+        "category": truth_entry.category,
+        "encounters": list(truth_entry.encounters),
+        "pool_buckets": list(truth_entry.pool_buckets),
+        "internal_surface": truth_entry.internal_surface,
+        "combat_capable": truth_entry.combat_capable,
+        "sample_intents": sample_intents,
+        "state_signatures": state_signatures,
     }
 
 
@@ -1514,7 +1569,7 @@ def _source_inventory_from_repo(repo_root: Path, *, entity_types: set[str] | Non
         "relic": sorted(ALL_RELICS.keys()),
         "potion": sorted(POTION_DEFINITIONS.keys()),
         "power": sorted(power_id for power_id, _ in _power_class_inventory()),
-        "monster": sorted(_monster_inventory().keys()),
+        "monster": sorted(_monster_source_inventory()),
         "event": sorted(_event_inventory().keys()),
         "neow": ["NeowEvent"],
         "room_type": sorted(room_type.name for room_type in RoomType),
@@ -1666,10 +1721,11 @@ def build_cli_raw_snapshot(
 
     if entity_type_filter is None or "monster" in entity_type_filter:
         for monster_id, monster_cls in sorted(_monster_inventory().items()):
-            source_facts = build_monster_source_facts(monster_id, monster_cls)
-            runtime_name_en = str(source_facts.get("display_name") or _humanize_identifier(monster_id))
+            runtime_facts = build_monster_source_facts(monster_id, monster_cls)
+            java_facts = build_monster_java_facts(monster_id)
+            runtime_name_en = str(runtime_facts.get("display_name") or _humanize_identifier(monster_id))
             runtime_name_cn = translate_monster(monster_id)
-            runtime_desc = ", ".join(source_facts.get("sample_intents") or [])
+            runtime_desc = ", ".join(runtime_facts.get("sample_intents") or [])
             en_wiki, cn_wiki = (
                 _fetch_entity_wiki_pages(
                     scraper,
@@ -1689,8 +1745,8 @@ def build_cli_raw_snapshot(
                     runtime_name_en=runtime_name_en,
                     runtime_name_cn=runtime_name_cn,
                     runtime_desc_runtime=runtime_desc,
-                    runtime_facts=source_facts,
-                    java_facts=source_facts,
+                    runtime_facts=runtime_facts,
+                    java_facts=java_facts,
                     en_wiki=en_wiki,
                     cn_wiki=cn_wiki,
                 )

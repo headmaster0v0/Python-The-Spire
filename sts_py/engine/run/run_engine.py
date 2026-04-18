@@ -301,6 +301,9 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         TorchHead,
     )
     from sts_py.engine.monsters.city_beyond import (
+        BanditBear,
+        BanditLeader,
+        BanditPointy,
         BookOfStabbing,
         Byrd,
         Centurion,
@@ -315,11 +318,14 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         Maw,
         Nemesis,
         OrbWalker,
+        SnakeDagger,
+        SpireGrowth,
         Reptomancer,
         Repulsor,
         Serpent,
         ShellParasite,
         SlaverBoss,
+        Taskmaster,
         Snecko,
         SnakePlant,
         Spiker,
@@ -339,6 +345,7 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         GremlinSneaky,
         GremlinTsundere,
         GremlinWar,
+        GremlinWizard,
         Hexaghost as ExordiumHexaghost,
         JawWorm,
         Lagavulin,
@@ -364,11 +371,14 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         "gremlinsneaky": GremlinSneaky,
         "gremlintsundere": GremlinTsundere,
         "gremlinwar": GremlinWar,
+        "gremlinwizard": GremlinWizard,
         "lagavulin": Lagavulin,
         "sentry": Sentry,
         "slaverred": SlaverRed,
         "slaverblue": SlaverBlue,
         "hexaghost": ExordiumHexaghost,
+        "lousenormal": LouseNormal,
+        "lousedefensive": LouseDefensive,
         "fuzzylousenormal": LouseNormal,
         "fuzzylousedefensive": LouseDefensive,
         "looter": Looter,
@@ -385,6 +395,7 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         "centurion": Centurion,
         "darkling": Darkling,
         "dagger": Dagger,
+        "snakedagger": SnakeDagger,
         "exploder": Exploder,
         "gianthead": GiantHead,
         "healer": Healer,
@@ -394,14 +405,20 @@ def _monster_factory_registry() -> dict[str, type[Any]]:
         "reptomancer": Reptomancer,
         "repulsor": Repulsor,
         "serpent": Serpent,
+        "spiregrowth": SpireGrowth,
         "shellparasite": ShellParasite,
         "slaverboss": SlaverBoss,
+        "taskmaster": Taskmaster,
         "snecko": Snecko,
         "snakeplant": SnakePlant,
         "spiker": Spiker,
         "sphericguardian": SphericGuardian,
         "transient": Transient,
         "writhingmass": WrithingMass,
+        "banditbear": BanditBear,
+        "banditleader": BanditLeader,
+        "banditpointy": BanditPointy,
+        "banditchild": BanditPointy,
         "slimeboss": SlimeBoss,
         "theguardian": TheGuardian,
         "champ": Champ,
@@ -445,6 +462,11 @@ JAVA_MONSTER_ID_ALIASES = {
 
 
 def _runtime_monster_id_for_logged_id(monster_id: str) -> str:
+    from sts_py.engine.monsters.monster_truth import canonicalize_monster_id
+
+    canonical = canonicalize_monster_id(monster_id)
+    if canonical is not None:
+        return canonical
     alias_key = _normalize_monster_lookup_id(monster_id)
     for source, target in JAVA_MONSTER_ID_ALIASES.items():
         if alias_key == _normalize_monster_lookup_id(source):
@@ -470,6 +492,12 @@ def _create_replay_monster(
     registry = _monster_factory_registry()
     monster_cls = registry.get(_normalize_monster_lookup_id(runtime_monster_id))
     if monster_cls is None:
+        from sts_py.engine.monsters.monster_truth import get_monster_truth
+
+        truth = get_monster_truth(runtime_monster_id)
+        if truth is not None and truth.combat_capable:
+            debug["proxy_forbidden"] = True
+            return None, debug
         monster_cls = GenericMonsterProxy
         debug["used_proxy"] = True
 
@@ -3167,6 +3195,15 @@ class RunEngine:
             monsters.append(monster)
 
         if not monsters:
+            from sts_py.engine.monsters.monster_truth import get_monster_truth
+
+            official_failures = [
+                str(monster_id)
+                for monster_id in monster_ids
+                if (truth := get_monster_truth(str(monster_id))) is not None and truth.combat_capable
+            ]
+            if official_failures:
+                raise ValueError(f"Failed to create official combat monsters: {official_failures}")
             setup_debug["fallback_monster_id"] = "JawWorm"
             fallback = create_monster("Jaw Worm", self.hp_rng, self.state.ascension)
             if fallback is not None:

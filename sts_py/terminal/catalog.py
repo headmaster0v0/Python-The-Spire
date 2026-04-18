@@ -11,6 +11,7 @@ from sts_py.engine.content.official_card_strings import get_official_card_string
 from sts_py.engine.content.official_relic_manifest import get_runtime_relic_manifest
 from sts_py.engine.content.potions import POTION_DEFINITIONS
 from sts_py.engine.content.relics import get_relic_by_id
+from sts_py.engine.monsters.monster_truth import get_monster_truth, official_monster_name_zhs
 from sts_py.engine.run.official_event_strings import get_official_event_strings
 from sts_py.engine.run.run_engine import RoomType
 from sts_py.terminal.translation_policy import get_translation_policy_entry
@@ -787,7 +788,54 @@ def translate_card_name(card_id: str) -> str:
 
 
 def translate_monster(monster_id: str) -> str:
-    return _policy_translation("monster", monster_id) or MONSTER_NAME_OVERRIDES.get(monster_id, _humanize_identifier(monster_id))
+    return (
+        official_monster_name_zhs(monster_id)
+        or _policy_translation("monster", monster_id)
+        or MONSTER_NAME_OVERRIDES.get(monster_id)
+        or _humanize_identifier(monster_id)
+    )
+
+
+MONSTER_MOVE_NAME_ALIASES: dict[tuple[str, str], str] = {
+    ("BanditPointy", "Pointy Special"): "双连刺",
+    ("Collector", "Strike"): "火球",
+    ("Automaton", "Beam"): "超能光束",
+    ("BronzeOrb", "Beam"): "光束",
+    ("Dagger", "Wound"): "刺击",
+    ("GremlinLeader", "Rally"): "集结！",
+    ("GremlinLeader", "Encourage"): "鼓舞",
+    ("Healer", "Attack"): "魔法攻击",
+    ("Healer", "Heal"): "治疗",
+    ("Healer", "Buff"): "强化",
+    ("ShellParasite", "Stun"): "惊惧",
+    ("SpireGrowth", "Quick Tackle"): "快速扑击",
+    ("SpireGrowth", "Smash"): "重击",
+    ("Taskmaster", "Scouring Whip"): "施虐鞭打",
+}
+
+
+def translate_monster_move(monster_id: str, move_name: str | None) -> str | None:
+    if move_name is None:
+        return None
+    move_name_text = str(move_name or "").strip()
+    if not move_name_text:
+        return None
+
+    truth = get_monster_truth(monster_id)
+    if truth is not None:
+        normalized = _humanize_identifier(move_name_text).lower()
+        for index, official_move_en in enumerate(truth.official_moves_en):
+            if not official_move_en:
+                continue
+            if _humanize_identifier(official_move_en).lower() == normalized:
+                if index < len(truth.official_moves_zhs) and truth.official_moves_zhs[index]:
+                    return truth.official_moves_zhs[index]
+                return official_move_en
+
+    alias = MONSTER_MOVE_NAME_ALIASES.get((str(getattr(truth, "canonical_id", monster_id)), move_name_text))
+    if alias is not None:
+        return alias
+    return None
 
 
 def translate_potion(potion_id: str) -> str:

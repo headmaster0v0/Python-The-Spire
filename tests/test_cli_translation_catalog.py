@@ -43,7 +43,7 @@ def test_entity_translations_cover_relic_potion_monster_power_and_event() -> Non
     assert translate_potion("SmokeBomb") == "烟雾弹"
     assert translate_potion("Elixir") == "万灵药水"
     assert translate_monster("JawWorm") == "大颚虫"
-    assert translate_monster("AcidSlimeLarge") == "大型酸液史莱姆"
+    assert translate_monster("AcidSlimeLarge") == "酸液史莱姆（大）"
     assert translate_monster("GremlinLeader") == "地精首领"
     assert translate_power("AfterImage") == "余像"
     assert translate_power("Lockon") == "跟踪锁定"

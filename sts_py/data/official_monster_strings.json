@@ -1,0 +1,1556 @@
+{
+  "schema_version": 1,
+  "jar_path": "desktop-1.0.jar",
+  "records": {
+    "AcidSlime_L": {
+      "official_key": "AcidSlime_L",
+      "java_class": "AcidSlime_L",
+      "name_en": "Acid Slime (L)",
+      "name_zhs": "酸液史莱姆（大）",
+      "moves_en": [
+        "Corrosive Spit",
+        "Split",
+        "Lick"
+      ],
+      "moves_zhs": [
+        "腐蚀喷吐",
+        "分裂",
+        "舔舔"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        "打断！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "AcidSlime_M": {
+      "official_key": "AcidSlime_M",
+      "java_class": "AcidSlime_M",
+      "name_en": "Acid Slime (M)",
+      "name_zhs": "酸液史莱姆（中）",
+      "moves_en": [
+        "Corrosive Spit",
+        "Lick"
+      ],
+      "moves_zhs": [
+        "腐蚀喷吐",
+        "舔舔"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "AcidSlime_S": {
+      "official_key": "AcidSlime_S",
+      "java_class": "AcidSlime_S",
+      "name_en": "Acid Slime (S)",
+      "name_zhs": "酸液史莱姆（小）",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Apology Slime": {
+      "official_key": "Apology Slime",
+      "java_class": "ApologySlime",
+      "name_en": "Apology Slime",
+      "name_zhs": "抱歉史莱姆",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "AwakenedOne": {
+      "official_key": "AwakenedOne",
+      "java_class": "AwakenedOne",
+      "name_en": "Awakened One",
+      "name_zhs": "觉醒者",
+      "moves_en": [
+        "Soul Strike",
+        "Dark Echo",
+        "Cleanse",
+        "Sludge"
+      ],
+      "moves_zhs": [
+        "灵魂攻击",
+        "黑暗回音",
+        "净化",
+        "污泥"
+      ],
+      "dialog_en": [
+        "~Grr~ ~.~ ~.~ ~.~",
+        "~No~ ~.~ ~.~ ~.~ ~no~ ~.~ ~.~ NL ~.~ ~.~ ~no~ ~.~ ~.~ ~.~"
+      ],
+      "dialog_zhs": [
+        "~咕嗷。。。~",
+        "~不。。。不。。~ NL ~。。不。。。~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BanditBear": {
+      "official_key": "BanditBear",
+      "java_class": "BanditBear",
+      "name_en": "Bear",
+      "name_zhs": "熊",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BanditChild": {
+      "official_key": "BanditChild",
+      "java_class": "BanditPointy",
+      "name_en": "Pointy",
+      "name_zhs": "尖尖",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~Beeeaaar!!!!~"
+      ],
+      "dialog_zhs": [
+        "熊哦！！！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BanditLeader": {
+      "official_key": "BanditLeader",
+      "java_class": "BanditLeader",
+      "name_en": "Romeo",
+      "name_zhs": "罗密欧",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~Grab~ ~em'~ ~Bear!!~",
+        "~You~ ~will~ ~pay~ ~for~ ~this!!~",
+        "~Nooooooo,~ ~Bear!~"
+      ],
+      "dialog_zhs": [
+        "熊，给我上！！",
+        "你会付出代价的！！",
+        "不——！熊！！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BookOfStabbing": {
+      "official_key": "BookOfStabbing",
+      "java_class": "BookOfStabbing",
+      "name_en": "Book of Stabbing",
+      "name_zhs": "扎人的书",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BronzeAutomaton": {
+      "official_key": "BronzeAutomaton",
+      "java_class": "BronzeAutomaton",
+      "name_en": "Bronze Automaton",
+      "name_zhs": "铜制机械人偶",
+      "moves_en": [
+        "HYPER BEAM"
+      ],
+      "moves_zhs": [
+        "超能光束"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        "晕眩！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "BronzeOrb": {
+      "official_key": "BronzeOrb",
+      "java_class": "BronzeOrb",
+      "name_en": "Orb",
+      "name_zhs": "铜球",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Byrd": {
+      "official_key": "Byrd",
+      "java_class": "Byrd",
+      "name_en": "Byrd",
+      "name_zhs": "异鸟",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "@CAW!@ NL @CAAAW@",
+        ""
+      ],
+      "dialog_zhs": [
+        "@嘎！@ NL @哑！@",
+        "击晕……"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Centurion": {
+      "official_key": "Centurion",
+      "java_class": "Centurion",
+      "name_en": "Centurion",
+      "name_zhs": "百夫长",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Champ": {
+      "official_key": "Champ",
+      "java_class": "Champ",
+      "name_en": "The Champ",
+      "name_zhs": "第一勇士",
+      "moves_en": [
+        "Defensive Stance",
+        "Execute",
+        "Face Slap"
+      ],
+      "moves_zhs": [
+        "防御态势",
+        "处决",
+        "打脸"
+      ],
+      "dialog_en": [
+        "You call that a weapon?",
+        "Come at me!",
+        "Do your worst! NL @HAHAHA!@",
+        "Have a free shot! NL Futile weakling!",
+        "~You've~ ~done~ ~it~ ~now...~",
+        "@DEFEAT??@ NL @IMPOSSIBLE!!@",
+        "~DIE~ ~.~ ~.~ ~.~",
+        "Face my wrath!",
+        "@THAT'S@ NL @MY@ @BELT!!@"
+      ],
+      "dialog_zhs": [
+        "你管这叫武器？",
+        "来和我战啊！",
+        "有什么招数尽管上！ NL @哈哈哈！@",
+        "来啊我让你打！ NL 没用的弱者！",
+        "~你惹火我了……~",
+        "@败北？@ NL @不可能的！！@ ",
+        "~去~ ~死~ ~。。。~",
+        "接受我的怒火吧！",
+        "@那是@ NL @我的@ @腰带！！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Chosen": {
+      "official_key": "Chosen",
+      "java_class": "Chosen",
+      "name_en": "Chosen",
+      "name_zhs": "被拣选者",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~Suffer...~"
+      ],
+      "dialog_zhs": [
+        "~挣扎吧……~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "CorruptHeart": {
+      "official_key": "CorruptHeart",
+      "java_class": "CorruptHeart",
+      "name_en": "Corrupt Heart",
+      "name_zhs": "腐化之心",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Cultist": {
+      "official_key": "Cultist",
+      "java_class": "Cultist",
+      "name_en": "Cultist",
+      "name_zhs": "邪教徒",
+      "moves_en": [
+        "",
+        "",
+        "Incantation"
+      ],
+      "moves_zhs": [
+        "",
+        "",
+        "念咒"
+      ],
+      "dialog_en": [
+        "@MY@ @POWER@ @IS@ NL @UNMATCHED!@",
+        "@YOU@ @DO@ @NOT@ NL @BELONG@ @HERE!@",
+        "~My~ ~powers~ NL ~were~ ~matched...~"
+      ],
+      "dialog_zhs": [
+        "@我的力量@ NL @无人能及！@",
+        "@你不属于@ NL @这里！@",
+        "~我的力量~ NL ~有人能及啊……~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Dagger": {
+      "official_key": "Dagger",
+      "java_class": "SnakeDagger",
+      "name_en": "Dagger",
+      "name_zhs": "匕首",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Darkling": {
+      "official_key": "Darkling",
+      "java_class": "Darkling",
+      "name_en": "Darkling",
+      "name_zhs": "小黑",
+      "moves_en": [
+        "Chomp! Chomp!"
+      ],
+      "moves_zhs": [
+        "啊呜！啊呜！"
+      ],
+      "dialog_en": [
+        "Regrowing..."
+      ],
+      "dialog_zhs": [
+        "重生中……"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Deca": {
+      "official_key": "Deca",
+      "java_class": "Deca",
+      "name_en": "Deca",
+      "name_zhs": "八体",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Donu": {
+      "official_key": "Donu",
+      "java_class": "Donu",
+      "name_en": "Donu",
+      "name_zhs": "甜圈",
+      "moves_en": [
+        "Circle of Power"
+      ],
+      "moves_zhs": [
+        "力量之环"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Exploder": {
+      "official_key": "Exploder",
+      "java_class": "Exploder",
+      "name_en": "Exploder",
+      "name_zhs": "爆炸机",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "FireOrb": {
+      "official_key": "FireOrb",
+      "java_class": "FireOrb",
+      "name_en": "Fire Orb",
+      "name_zhs": "烈焰球",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "FlameBruiser": {
+      "official_key": "FlameBruiser",
+      "java_class": "FlameBruiser",
+      "name_en": "Flame Bruiser",
+      "name_zhs": "烈焰蛮汉",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "FungiBeast": {
+      "official_key": "FungiBeast",
+      "java_class": "FungiBeast",
+      "name_en": "Fungi Beast",
+      "name_zhs": "真菌兽",
+      "moves_en": [
+        "Grow"
+      ],
+      "moves_zhs": [
+        "生长"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "FuzzyLouseDefensive": {
+      "official_key": "FuzzyLouseDefensive",
+      "java_class": "FuzzyLouseDefensive",
+      "name_en": "Louse",
+      "name_zhs": "虱虫",
+      "moves_en": [
+        "Spit Web"
+      ],
+      "moves_zhs": [
+        "吐网"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "FuzzyLouseNormal": {
+      "official_key": "FuzzyLouseNormal",
+      "java_class": "FuzzyLouseNormal",
+      "name_en": "Louse",
+      "name_zhs": "虱虫",
+      "moves_en": [
+        "Grow"
+      ],
+      "moves_zhs": [
+        "成长"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GiantHead": {
+      "official_key": "GiantHead",
+      "java_class": "GiantHead",
+      "name_en": "Giant Head",
+      "name_zhs": "大脑袋",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~It~ ~is~ ~time~",
+        "~Good~ ~Bye~",
+        "~Tick~ ~Tock~ NL ~Tick~ ~Tock~",
+        "~Why~ ~are~ ~you~ NL ~still~ ~here?~"
+      ],
+      "dialog_zhs": [
+        "~是时候了~",
+        "~再见~",
+        "~滴~ ~答~ NL ~滴~ ~答~",
+        "~为什么你~ NL ~还在这里？~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinFat": {
+      "official_key": "GremlinFat",
+      "java_class": "GremlinFat",
+      "name_en": "Fat Gremlin",
+      "name_zhs": "胖地精",
+      "moves_en": [
+        "Smash"
+      ],
+      "moves_zhs": [
+        "粉碎"
+      ],
+      "dialog_en": [
+        "",
+        "",
+        "@Oh@ @no,@ NL @oh@ @no,@ NL @oH@ @NO!@"
+      ],
+      "dialog_zhs": [
+        "",
+        "",
+        "@哦不，@ NL @哦不、@ NL @哦！不！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinLeader": {
+      "official_key": "GremlinLeader",
+      "java_class": "GremlinLeader",
+      "name_en": "Gremlin Leader",
+      "name_zhs": "地精首领",
+      "moves_en": [
+        "Rally!"
+      ],
+      "moves_zhs": [
+        "集合！"
+      ],
+      "dialog_en": [
+        "Don't ever give up!",
+        "We're not done yet!",
+        "Get em boys!",
+        "@Retreat@ NL @Retreaaat!@",
+        "@Ruuuuuuun!@"
+      ],
+      "dialog_zhs": [
+        "永远别放弃！",
+        "我们还没完呢！",
+        "小的们，给我上！",
+        "@撤退@ NL @撤退啊！@",
+        "@逃命哇！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinNob": {
+      "official_key": "GremlinNob",
+      "java_class": "GremlinNob",
+      "name_en": "Gremlin Nob",
+      "name_zhs": "地精大块头",
+      "moves_en": [
+        "Skull Bash",
+        "Bull Rush"
+      ],
+      "moves_zhs": [
+        "颅骨重击",
+        "蛮牛冲撞"
+      ],
+      "dialog_en": [
+        "@RRrroohrrRGHHhhh!!@"
+      ],
+      "dialog_zhs": [
+        "@啊嗷嗷呜嗷！！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinThief": {
+      "official_key": "GremlinThief",
+      "java_class": "GremlinThief",
+      "name_en": "Sneaky Gremlin",
+      "name_zhs": "卑鄙地精",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "",
+        "@I'll@ @go@ NL @get@ @help!@ ",
+        "@What@ @the!?@"
+      ],
+      "dialog_zhs": [
+        "",
+        "@我去@ NL @叫救兵！@ ",
+        "@什么！？@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinTsundere": {
+      "official_key": "GremlinTsundere",
+      "java_class": "GremlinTsundere",
+      "name_en": "Shield Gremlin",
+      "name_zhs": "持盾地精",
+      "moves_en": [
+        "Protect",
+        "Shield Bash"
+      ],
+      "moves_zhs": [
+        "保护",
+        "盾击"
+      ],
+      "dialog_en": [
+        "",
+        "~Good~ ~bye...~",
+        "This is no good..."
+      ],
+      "dialog_zhs": [
+        "",
+        "~再见……~",
+        "这可不妙……"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinWarrior": {
+      "official_key": "GremlinWarrior",
+      "java_class": "GremlinWarrior",
+      "name_en": "Mad Gremlin",
+      "name_zhs": "火大地精",
+      "moves_en": [
+        "Claw"
+      ],
+      "moves_zhs": [
+        "爪挠"
+      ],
+      "dialog_en": [
+        "",
+        "@Gonna@ @go@ NL @get@ @help!@",
+        "I'm outta here!"
+      ],
+      "dialog_zhs": [
+        "",
+        "@我去@ NL @叫援军！@",
+        "溜了溜了！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "GremlinWizard": {
+      "official_key": "GremlinWizard",
+      "java_class": "GremlinWizard",
+      "name_en": "Gremlin Wizard",
+      "name_zhs": "地精法师",
+      "moves_en": [
+        "Charging",
+        "Ultimate Blast"
+      ],
+      "moves_zhs": [
+        "蓄能",
+        "终极大爆炸"
+      ],
+      "dialog_en": [
+        "",
+        "Charging up!",
+        "~Here~ ~it~ ~comes!!~",
+        "@I...@ @get...@ NL @help...!@",
+        "~too...~ NL ~dangerous...~ NL ~bye...~"
+      ],
+      "dialog_zhs": [
+        "",
+        "在蓄能啦！",
+        "~要来咯！！~",
+        "@我去……@ NL @叫援军！@",
+        "~太…~ NL ~危险了……~ NL ~走了走了……~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Healer": {
+      "official_key": "Healer",
+      "java_class": "Healer",
+      "name_en": "Mystic",
+      "name_zhs": "神秘术士",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Hexaghost": {
+      "official_key": "Hexaghost",
+      "java_class": "Hexaghost",
+      "name_en": "Hexaghost",
+      "name_zhs": "六火亡魂",
+      "moves_en": [
+        "Inflame",
+        "Sear",
+        "Inferno"
+      ],
+      "moves_zhs": [
+        "高热",
+        "灼烧",
+        "地狱火"
+      ],
+      "dialog_en": [],
+      "dialog_zhs": [],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "HexaghostBody": {
+      "official_key": "HexaghostBody",
+      "java_class": "HexaghostBody",
+      "name_en": "",
+      "name_zhs": "",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [],
+      "dialog_zhs": [],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "HexaghostOrb": {
+      "official_key": "HexaghostOrb",
+      "java_class": "HexaghostOrb",
+      "name_en": "",
+      "name_zhs": "",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [],
+      "dialog_zhs": [],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "JawWorm": {
+      "official_key": "JawWorm",
+      "java_class": "JawWorm",
+      "name_en": "Jaw Worm",
+      "name_zhs": "大颚虫",
+      "moves_en": [
+        "Bellow",
+        "Thrash"
+      ],
+      "moves_zhs": [
+        "咆哮",
+        "抽打"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Lagavulin": {
+      "official_key": "Lagavulin",
+      "java_class": "Lagavulin",
+      "name_en": "Lagavulin",
+      "name_zhs": "乐加维林",
+      "moves_en": [
+        "Siphon Soul"
+      ],
+      "moves_zhs": [
+        "灵魂吸取"
+      ],
+      "dialog_en": [
+        "",
+        "... NL .....",
+        "...? NL .....!?",
+        "@!!!@ NL @!???@"
+      ],
+      "dialog_zhs": [
+        "击晕！",
+        "… NL ……",
+        "…？ NL ……！？",
+        "@！！！@ NL @！？？？@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Looter": {
+      "official_key": "Looter",
+      "java_class": "Looter",
+      "name_en": "Looter",
+      "name_zhs": "抢劫的",
+      "moves_en": [
+        "Lunge",
+        "Mug"
+      ],
+      "moves_zhs": [
+        "突刺",
+        "打劫"
+      ],
+      "dialog_en": [
+        "Give me your gold!",
+        "@NOOOoooo!@",
+        "Where's my smoke bomb... Let's see here...",
+        "Thanks for the money, hehe"
+      ],
+      "dialog_zhs": [
+        "把钱交出来！",
+        "@不——！@",
+        "我的烟雾弹在哪儿呢……我找找……",
+        "多谢你的钱啦，嘿嘿"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Maw": {
+      "official_key": "Maw",
+      "java_class": "Maw",
+      "name_en": "The Maw",
+      "name_zhs": "巨口",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "@RRrrohrrRGHhh!!@"
+      ],
+      "dialog_zhs": [
+        "@呜嗷嗷啊嗷！！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Mugger": {
+      "official_key": "Mugger",
+      "java_class": "Mugger",
+      "name_en": "Mugger",
+      "name_zhs": "打劫的",
+      "moves_en": [
+        "Lunge",
+        "Mug"
+      ],
+      "moves_zhs": [
+        "猛冲",
+        "抢劫"
+      ],
+      "dialog_en": [
+        "Hand it over!",
+        "I'm outta here!"
+      ],
+      "dialog_zhs": [
+        "给我交出来！",
+        "我可溜了！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Nemesis": {
+      "official_key": "Nemesis",
+      "java_class": "Nemesis",
+      "name_en": "Nemesis",
+      "name_zhs": "天罚",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Orb Walker": {
+      "official_key": "Orb Walker",
+      "java_class": "OrbWalker",
+      "name_en": "Orb Walker",
+      "name_zhs": "圆球行者",
+      "moves_en": [
+        "Strength Up"
+      ],
+      "moves_zhs": [
+        "强化"
+      ],
+      "dialog_en": [
+        "Initiating NL shields."
+      ],
+      "dialog_zhs": [
+        "护盾 NL 开启。"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Puppeteer": {
+      "official_key": "Puppeteer",
+      "java_class": "Puppeteer",
+      "name_en": "Puppeteer",
+      "name_zhs": "人偶师",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Reptomancer": {
+      "official_key": "Reptomancer",
+      "java_class": "Reptomancer",
+      "name_en": "Reptomancer",
+      "name_zhs": "拜蛇术士",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Repulsor": {
+      "official_key": "Repulsor",
+      "java_class": "Repulsor",
+      "name_en": "Repulsor",
+      "name_zhs": "反冲机",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Sentry": {
+      "official_key": "Sentry",
+      "java_class": "Sentry",
+      "name_en": "Sentry",
+      "name_zhs": "哨卫",
+      "moves_en": [
+        "Disintegrate"
+      ],
+      "moves_zhs": [
+        "粉碎"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Serpent": {
+      "official_key": "Serpent",
+      "java_class": "SpireGrowth",
+      "name_en": "Spire Growth",
+      "name_zhs": "塔内增生组织",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Shelled Parasite": {
+      "official_key": "Shelled Parasite",
+      "java_class": "ShelledParasite",
+      "name_en": "Shelled Parasite",
+      "name_zhs": "带壳寄生怪",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SlaverBlue": {
+      "official_key": "SlaverBlue",
+      "java_class": "SlaverBlue",
+      "name_en": "Slaver",
+      "name_zhs": "奴隶贩子",
+      "moves_en": [
+        "Rake"
+      ],
+      "moves_zhs": [
+        "耙伤"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SlaverBoss": {
+      "official_key": "SlaverBoss",
+      "java_class": "Taskmaster",
+      "name_en": "Taskmaster",
+      "name_zhs": "奴隶头子",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SlaverRed": {
+      "official_key": "SlaverRed",
+      "java_class": "SlaverRed",
+      "name_en": "Slaver",
+      "name_zhs": "奴隶贩子",
+      "moves_en": [
+        "Scrape",
+        "Entangle"
+      ],
+      "moves_zhs": [
+        "刮伤",
+        "丢网"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SlimeBoss": {
+      "official_key": "SlimeBoss",
+      "java_class": "SlimeBoss",
+      "name_en": "Slime Boss",
+      "name_zhs": "史莱姆老大",
+      "moves_en": [
+        "Slam",
+        "Preparing",
+        "Split",
+        "Goop Spray"
+      ],
+      "moves_zhs": [
+        "猛撞",
+        "准备",
+        "分裂",
+        "黏液喷射"
+      ],
+      "dialog_en": [
+        "~Slime...~ NL #r~CRUSH!!!~",
+        ""
+      ],
+      "dialog_zhs": [
+        "~史莱姆……~ NL #r~撞~ #r~击~ #r~！！~",
+        "打断！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SnakePlant": {
+      "official_key": "SnakePlant",
+      "java_class": "SnakePlant",
+      "name_en": "Snake Plant",
+      "name_zhs": "蛇花",
+      "moves_en": [
+        "Enfeebling Spores"
+      ],
+      "moves_zhs": [
+        "虚弱孢子"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Snecko": {
+      "official_key": "Snecko",
+      "java_class": "Snecko",
+      "name_en": "Snecko",
+      "name_zhs": "异蛇",
+      "moves_en": [
+        "Perplexing Glare",
+        "Tail Whip",
+        "Bite"
+      ],
+      "moves_zhs": [
+        "困惑瞪视",
+        "扫尾",
+        "噬咬"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SphericGuardian": {
+      "official_key": "SphericGuardian",
+      "java_class": "SphericGuardian",
+      "name_en": "Spheric Guardian",
+      "name_zhs": "圆球守护者",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~Outsider~ NL ~Detected~"
+      ],
+      "dialog_zhs": [
+        "~侦测到~ NL ~外来者~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SpikeSlime_L": {
+      "official_key": "SpikeSlime_L",
+      "java_class": "SpikeSlime_L",
+      "name_en": "Spike Slime (L)",
+      "name_zhs": "尖刺史莱姆（大）",
+      "moves_en": [
+        "Lick",
+        "Split"
+      ],
+      "moves_zhs": [
+        "舔舔",
+        "分裂"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        "打断！"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SpikeSlime_M": {
+      "official_key": "SpikeSlime_M",
+      "java_class": "SpikeSlime_M",
+      "name_en": "Spike Slime (M)",
+      "name_zhs": "尖刺史莱姆（中）",
+      "moves_en": [
+        "Lick"
+      ],
+      "moves_zhs": [
+        "舔舔"
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SpikeSlime_S": {
+      "official_key": "SpikeSlime_S",
+      "java_class": "SpikeSlime_S",
+      "name_en": "Spike Slime (S)",
+      "name_zhs": "尖刺史莱姆（小）",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Spiker": {
+      "official_key": "Spiker",
+      "java_class": "Spiker",
+      "name_en": "Spiker",
+      "name_zhs": "钉刺机",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SpireShield": {
+      "official_key": "SpireShield",
+      "java_class": "SpireShield",
+      "name_en": "Spire Shield",
+      "name_zhs": "高塔之盾",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "SpireSpear": {
+      "official_key": "SpireSpear",
+      "java_class": "SpireSpear",
+      "name_en": "Spire Spear",
+      "name_zhs": "高塔之矛",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [],
+      "dialog_zhs": [],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "TheCollector": {
+      "official_key": "TheCollector",
+      "java_class": "TheCollector",
+      "name_en": "The Collector",
+      "name_zhs": "收藏家",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "@You@ @are@ @mine!@"
+      ],
+      "dialog_zhs": [
+        "@你是我的了！@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "TheGuardian": {
+      "official_key": "TheGuardian",
+      "java_class": "TheGuardian",
+      "name_en": "The Guardian",
+      "name_zhs": "守护者",
+      "moves_en": [
+        "Defensive Mode",
+        "Fierce Bash",
+        "Roll",
+        "Twin Slam",
+        "Whirlwind",
+        "Charging Up",
+        "Vent Steam"
+      ],
+      "moves_zhs": [
+        "防御模式",
+        "猛烈痛击",
+        "滚动",
+        "双斩",
+        "旋风",
+        "蓄能",
+        "蒸汽喷射"
+      ],
+      "dialog_en": [
+        "#b~..COOLING...~ NL #b~...DOWN...~",
+        "Defending...",
+        "#r@DESTROY@ NL #r@DESTROY@ NL #r@DESTROY@",
+        "#r@DANGER@ NL #r@DANGER@ NL #r@DANGER@"
+      ],
+      "dialog_zhs": [
+        "#b~冷却……~ NL #b~…中…~",
+        "防御……",
+        "#r@摧毁@ NL #r@摧毁@ NL #r@摧毁@",
+        "#r@危险@ NL #r@危险@ NL #r@危险@"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "TheGuardianOrb": {
+      "official_key": "TheGuardianOrb",
+      "java_class": "TheGuardianOrb",
+      "name_en": "",
+      "name_zhs": "",
+      "moves_en": [],
+      "moves_zhs": [],
+      "dialog_en": [],
+      "dialog_zhs": [],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "TimeEater": {
+      "official_key": "TimeEater",
+      "java_class": "TimeEater",
+      "name_en": "Time Eater",
+      "name_zhs": "时间吞噬者",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        "~Ah...~ NL ~..company...~",
+        "~Foolish..~ NL @FOOOLISH!@",
+        "~Never....~ NL ~...liked..~ NL ~..you...~"
+      ],
+      "dialog_zhs": [
+        "~啊……~ NL ~…居然有人来了…~",
+        "~愚蠢……~ NL @何等愚蠢！@",
+        "~一直……~ NL ~……都不…~ NL ~…喜欢你……~"
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "TorchHead": {
+      "official_key": "TorchHead",
+      "java_class": "TorchHead",
+      "name_en": "Torch Head",
+      "name_zhs": "火炬头",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "Transient": {
+      "official_key": "Transient",
+      "java_class": "Transient",
+      "name_en": "Transient",
+      "name_zhs": "倏忽魔",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    },
+    "WrithingMass": {
+      "official_key": "WrithingMass",
+      "java_class": "WrithingMass",
+      "name_en": "Writhing Mass",
+      "name_zhs": "扭曲团块",
+      "moves_en": [
+        ""
+      ],
+      "moves_zhs": [
+        ""
+      ],
+      "dialog_en": [
+        ""
+      ],
+      "dialog_zhs": [
+        ""
+      ],
+      "translation_source": "desktop-1.0.jar:localization/zhs/monsters.json",
+      "description_source": "desktop-1.0.jar:localization/eng/monsters.json + localization/zhs/monsters.json"
+    }
+  }
+}

@@ -395,29 +395,144 @@ class ShellParasite(MonsterBase):
 @dataclass
 class Byrd(MonsterBase):
     peck_dmg: int = 1
+    peck_count: int = 5
     swoop_dmg: int = 12
+    headbutt_dmg: int = 3
+    flight_amt: int = 3
+    first_move: bool = True
     is_flying: bool = True
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "Byrd":
-        hp = hp_rng.random_int_between(28, 33) if ascension >= 7 else hp_rng.random_int_between(25, 31)
-        return cls(id="Byrd", name="Byrd", hp=hp, max_hp=hp)
+        hp = hp_rng.random_int_between(26, 33) if ascension >= 7 else hp_rng.random_int_between(25, 31)
+        peck_count = 6 if ascension >= 2 else 5
+        swoop_dmg = 14 if ascension >= 2 else 12
+        flight_amt = 4 if ascension >= 17 else 3
+        return cls(
+            id="Byrd",
+            name="Byrd",
+            hp=hp,
+            max_hp=hp,
+            peck_count=peck_count,
+            swoop_dmg=swoop_dmg,
+            headbutt_dmg=3,
+            flight_amt=flight_amt,
+        )
 
     def get_move(self, roll: int) -> None:
         MOVE_PECK = 1
-        MOVE_SWOOP = 2
-        MOVE_CAW = 3
-        MOVE_FLY = 4
+        MOVE_GO_AIRBORNE = 2
+        MOVE_SWOOP = 3
+        MOVE_STUN = 4
+        MOVE_HEADBUTT = 5
+        MOVE_CAW = 6
+        if self.first_move:
+            self.first_move = False
+            if self.ai_rng is not None and self.ai_rng.random_boolean_chance(0.375):
+                self.set_move(MonsterMove(MOVE_CAW, MonsterIntent.BUFF, name="Caw"))
+            else:
+                self.set_move(
+                    MonsterMove(
+                        MOVE_PECK,
+                        MonsterIntent.ATTACK,
+                        self.peck_dmg,
+                        multiplier=self.peck_count,
+                        is_multi_damage=True,
+                        name="Peck",
+                    )
+                )
+            return
         if self.is_flying:
             if roll < 50:
-                self.set_move(MonsterMove(MOVE_PECK, MonsterIntent.ATTACK, self.peck_dmg, multiplier=5, is_multi_damage=True, name="Peck"))
-            elif roll < 80:
-                self.set_move(MonsterMove(MOVE_SWOOP, MonsterIntent.ATTACK, self.swoop_dmg, name="Swoop"))
+                if self.last_two_moves(MOVE_PECK):
+                    if self.ai_rng is not None and self.ai_rng.random_boolean_chance(0.4):
+                        self.set_move(MonsterMove(MOVE_SWOOP, MonsterIntent.ATTACK, self.swoop_dmg, name="Swoop"))
+                    else:
+                        self.set_move(MonsterMove(MOVE_CAW, MonsterIntent.BUFF, name="Caw"))
+                else:
+                    self.set_move(
+                        MonsterMove(
+                            MOVE_PECK,
+                            MonsterIntent.ATTACK,
+                            self.peck_dmg,
+                            multiplier=self.peck_count,
+                            is_multi_damage=True,
+                            name="Peck",
+                        )
+                    )
+            elif roll < 70:
+                if self.last_move(MOVE_SWOOP):
+                    if self.ai_rng is not None and self.ai_rng.random_boolean_chance(0.375):
+                        self.set_move(MonsterMove(MOVE_CAW, MonsterIntent.BUFF, name="Caw"))
+                    else:
+                        self.set_move(
+                            MonsterMove(
+                                MOVE_PECK,
+                                MonsterIntent.ATTACK,
+                                self.peck_dmg,
+                                multiplier=self.peck_count,
+                                is_multi_damage=True,
+                                name="Peck",
+                            )
+                        )
+                else:
+                    self.set_move(MonsterMove(MOVE_SWOOP, MonsterIntent.ATTACK, self.swoop_dmg, name="Swoop"))
+            elif self.last_move(MOVE_CAW):
+                if self.ai_rng is not None and self.ai_rng.random_boolean_chance(0.2857):
+                    self.set_move(MonsterMove(MOVE_SWOOP, MonsterIntent.ATTACK, self.swoop_dmg, name="Swoop"))
+                else:
+                    self.set_move(
+                        MonsterMove(
+                            MOVE_PECK,
+                            MonsterIntent.ATTACK,
+                            self.peck_dmg,
+                            multiplier=self.peck_count,
+                            is_multi_damage=True,
+                            name="Peck",
+                        )
+                    )
             else:
                 self.set_move(MonsterMove(MOVE_CAW, MonsterIntent.BUFF, name="Caw"))
         else:
-            self.set_move(MonsterMove(MOVE_FLY, MonsterIntent.BUFF, name="Fly"))
+            self.set_move(MonsterMove(MOVE_HEADBUTT, MonsterIntent.ATTACK, self.headbutt_dmg, name="Headbutt"))
+
+    def take_turn(self, player) -> None:
+        if self.next_move is None:
+            return
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        if move_id == 1:
+            damage = self.get_intent_damage()
+            for _ in range(max(1, int(self.peck_count or 1))):
+                player.take_damage(damage)
+            return
+        if move_id == 3:
+            player.take_damage(self.get_intent_damage())
+            return
+        if move_id == 5:
+            player.take_damage(self.get_intent_damage())
+            self.set_move(MonsterMove(2, MonsterIntent.UNKNOWN, name="Go Airborne"))
+            return
+        if move_id == 2:
             self.is_flying = True
+            return
+        if move_id == 6:
+            self.gain_strength(1)
+            return
+        if move_id == 4:
+            return
+
+    def take_damage(self, amount: int) -> int:
+        actual_damage = super().take_damage(amount)
+        airborne_hits = int(getattr(self, "_byrd_airborne_hits", 0) or 0)
+        if self.is_flying and actual_damage > 0:
+            airborne_hits += 1
+            if airborne_hits >= self.flight_amt:
+                self.is_flying = False
+                self._byrd_airborne_hits = 0
+                self.set_move(MonsterMove(4, MonsterIntent.STUN, name="Stunned"))
+                return actual_damage
+        self._byrd_airborne_hits = airborne_hits
+        return actual_damage
 
 
 @dataclass
@@ -513,46 +628,137 @@ class Snecko(MonsterBase):
 class Centurion(MonsterBase):
     fury_dmg: int = 6
     slam_dmg: int = 12
+    fury_hits: int = 3
     defend_block: int = 15
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "Centurion":
         hp = hp_rng.random_int_between(78, 82) if ascension >= 7 else hp_rng.random_int_between(76, 80)
-        return cls(id="Centurion", name="Centurion", hp=hp, max_hp=hp)
+        defend_block = 20 if ascension >= 17 else 15
+        fury_dmg = 7 if ascension >= 2 else 6
+        slam_dmg = 14 if ascension >= 2 else 12
+        return cls(
+            id="Centurion",
+            name="Centurion",
+            hp=hp,
+            max_hp=hp,
+            fury_dmg=fury_dmg,
+            slam_dmg=slam_dmg,
+            fury_hits=3,
+            defend_block=defend_block,
+        )
 
     def get_move(self, roll: int) -> None:
         MOVE_FURY = 1
-        MOVE_SLAM = 2
-        MOVE_DEFEND = 3
-        if roll < 35:
-            self.set_move(MonsterMove(MOVE_FURY, MonsterIntent.ATTACK, self.fury_dmg, multiplier=3, is_multi_damage=True, name="Fury"))
-        elif roll < 70:
-            self.set_move(MonsterMove(MOVE_SLAM, MonsterIntent.ATTACK, self.slam_dmg, name="Slam"))
-        else:
+        MOVE_DEFEND = 2
+        MOVE_SLAM = 3
+        alive_count = sum(1 for monster in getattr(getattr(self, "state", None), "monsters", []) if not monster.is_dead())
+        if roll >= 65 and not self.last_two_moves(MOVE_DEFEND) and not self.last_two_moves(MOVE_SLAM):
+            if alive_count > 1:
+                self.set_move(MonsterMove(MOVE_DEFEND, MonsterIntent.DEFEND, name="Protect"))
+                return
+            self.set_move(MonsterMove(MOVE_SLAM, MonsterIntent.ATTACK, self.fury_dmg, multiplier=self.fury_hits, is_multi_damage=True, name="Fury"))
+            return
+        if not self.last_two_moves(MOVE_FURY):
+            self.set_move(MonsterMove(MOVE_FURY, MonsterIntent.ATTACK, self.slam_dmg, name="Slash"))
+            return
+        if alive_count > 1:
             self.set_move(MonsterMove(MOVE_DEFEND, MonsterIntent.DEFEND, name="Defend"))
-            self.gain_block(self.defend_block)
+            return
+        self.set_move(MonsterMove(MOVE_SLAM, MonsterIntent.ATTACK, self.fury_dmg, multiplier=self.fury_hits, is_multi_damage=True, name="Fury"))
+
+    def take_turn(self, player) -> None:
+        if self.next_move is None:
+            return
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        if move_id == 1:
+            player.take_damage(self.get_intent_damage())
+            return
+        if move_id == 2:
+            combat_state = getattr(self, "state", None)
+            targets = [monster for monster in getattr(combat_state, "monsters", []) if not monster.is_dead()]
+            if targets:
+                target = next((monster for monster in targets if monster is not self), self)
+                target.gain_block(self.defend_block)
+            return
+        if move_id == 3:
+            damage = max(0, int(getattr(self.next_move, "base_damage", 0) or self.fury_dmg))
+            for _ in range(max(1, int(self.fury_hits or 1))):
+                player.take_damage(damage)
 
 
 @dataclass
 class Healer(MonsterBase):
     attack_dmg: int = 8
     heal_amount: int = 16
+    str_amount: int = 2
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "Healer":
         hp = hp_rng.random_int_between(50, 56) if ascension >= 7 else hp_rng.random_int_between(48, 54)
-        return cls(id="Healer", name="Healer", hp=hp, max_hp=hp)
+        if ascension >= 17:
+            attack_dmg = 9
+            str_amount = 4
+            heal_amount = 20
+        elif ascension >= 2:
+            attack_dmg = 9
+            str_amount = 3
+            heal_amount = 16
+        else:
+            attack_dmg = 8
+            str_amount = 2
+            heal_amount = 16
+        return cls(
+            id="Healer",
+            name="Healer",
+            hp=hp,
+            max_hp=hp,
+            attack_dmg=attack_dmg,
+            heal_amount=heal_amount,
+            str_amount=str_amount,
+        )
 
     def get_move(self, roll: int) -> None:
         MOVE_ATTACK = 1
         MOVE_HEAL = 2
         MOVE_BUFF = 3
-        if roll < 40:
-            self.set_move(MonsterMove(MOVE_ATTACK, MonsterIntent.ATTACK, self.attack_dmg, name="Attack"))
-        elif roll < 70:
+        combat_state = getattr(self, "state", None)
+        monsters = [monster for monster in getattr(combat_state, "monsters", []) if not monster.is_dead()]
+        need_to_heal = sum(max(0, int(getattr(monster, "max_hp", 0) or 0) - int(getattr(monster, "hp", 0) or 0)) for monster in monsters)
+        heal_threshold = 20 if self.str_amount >= 4 else 15
+        if need_to_heal > heal_threshold and not self.last_two_moves(MOVE_HEAL):
             self.set_move(MonsterMove(MOVE_HEAL, MonsterIntent.BUFF, name="Heal"))
-        else:
+            return
+        if self.str_amount >= 4:
+            if roll >= 40 and not self.last_move(MOVE_ATTACK):
+                self.set_move(MonsterMove(MOVE_ATTACK, MonsterIntent.ATTACK_DEBUFF, self.attack_dmg, name="Attack"))
+                return
+        elif roll >= 40 and not self.last_two_moves(MOVE_ATTACK):
+            self.set_move(MonsterMove(MOVE_ATTACK, MonsterIntent.ATTACK_DEBUFF, self.attack_dmg, name="Attack"))
+            return
+        if not self.last_two_moves(MOVE_BUFF):
             self.set_move(MonsterMove(MOVE_BUFF, MonsterIntent.BUFF, name="Buff"))
+            return
+        self.set_move(MonsterMove(MOVE_ATTACK, MonsterIntent.ATTACK_DEBUFF, self.attack_dmg, name="Attack"))
+
+    def take_turn(self, player) -> None:
+        if self.next_move is None:
+            return
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        combat_state = getattr(self, "state", None)
+        monsters = [monster for monster in getattr(combat_state, "monsters", []) if not monster.is_dead()]
+        if move_id == 1:
+            player.take_damage(self.get_intent_damage())
+            player.add_power(create_power("Frail", 2, player.id))
+            return
+        if move_id == 2:
+            for monster in monsters:
+                monster.hp = min(monster.max_hp, monster.hp + self.heal_amount)
+            return
+        if move_id == 3:
+            for monster in monsters:
+                monster.gain_strength(self.str_amount)
+            return
 
 
 # =============================================================================
@@ -957,30 +1163,37 @@ class Serpent(MonsterBase):
 
 @dataclass
 class SlaverBoss(MonsterBase):
+    whip_dmg: int = 7
     wound_count: int = 1
+    gain_strength_after_attack: bool = False
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "SlaverBoss":
-        hp = hp_rng.random_int_between(45, 50) if ascension >= 7 else hp_rng.random_int_between(40, 46)
+        hp = hp_rng.random_int_between(57, 64) if ascension >= 7 else hp_rng.random_int_between(54, 60)
+        wound_count = 3 if ascension >= 18 else (2 if ascension >= 3 else 1)
         return cls(
             id="SlaverBoss",
             name="Taskmaster",
             hp=hp,
             max_hp=hp,
-            wound_count=1 if ascension < 17 else 2,
+            whip_dmg=7,
+            wound_count=wound_count,
+            gain_strength_after_attack=ascension >= 18,
         )
 
     def get_move(self, roll: int) -> None:
-        self.set_move(MonsterMove(2, MonsterIntent.ATTACK_DEBUFF, name="Scouring Whip"))
+        self.set_move(MonsterMove(2, MonsterIntent.ATTACK_DEBUFF, base_damage=self.whip_dmg, name="Scouring Whip"))
 
     def take_turn(self, player) -> None:
         if self.next_move is None:
             return
+        player.take_damage(self.get_intent_damage())
         card_manager = getattr(getattr(self, "state", None), "card_manager", None)
-        if card_manager is None:
-            return
-        for _ in range(max(1, int(self.wound_count or 1))):
-            card_manager.discard_pile.add(CardInstance(card_id="Wound"))
+        if card_manager is not None:
+            for _ in range(max(1, int(self.wound_count or 1))):
+                card_manager.discard_pile.add(CardInstance(card_id="Wound"))
+        if self.gain_strength_after_attack:
+            self.gain_strength(1)
 
 
 @dataclass
@@ -1357,29 +1570,193 @@ class Reptomancer(MonsterBase):
         else:
             self.set_move(MonsterMove(MOVE_BIG_BITE, MonsterIntent.ATTACK, self.big_bite_dmg, name="Big Bite"))
 
+    def take_turn(self, player) -> None:
+        if self.next_move is None:
+            return
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        if move_id == 1:
+            damage = self.get_intent_damage()
+            for _ in range(2):
+                player.take_damage(damage)
+            return
+        if move_id == 2:
+            player.take_damage(self.get_intent_damage())
+            return
+        if move_id == 3:
+            combat_state = getattr(self, "state", None)
+            alive_daggers = [
+                monster
+                for monster in getattr(combat_state, "monsters", [])
+                if not monster.is_dead() and getattr(monster, "id", "") in {"Dagger", "SnakeDagger"}
+            ]
+            if len(alive_daggers) >= 2 or combat_state is None:
+                return
+            for _ in range(2 - len(alive_daggers)):
+                combat_state.add_monster(SnakeDagger.create(getattr(combat_state, "rng", MutableRNG.from_seed(1, rng_type="monsterHpRng")), 0))
+
 
 @dataclass
 class Dagger(MonsterBase):
     stab_dmg: int = 9
+    sacrifice_dmg: int = 25
 
     @classmethod
     def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "Dagger":
         hp = 25
-        return cls(id="Dagger", name="Dagger", hp=hp, max_hp=hp)
+        return cls(id="Dagger", name="Dagger", hp=hp, max_hp=hp, stab_dmg=9, sacrifice_dmg=25)
 
     def get_move(self, roll: int) -> None:
         MOVE_WOUND = 1
-        MOVE_STAB = 2
+        MOVE_EXPLODE = 2
         if self.first_move:
             self.first_move = False
-            self.set_move(MonsterMove(MOVE_WOUND, MonsterIntent.ATTACK_DEBUFF, name="Wound"))
+            self.set_move(MonsterMove(MOVE_WOUND, MonsterIntent.ATTACK_DEBUFF, self.stab_dmg, name="Wound"))
             return
-        self.set_move(MonsterMove(MOVE_STAB, MonsterIntent.ATTACK, self.stab_dmg, name="Stab"))
+        self.set_move(MonsterMove(MOVE_EXPLODE, MonsterIntent.ATTACK, self.sacrifice_dmg, name="Explode"))
 
     def take_turn(self, player) -> None:
         if self.next_move is None:
             return
-        if self.next_move.intent == MonsterIntent.ATTACK_DEBUFF:
+        move_id = int(getattr(self.next_move, "move_id", -1) or -1)
+        if move_id == 1:
+            player.take_damage(self.stab_dmg)
+            card_manager = getattr(getattr(self, "state", None), "card_manager", None)
+            if card_manager is not None:
+                card_manager.discard_pile.add(CardInstance(card_id="Wound"))
             return
-        if self.next_move.intent.is_attack():
+        if move_id == 2:
+            player.take_damage(self.sacrifice_dmg)
+            self.hp = 0
+            self.is_dying = True
+
+
+@dataclass
+class Taskmaster(SlaverBoss):
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "Taskmaster":
+        monster = super().create(hp_rng, ascension)
+        monster.id = "Taskmaster"
+        monster.name = "Taskmaster"
+        return monster
+
+
+@dataclass
+class SpireGrowth(Serpent):
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "SpireGrowth":
+        monster = super().create(hp_rng, ascension)
+        monster.id = "SpireGrowth"
+        monster.name = "Spire Growth"
+        return monster
+
+
+@dataclass
+class SnakeDagger(Dagger):
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "SnakeDagger":
+        monster = super().create(hp_rng, ascension)
+        monster.id = "SnakeDagger"
+        monster.name = "Dagger"
+        return monster
+
+
+@dataclass
+class BanditPointy(MonsterBase):
+    attack_dmg: int = 5
+
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "BanditPointy":
+        hp = 34 if ascension >= 7 else 30
+        attack_dmg = 6 if ascension >= 2 else 5
+        return cls(id="BanditPointy", name="Pointy", hp=hp, max_hp=hp, attack_dmg=attack_dmg)
+
+    def get_move(self, roll: int) -> None:
+        self.set_move(MonsterMove(1, MonsterIntent.ATTACK, self.attack_dmg, multiplier=2, is_multi_damage=True, name="Pointy Special"))
+
+    def take_turn(self, player) -> None:
+        damage = self.get_intent_damage()
+        for _ in range(2):
+            player.take_damage(damage)
+
+
+@dataclass
+class BanditLeader(MonsterBase):
+    slash_dmg: int = 15
+    agonize_dmg: int = 10
+    weak_amount: int = 2
+
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "BanditLeader":
+        hp = hp_rng.random_int_between(37, 41) if ascension >= 7 else hp_rng.random_int_between(35, 39)
+        slash_dmg = 17 if ascension >= 2 else 15
+        agonize_dmg = 12 if ascension >= 2 else 10
+        weak_amount = 3 if ascension >= 17 else 2
+        return cls(id="BanditLeader", name="Romeo", hp=hp, max_hp=hp, slash_dmg=slash_dmg, agonize_dmg=agonize_dmg, weak_amount=weak_amount)
+
+    def get_move(self, roll: int) -> None:
+        if self.first_move:
+            self.first_move = False
+            self.set_move(MonsterMove(2, MonsterIntent.UNKNOWN, name="Mock"))
+            return
+        if self.last_move(2):
+            self.set_move(MonsterMove(3, MonsterIntent.ATTACK_DEBUFF, self.agonize_dmg, name="Agonizing Slash"))
+            return
+        if self.last_move(3):
+            if int(getattr(self, "_bandit_leader_attack_chain", 0) or 0) < (2 if self.weak_amount >= 3 else 1):
+                self._bandit_leader_attack_chain = int(getattr(self, "_bandit_leader_attack_chain", 0) or 0) + 1
+                self.set_move(MonsterMove(1, MonsterIntent.ATTACK, self.slash_dmg, name="Cross Slash"))
+            else:
+                self._bandit_leader_attack_chain = 0
+                self.set_move(MonsterMove(3, MonsterIntent.ATTACK_DEBUFF, self.agonize_dmg, name="Agonizing Slash"))
+            return
+        self._bandit_leader_attack_chain = int(getattr(self, "_bandit_leader_attack_chain", 0) or 0)
+        self.set_move(MonsterMove(1, MonsterIntent.ATTACK, self.slash_dmg, name="Cross Slash"))
+
+    def take_turn(self, player) -> None:
+        move_id = int(getattr(getattr(self, "next_move", None), "move_id", -1) or -1)
+        if move_id == 1:
             player.take_damage(self.get_intent_damage())
+            return
+        if move_id == 2:
+            return
+        if move_id == 3:
+            player.take_damage(self.get_intent_damage())
+            player.add_power(create_power("Weak", self.weak_amount, player.id))
+
+
+@dataclass
+class BanditBear(MonsterBase):
+    maul_dmg: int = 18
+    lunge_dmg: int = 9
+    lunge_block: int = 9
+    dex_reduction: int = -2
+
+    @classmethod
+    def create(cls, hp_rng: MutableRNG, ascension: int = 0) -> "BanditBear":
+        hp = hp_rng.random_int_between(40, 44) if ascension >= 7 else hp_rng.random_int_between(38, 42)
+        maul_dmg = 20 if ascension >= 2 else 18
+        lunge_dmg = 10 if ascension >= 2 else 9
+        dex_reduction = -4 if ascension >= 17 else -2
+        return cls(id="BanditBear", name="Bear", hp=hp, max_hp=hp, maul_dmg=maul_dmg, lunge_dmg=lunge_dmg, lunge_block=9, dex_reduction=dex_reduction)
+
+    def get_move(self, roll: int) -> None:
+        if self.first_move:
+            self.first_move = False
+            self.set_move(MonsterMove(2, MonsterIntent.STRONG_DEBUFF, name="Bear Hug"))
+            return
+        if self.last_move(2) or self.last_move(1):
+            self.set_move(MonsterMove(3, MonsterIntent.ATTACK_DEFEND, self.lunge_dmg, name="Lunge"))
+            return
+        self.set_move(MonsterMove(1, MonsterIntent.ATTACK, self.maul_dmg, name="Maul"))
+
+    def take_turn(self, player) -> None:
+        move_id = int(getattr(getattr(self, "next_move", None), "move_id", -1) or -1)
+        if move_id == 1:
+            player.take_damage(self.get_intent_damage())
+            return
+        if move_id == 2:
+            player.add_power(create_power("Dexterity", self.dex_reduction, player.id))
+            return
+        if move_id == 3:
+            player.take_damage(self.get_intent_damage())
+            self.gain_block(self.lunge_block)
