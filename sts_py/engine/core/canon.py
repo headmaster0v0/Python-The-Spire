@@ -13,6 +13,10 @@ def asdict(obj: Any) -> Any:
     We keep this intentionally small and predictable to preserve determinism.
     """
 
+    to_dict = getattr(obj, "to_dict", None)
+    if callable(to_dict):
+        return asdict(to_dict())
+
     if dataclasses.is_dataclass(obj):
         return dataclasses.asdict(obj)
 

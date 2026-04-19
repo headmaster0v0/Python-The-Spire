@@ -3,19 +3,29 @@ from __future__ import annotations
 """Generate map image using original game sprites."""
 
 import os
+import zipfile
+from functools import lru_cache
+from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont
 
-def _find_project_root() -> str:
-    path = os.getcwd()
-    while path and not os.path.exists(os.path.join(path, 'desktop-1.0-decompiled')):
-        parent = os.path.dirname(path)
-        if parent == path:
-            break
-        path = parent
-    return path
+
+def _find_project_root() -> Path:
+    path = Path(__file__).resolve().parent
+    markers = ("desktop-1.0.jar", "desktop-1.0-decompiled")
+    while True:
+        if any((path / marker).exists() for marker in markers):
+            return path
+        if path.parent == path:
+            return Path(__file__).resolve().parent
+        path = path.parent
 
 
-ASSETS_DIR = os.path.join(_find_project_root(), "desktop-1.0-decompiled", "images", "ui", "map")
+PROJECT_ROOT = _find_project_root()
+DECOMPILED_ASSETS_DIR = PROJECT_ROOT / "desktop-1.0-decompiled" / "images" / "ui" / "map"
+JAR_PATH = PROJECT_ROOT / "desktop-1.0.jar"
+EXTRACT_ROOT = PROJECT_ROOT / "runtime_tmp" / "map_asset_cache"
+EXTRACTED_ASSETS_DIR = EXTRACT_ROOT / "images" / "ui" / "map"
 
 NODE_IMAGES = {
     "M": "monster.png",
@@ -49,14 +59,66 @@ PADDING = 80
 BOSS_PADDING = 160
 
 
+def _map_asset_files() -> set[str]:
+    names = {
+        file_name
+        for file_name in NODE_IMAGES.values()
+        if file_name
+    }
+    names.update(NODE_OUTLINE_IMAGES.values())
+    for boss_images in BOSS_IMAGES.values():
+        names.update(boss_images.values())
+    return {(Path("images") / "ui" / "map" / Path(name)).as_posix() for name in names}
+
+
+def _extract_map_assets_from_jar(jar_path: Path, extract_root: Path) -> Path:
+    extract_root.mkdir(parents=True, exist_ok=True)
+    required_assets = _map_asset_files()
+    if all((extract_root / relative).exists() for relative in required_assets):
+        return extract_root / "images" / "ui" / "map"
+
+    with zipfile.ZipFile(jar_path) as jar:
+        for relative in sorted(required_assets):
+            target = extract_root / relative
+            if target.exists():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with jar.open(relative) as src, target.open("wb") as dst:
+                dst.write(src.read())
+    return extract_root / "images" / "ui" / "map"
+
+
+def _resolve_assets_dir() -> Path:
+    if DECOMPILED_ASSETS_DIR.exists():
+        return DECOMPILED_ASSETS_DIR
+    if JAR_PATH.exists():
+        return _extract_map_assets_from_jar(JAR_PATH, EXTRACT_ROOT)
+    return DECOMPILED_ASSETS_DIR
+
+
+ASSETS_DIR = _resolve_assets_dir()
+
+
+@lru_cache(maxsize=None)
 def load_image(name: str) -> Image.Image | None:
     if name is None:
         return None
-    path = os.path.join(ASSETS_DIR, os.path.normpath(name))
-    if not os.path.exists(path):
+    path = ASSETS_DIR / os.path.normpath(name)
+    if not path.exists():
         return None
-    img = Image.open(path).convert("RGBA")
+    with Image.open(path) as source:
+        img = source.convert("RGBA")
     return adjust_image_contrast(img)
+
+
+@lru_cache(maxsize=None)
+def _load_resized_image(name: str | None, width: int, height: int) -> Image.Image | None:
+    if name is None:
+        return None
+    img = load_image(name)
+    if img is None:
+        return None
+    return img.resize((width, height), Image.LANCZOS)
 
 
 def adjust_image_contrast(img: Image.Image, brightness: float = 1.0) -> Image.Image:
@@ -76,6 +138,27 @@ def adjust_image_contrast(img: Image.Image, brightness: float = 1.0) -> Image.Im
 
 def draw_curved_line(draw: ImageDraw.Draw, x1: int, y1: int, x2: int, y2: int, color: tuple, width: int = LINE_WIDTH):
     draw.line([(x1, y1), (x2, y2)], fill=color, width=width)
+
+
+def _draw_node_highlight(draw: ImageDraw.Draw, px: int, py: int, *, is_current: bool, is_available: bool) -> None:
+    if not is_current and not is_available:
+        return
+    if is_current:
+        padding = 18
+        fill = (255, 241, 188, 120)
+        outline = (255, 255, 255, 230)
+        width = 10
+    else:
+        padding = 10
+        fill = (145, 214, 255, 72)
+        outline = (217, 242, 255, 190)
+        width = 6
+    draw.ellipse(
+        (px - padding, py - padding, px + NODE_SIZE + padding, py + NODE_SIZE + padding),
+        fill=fill,
+        outline=outline,
+        width=width,
+    )
 
 
 def generate_map_image(engine) -> Image.Image:
@@ -107,6 +190,7 @@ def generate_map_image(engine) -> Image.Image:
     bg = Image.new("RGBA", (img_width, img_height), (210, 180, 140, 255))
 
     line_color = (100, 70, 40, 255)
+    draw = ImageDraw.Draw(bg)
 
     for node in nodes:
         for dst in node.connections:
@@ -119,7 +203,6 @@ def generate_map_image(engine) -> Image.Image:
             px2 = start_x + dst_node.x * node_spacing_x + NODE_SIZE // 2
             py2 = start_y + (max_y - dst_node.y) * node_spacing_y + NODE_SIZE // 2
 
-            draw = ImageDraw.Draw(bg)
             draw_curved_line(draw, px1, py1, px2, py2, line_color)
 
     for y in range(max_y, min_y - 1, -1):
@@ -135,26 +218,25 @@ def generate_map_image(engine) -> Image.Image:
             is_available = node.node_id in available_ids
             is_boss = y == max_y
 
+            _draw_node_highlight(draw, px, py, is_current=is_current, is_available=is_available)
+
             if is_boss:
-                boss_img = load_image(BOSS_IMAGES.get(engine.state.act, BOSS_IMAGES[1]).get(act_boss_idx))
+                boss_img = _load_resized_image(BOSS_IMAGES.get(engine.state.act, BOSS_IMAGES[1]).get(act_boss_idx), BOSS_SIZE, BOSS_SIZE)
                 if boss_img:
-                    boss_scaled = boss_img.resize((BOSS_SIZE, BOSS_SIZE), Image.LANCZOS)
                     boss_paste_x = px + (NODE_SIZE - BOSS_SIZE) // 2
                     boss_paste_y = py + (NODE_SIZE - BOSS_SIZE) // 2
-                    bg.paste(boss_scaled, (boss_paste_x, boss_paste_y), boss_scaled)
+                    bg.paste(boss_img, (boss_paste_x, boss_paste_y), boss_img)
             else:
                 node_key = node.room_type.value
 
                 if is_current:
-                    node_outline = load_image(NODE_OUTLINE_IMAGES.get(node_key))
+                    node_outline = _load_resized_image(NODE_OUTLINE_IMAGES.get(node_key), NODE_SIZE, NODE_SIZE)
                     if node_outline:
-                        outline_scaled = node_outline.resize((NODE_SIZE, NODE_SIZE), Image.LANCZOS)
-                        bg.paste(outline_scaled, (px, py), outline_scaled)
+                        bg.paste(node_outline, (px, py), node_outline)
 
-                node_img = load_image(NODE_IMAGES.get(node_key))
+                node_img = _load_resized_image(NODE_IMAGES.get(node_key), NODE_SIZE, NODE_SIZE)
                 if node_img:
-                    node_scaled = node_img.resize((NODE_SIZE, NODE_SIZE), Image.LANCZOS)
-                    bg.paste(node_scaled, (px, py), node_scaled)
+                    bg.paste(node_img, (px, py), node_img)
 
     try:
         title_font = ImageFont.truetype("arial.ttf", 28)
@@ -164,16 +246,17 @@ def generate_map_image(engine) -> Image.Image:
     act_names = {1: "低语者之域", 2: "城市", 3: "彼方"}
     title = f"第 {engine.state.act} 幕 - {act_names.get(engine.state.act, '???')}"
 
-    draw = ImageDraw.Draw(bg)
     draw.text((img_width // 2 - 100, 20), title, font=title_font, fill=(255, 255, 255, 255))
 
     return bg
 
 
-def save_map_image(engine, path: str = "map_output.png") -> str:
+def save_map_image(engine, path: str | os.PathLike[str] = "map_output.png") -> str:
     img = generate_map_image(engine)
-    img.save(path)
-    return os.path.abspath(path)
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    img.save(destination)
+    return str(destination.resolve())
 
 
 def show_map_image(engine):

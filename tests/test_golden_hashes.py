@@ -50,4 +50,6 @@ def test_golden_combat_hash(workspace_tmp_path):
     # Also updated for PowerContainer.change_log field addition
     # Updated 2026-03-25: Player.id field addition
     # Updated 2026-04-04: CombatState dataclass expanded with internal choice/reward state
-    assert r.state_hash == "29245b16a0dc5a0e26f96e800db6dc6c5b873b78bcbbb2ec6f8a7d70f26ffe21"
+    # Updated 2026-04-19: hash now follows explicit nested to_dict() contracts
+    # instead of drifting with raw dataclass field expansion.
+    assert r.state_hash == "52c64e1b00ad877c07479f0644b7f2ad184c1f74850e87cf6754740d8a036a93"
