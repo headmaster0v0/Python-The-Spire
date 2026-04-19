@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
-from typing import Any
+from typing import Any, Callable
 
 from sts_py.engine.combat.card_effects import get_card_effects
 from sts_py.engine.content.card_instance import CardInstance
@@ -737,6 +737,22 @@ def _normalize_official_card_description(text: str) -> str:
     return normalized.strip()
 
 
+_CLI_CARD_DESCRIPTION_READABILITY_OVERRIDES: dict[str, Callable[[CardInstance], str]] = {
+    "Bash": lambda card: (
+        f"造成 {max(0, int(getattr(card, 'base_damage', 0) or 0))} 点伤害并施加 "
+        f"{max(0, int(getattr(card, 'base_magic_number', 0) or 0))} 层易伤。"
+    ),
+}
+
+
+def _apply_cli_card_description_readability(card: CardInstance, description: str) -> str:
+    override = _CLI_CARD_DESCRIPTION_READABILITY_OVERRIDES.get(card.card_id)
+    if override is None:
+        return description
+    rewritten = str(override(card) or "").strip()
+    return rewritten if _looks_presentable_text(rewritten) else description
+
+
 def _official_card_description(card: CardInstance) -> str | None:
     official = get_official_card_strings(card.runtime_card_id)
     if official is None:
@@ -759,6 +775,7 @@ def _official_card_description(card: CardInstance) -> str | None:
     for token, value in substitutions.items():
         description = description.replace(token, value)
     description = _normalize_official_card_description(description)
+    description = _apply_cli_card_description_readability(card, description)
     return description if _looks_presentable_text(description) else None
 
 

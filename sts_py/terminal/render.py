@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from typing import Any, Iterable
 
@@ -82,6 +83,55 @@ ORB_LABELS: dict[str, str] = {
     "Plasma": "等离子",
 }
 
+_VIEW_TITLES: dict[str, str] = {
+    "help": "帮助",
+    "neow": "涅奥",
+    "neow_card_choice": "涅奥选牌",
+    "map": "地图阶段",
+    "combat": "战斗",
+    "reward": "奖励",
+    "shop": "商店",
+    "event": "事件",
+    "rest": "篝火",
+    "treasure": "宝箱",
+    "victory": "胜利",
+    "defeat": "失败",
+    "boss_relics": "首领遗物",
+    "status": "状态",
+    "intent": "怪物意图",
+    "exhaust": "消耗堆",
+    "deck": "牌组",
+    "relics": "遗物",
+    "potions": "药水",
+    "draw_pile": "抽牌堆",
+    "discard_pile": "弃牌堆",
+    "card_detail": "卡牌详情",
+    "upgradable_cards": "可升级卡牌",
+    "removable_cards": "可移除卡牌",
+    "reward_cards": "可选卡牌奖励",
+}
+
+_INPUT_PROMPTS: dict[str, str] = {
+    "neow": "涅奥> ",
+    "neow_card_choice": "涅奥选牌> ",
+    "map": "地图> ",
+    "combat": "战斗> ",
+    "combat_target": "目标> ",
+    "reward": "奖励> ",
+    "reward_card_choice": "选牌> ",
+    "shop": "商店> ",
+    "shop_remove": "移除> ",
+    "event": "事件> ",
+    "event_card_choice": "选牌> ",
+    "rest": "篝火> ",
+    "rest_smith": "锻造> ",
+    "treasure": "宝箱> ",
+    "boss_relics": "首领遗物> ",
+    "pause": "按 Enter 继续...",
+}
+
+_TERMINAL_COLOR_MARKER_RE = re.compile(r"#[A-Za-z]")
+
 _HELP_LINES: dict[str, list[str]] = {
     "neow": [
         "数字: 选择涅奥祝福",
@@ -159,9 +209,64 @@ _HELP_LINES: dict[str, list[str]] = {
 }
 
 
+def get_view_title(key: str) -> str:
+    return _VIEW_TITLES.get(key, key)
+
+
+def get_input_prompt(key: str) -> str:
+    return _INPUT_PROMPTS.get(key, f"{key}> ")
+
+
+def _normalize_terminal_inline_spacing(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    normalized = re.sub(r"\[\s+", "[", normalized)
+    normalized = re.sub(r"\s+\]", "]", normalized)
+    normalized = re.sub(r"\(\s+", "(", normalized)
+    normalized = re.sub(r"\s+\)", ")", normalized)
+    normalized = re.sub(r"\s*([，。！？；：、）】》％%])", r"\1", normalized)
+    normalized = re.sub(r"([（【《])\s*", r"\1", normalized)
+    return normalized.strip()
+
+
+def sanitize_terminal_text(text: Any, *, multiline: bool = False) -> str:
+    value = str(text or "")
+    newline_token = "\n" if multiline else " "
+    value = re.sub(r"\s*NL\s*", newline_token, value)
+    value = _TERMINAL_COLOR_MARKER_RE.sub("", value)
+    value = value.replace("~", "").replace("@", "")
+    if not multiline:
+        return _normalize_terminal_inline_spacing(value)
+
+    lines: list[str] = []
+    for raw_line in value.splitlines():
+        normalized = _normalize_terminal_inline_spacing(raw_line)
+        if normalized:
+            lines.append(normalized)
+            continue
+        if lines and lines[-1] != "":
+            lines.append("")
+    return "\n".join(lines).strip()
+
+
+def render_narrative_text(text: Any) -> str:
+    return sanitize_terminal_text(text, multiline=True)
+
+
+def _choice_label_text(label: Any) -> str:
+    return sanitize_terminal_text(label, multiline=False)
+
+
 def configure_console_encoding() -> None:
     if os.name != "nt":
         return
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleCP(65001)
+        kernel32.SetConsoleOutputCP(65001)
+    except Exception:
+        pass
     for stream_name in ("stdin", "stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
         reconfigure = getattr(stream, "reconfigure", None)
@@ -522,7 +627,7 @@ def render_hand_lines(card_ids: Iterable[str]) -> list[str]:
 
 
 def render_pending_choice_lines(options: Iterable[dict[str, Any]]) -> list[str]:
-    return [f"[{idx}] {option.get('label', option)}" for idx, option in enumerate(options)]
+    return [f"[{idx}] {_choice_label_text(option.get('label', option))}" for idx, option in enumerate(options)]
 
 
 def open_map_image(engine) -> None:
@@ -629,6 +734,13 @@ def render_shop_card_lines(cards: list[dict[str, Any]]) -> tuple[list[str], list
     return lines, inspect_card_ids
 
 
+def render_neow_option_lines(options: Iterable[dict[str, Any]]) -> list[str]:
+    lines: list[str] = []
+    for idx, option in enumerate(options):
+        lines.append(f"[{idx}] {_choice_label_text((option or {}).get('label', option))}")
+    return lines
+
+
 def render_shop_relic_lines(
     relics: list[dict[str, Any]],
     *,
@@ -661,9 +773,9 @@ def render_event_choice_lines(event) -> list[str]:
     description_cn = str(getattr(event, "description_cn", "") or "").strip()
     description_en = str(getattr(event, "description", "") or "").strip()
     if _looks_sane_translation(description_cn):
-        lines.append(description_cn)
+        lines.append(_choice_label_text(description_cn))
     elif _looks_presentable_text(description_en):
-        lines.append(description_en)
+        lines.append(_choice_label_text(description_en))
     for idx, choice in enumerate(getattr(event, "choices", []) or []):
         choice_cn = str(getattr(choice, "description_cn", "") or "").strip()
         choice_en = str(getattr(choice, "description", "") or "").strip()
@@ -675,7 +787,7 @@ def render_event_choice_lines(event) -> list[str]:
                 label = f"{label} ({disabled_cn})"
             elif disabled_en and disabled_en not in label:
                 label = f"{label} ({disabled_en})"
-        lines.append(f"[{idx}] {label}")
+        lines.append(f"[{idx}] {_choice_label_text(label)}")
     return lines
 
 
@@ -683,9 +795,9 @@ def describe_event_card_choice(pending_choice: dict[str, Any] | None) -> str:
     prompt_cn = str((pending_choice or {}).get("prompt_cn", "") or "").strip()
     prompt = str((pending_choice or {}).get("prompt", "") or "").strip()
     if prompt_cn:
-        return prompt_cn
+        return _choice_label_text(prompt_cn)
     if prompt:
-        return prompt
+        return _choice_label_text(prompt)
     effect_type = str((pending_choice or {}).get("effect_type", "") or "")
     label_map = {
         "choose_card_to_remove": "移除",
@@ -755,14 +867,14 @@ def describe_neow_card_choice(pending_choice: dict[str, Any] | None) -> str:
     action = str((pending_choice or {}).get("action", "") or "")
     remaining = int((pending_choice or {}).get("remaining", 1) or 1)
     if action == "reward_pick":
-        return "涅奥选牌 - 选择要获得的卡牌"
+        return f"{get_view_title('neow_card_choice')} - 选择要获得的卡牌"
     if action == "remove":
-        return f"涅奥选牌 - 选择要移除的卡牌（剩余 {remaining} 张）"
+        return f"{get_view_title('neow_card_choice')} - 选择要移除的卡牌（剩余 {remaining} 张）"
     if action == "transform":
-        return f"涅奥选牌 - 选择要变形的卡牌（剩余 {remaining} 张）"
+        return f"{get_view_title('neow_card_choice')} - 选择要变形的卡牌（剩余 {remaining} 张）"
     if action == "upgrade":
-        return "涅奥选牌 - 选择要升级的卡牌"
-    return "涅奥选牌"
+        return f"{get_view_title('neow_card_choice')} - 选择要升级的卡牌"
+    return get_view_title("neow_card_choice")
 
 
 def render_help_lines(context: str) -> list[str]:

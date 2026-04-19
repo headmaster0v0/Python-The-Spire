@@ -54,6 +54,13 @@ This repo should only be described as "aligned closely enough to the original to
 
 `sts_py/data/known_approximations.json` must stay empty. Any newly discovered approximation should become a failing test or blocker instead of living as a silent TODO.
 
+The scripted CLI signoff must also stay free of raw UI marker leakage in player-visible text:
+
+- no `NL`
+- no color markers such as `#g` / `#r` / `#b`
+- no emphasis markers such as `~` / `@`
+- no `�`
+
 ## Daily Maintenance Commands
 
 For routine post-ship maintenance, start with the lighter default chain:
@@ -138,6 +145,8 @@ The formal stable command set remains:
 
 These commands are sufficient for the shipped "complete playable CLI run" target, including random-seed startup, the Neow opening phase, and the required combat info surface. Do not expand the top-level command surface unless a concrete high-frequency usability bug justifies a narrow change.
 
+When the CLI reaches Neow's terminal-only completion page and the only remaining option is `[离开]`, it should render that completion text once and then auto-advance back to the map without requiring an extra manual confirmation input.
+
 ## Final Truth Lanes To Preserve
 
 - stateful card wire shapes: `GeneticAlgorithm#<misc>[+]`, `RitualDagger#<misc>[+]`, `SearingBlow+N`
@@ -145,4 +154,6 @@ These commands are sufficient for the shipped "complete playable CLI run" target
 - end-turn retain / no-discard / ethereal boundary correctness
 - repeated harness fixture stability and repeated offline audit stability
 - Chinese-first CLI closeout surface without reopening gameplay truth
+- no mojibake, no `�`, and no raw UI marker leakage (`NL`, color markers, emphasis markers) on the CLI-visible surface
+- Neow CLI auto-completes the terminal-only `[离开]` completion page after rendering it once
 - close source fidelity, not seed-perfect parity

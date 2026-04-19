@@ -94,12 +94,12 @@ def test_new_run_starts_in_intro_or_repeat_neow_phase() -> None:
     assert len(engine.get_neow_options()) == 2
 
 
-def test_handle_neow_direct_reward_requires_leave_then_transitions_to_map(monkeypatch, capsys) -> None:
+def test_handle_neow_direct_reward_auto_leaves_then_transitions_to_map(monkeypatch, capsys) -> None:
     engine = RunEngine.create("TESTPHASE266HANDLE", ascension=0)
     engine.state.neow_options = [_make_option("HUNDRED_GOLD", reward_value=100, label="gain 100 gold")]
     engine.state.neow_screen = "reward_select"
 
-    responses = iter(["0", "0"])
+    responses = iter(["0"])
     monkeypatch.setattr(builtins, "input", lambda prompt="": next(responses))
     monkeypatch.setattr(play_cli, "clear_screen", lambda: None)
 
@@ -107,6 +107,7 @@ def test_handle_neow_direct_reward_requires_leave_then_transitions_to_map(monkey
     output = capsys.readouterr().out
 
     assert "gain 100 gold" in output
+    assert "已自动确认离开，继续前往地图。" in output
     assert engine.state.phase == RunPhase.MAP
     assert engine.state.player_gold == 199
 
@@ -343,7 +344,7 @@ def test_handle_neow_card_selection_supports_inspect(monkeypatch, capsys) -> Non
     engine.state.neow_options = [_make_option("REMOVE_CARD", label="remove 1 card")]
     engine.state.neow_screen = "reward_select"
 
-    responses = iter(["0", "inspect 1", "1", "0"])
+    responses = iter(["0", "inspect 1", "1"])
     monkeypatch.setattr(builtins, "input", lambda prompt="": next(responses))
     monkeypatch.setattr(play_cli, "clear_screen", lambda: None)
 
@@ -351,5 +352,6 @@ def test_handle_neow_card_selection_supports_inspect(monkeypatch, capsys) -> Non
     output = capsys.readouterr().out
 
     assert "ID: Defend" in output
+    assert "已自动确认离开，继续前往地图。" in output
     assert "Defend" not in engine.state.deck
     assert engine.state.phase == RunPhase.MAP

@@ -1,6 +1,6 @@
 ﻿# AI Handoff: STS Python Headless
 
-> Updated: 2026-04-17
+> Updated: 2026-04-19
 > Latest phase: Phase 268 - Dev-Loop Performance / Verification Throughput Closure
 > Current test result: full test suite passed (`1969 passed`)
 
@@ -33,6 +33,13 @@ This project aims to recreate Slay the Spire's original game logic in Python.
   Java-side recorder mod used to emit run logs.
 
 ## 3. Current Baseline
+
+- Terminal CLI maintenance note (2026-04-19):
+  - the stable CLI command surface is unchanged, but the player-visible terminal contract is tighter:
+    - the Neow completion page now renders once and auto-confirms the terminal-only `[离开]` follow-up so CLI flow returns directly to the map without an extra manual input
+    - player-visible CLI text now strips raw UI markers before display instead of leaking desktop formatting tokens such as `NL`, `#g/#r/#b`, `~`, or `@`
+    - Windows terminal startup now does a best-effort console UTF-8 code-page switch before the existing stream `reconfigure(...)` fallback
+  - CLI-readable card descriptions still stay runtime/catalog-sourced first; only narrow high-frequency readability rewrites should sit on top of official text
 
 - Phase 268 - Dev-Loop Performance / Verification Throughput Closure:
   - this phase is a verification-throughput closure on top of the existing Phase 267 fidelity baseline rather than a new gameplay/content tranche

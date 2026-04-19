@@ -140,3 +140,5 @@ def test_phase267_scripted_cli_signoff_walks_real_play_stages_without_placeholde
     assert "Boss 房间" not in output
     assert "RandomRelic" not in output
     assert "placeholder" not in output.lower()
+    for raw_marker in ("NL", "#g", "#r", "#b", "~", "@"):
+        assert raw_marker not in output

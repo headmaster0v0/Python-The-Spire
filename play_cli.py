@@ -22,6 +22,8 @@ from sts_py.terminal.render import (
     describe_neow_card_choice,
     configure_console_encoding,
     format_map_lines,
+    get_input_prompt,
+    get_view_title,
     open_map_image,
     print_map,
     print_separator,
@@ -48,6 +50,8 @@ from sts_py.terminal.render import (
     render_status_line,
     render_target_prompt_lines,
     render_treasure_relic_lines,
+    render_narrative_text,
+    render_neow_option_lines,
 )
 
 
@@ -87,25 +91,28 @@ def _show_lines(title: str, lines: Iterable[str]) -> None:
 
 
 def _show_deck(engine: RunEngine) -> None:
-    _show_lines("牌组", render_card_collection_lines(engine.state.deck))
+    _show_lines(get_view_title("deck"), render_card_collection_lines(engine.state.deck))
 
 
 def _show_relics(engine: RunEngine) -> None:
-    _show_lines("遗物", render_relic_lines(engine.state.relics, relic_contexts=build_relic_contexts_from_engine(engine)))
+    _show_lines(
+        get_view_title("relics"),
+        render_relic_lines(engine.state.relics, relic_contexts=build_relic_contexts_from_engine(engine)),
+    )
 
 
 def _show_potions(engine: RunEngine) -> None:
-    _show_lines("药水", render_potion_lines(engine.state.potions))
+    _show_lines(get_view_title("potions"), render_potion_lines(engine.state.potions))
 
 
 def _show_card_detail(card_id: str, *, index: int | None = None) -> None:
-    _show_lines("卡牌详情", render_card_detail_lines(card_id, index=index))
+    _show_lines(get_view_title("card_detail"), render_card_detail_lines(card_id, index=index))
 
 
 def _pause_for_feedback(message: str | None = None) -> None:
     if message:
         print(message)
-    input("按 Enter 继续...")
+    input(get_input_prompt("pause"))
 
 
 def _format_failure(prefix: str, reason: str | None = None) -> str:
@@ -124,6 +131,18 @@ def _format_shop_replacement(result: dict[str, object]) -> str:
     if replacement_potion:
         return translate_potion(str(replacement_potion))
     return ""
+
+
+def _is_auto_leave_neow_screen(engine: RunEngine, options: list[dict[str, object]]) -> bool:
+    if str(getattr(engine.state, "neow_screen", "") or "") != "complete":
+        return False
+    if len(options) != 1:
+        return False
+    option = dict(options[0] or {})
+    if int(option.get("dialog_option_index", -1) or -1) == 3:
+        return True
+    label = str(option.get("label_cn") or option.get("label") or "").strip()
+    return label == "[离开]"
 
 
 def _prompt_card_selection(
@@ -156,10 +175,10 @@ def _show_pile(engine: RunEngine, pile_name: str) -> None:
     card_manager = combat.state.card_manager
     if pile_name == "draw":
         card_ids = [card.card_id for card in card_manager.draw_pile.cards]
-        _show_lines("抽牌堆", render_card_collection_lines(card_ids))
+        _show_lines(get_view_title("draw_pile"), render_card_collection_lines(card_ids))
     elif pile_name == "discard":
         card_ids = [card.card_id for card in card_manager.discard_pile.cards]
-        _show_lines("弃牌堆", render_card_collection_lines(card_ids))
+        _show_lines(get_view_title("discard_pile"), render_card_collection_lines(card_ids))
 
 
 def _handle_common_info_command(
@@ -174,7 +193,7 @@ def _handle_common_info_command(
     lowered = command.lower()
 
     if lowered == "help":
-        _show_lines("帮助", render_help_lines(context))
+        _show_lines(get_view_title("help"), render_help_lines(context))
         return True
     if lowered == "map":
         print_map(engine)
@@ -192,13 +211,13 @@ def _handle_common_info_command(
         _show_potions(engine)
         return True
     if lowered == "status":
-        _show_lines("状态", render_status_detail_lines(engine))
+        _show_lines(get_view_title("status"), render_status_detail_lines(engine))
         return True
     if lowered == "intent":
-        _show_lines("怪物意图", render_intent_lines(engine))
+        _show_lines(get_view_title("intent"), render_intent_lines(engine))
         return True
     if lowered == "exhaust":
-        _show_lines("消耗堆", render_exhaust_pile_lines(engine))
+        _show_lines(get_view_title("exhaust"), render_exhaust_pile_lines(engine))
         return True
     if allow_draw_discard and lowered == "draw":
         _show_pile(engine, "draw")
@@ -209,11 +228,11 @@ def _handle_common_info_command(
     if lowered.startswith("inspect "):
         idx = _parse_int(command.split(maxsplit=1)[1])
         if idx is None:
-            print("请输入有效的序号。")
+            print("inspect 命令需要有效序号。")
             return True
         card_ids = inspect_cards if inspect_cards is not None else engine.state.deck
         if not 0 <= idx < len(card_ids):
-            print("序号超出范围。")
+            print("inspect 序号超出当前范围。")
             return True
         _show_card_detail(card_ids[idx], index=idx)
         return True
@@ -221,7 +240,7 @@ def _handle_common_info_command(
 
 
 def _print_map_header(engine: RunEngine) -> None:
-    _print_title("地图阶段")
+    _print_title(get_view_title("map"))
     print(render_status_line(engine))
     current_room = engine.get_current_room()
     if current_room is not None:
@@ -236,7 +255,7 @@ def _print_combat_header(engine: RunEngine) -> list[str]:
     hand_cards = [card.card_id for card in combat.state.card_manager.hand.cards]
     player = combat.state.player
 
-    _print_title("战斗")
+    _print_title(get_view_title("combat"))
     print(render_status_line(engine))
     for line in render_combat_player_lines(player):
         print(line)
@@ -269,10 +288,12 @@ def _print_combat_header(engine: RunEngine) -> list[str]:
 def handle_neow(engine: RunEngine, reached_boss: bool = False) -> None:
     while engine.state.phase == RunPhase.NEOW:
         clear_screen()
-        _print_title("涅奥")
+        _print_title(get_view_title("neow"))
         print(render_status_line(engine))
         print_separator("-")
-        neow_body = str(getattr(engine.state, "neow_body_cn", "") or getattr(engine.state, "neow_body", "") or "").strip()
+        neow_body = render_narrative_text(
+            getattr(engine.state, "neow_body_cn", "") or getattr(engine.state, "neow_body", "") or ""
+        )
         if neow_body:
             print(neow_body)
             print_separator("-")
@@ -281,7 +302,7 @@ def handle_neow(engine: RunEngine, reached_boss: bool = False) -> None:
         if pending_choice:
             card_ids = engine.get_neow_choice_cards()
             _show_lines(describe_neow_card_choice(pending_choice), render_card_collection_lines(card_ids))
-            raw = input("涅奥选牌> ").strip()
+            raw = input(get_input_prompt("neow_card_choice")).strip()
             if not raw:
                 continue
             if _handle_common_info_command(engine, raw, context="neow", inspect_cards=card_ids):
@@ -296,11 +317,20 @@ def handle_neow(engine: RunEngine, reached_boss: bool = False) -> None:
             _pause_for_feedback(_format_failure("选择失败", result.get("reason")))
             continue
 
+        options = engine.get_neow_options()
         print("可选的涅奥祝福：")
-        for idx, option in enumerate(engine.get_neow_options()):
-            print(f"[{idx}] {option.get('label', '')}")
+        for line in render_neow_option_lines(options):
+            print(line)
         print_separator("-")
-        raw = input("涅奥> ").strip()
+        if _is_auto_leave_neow_screen(engine, options):
+            print("已自动确认离开，继续前往地图。")
+            print_separator("-")
+            result = engine.choose_neow_option(0)
+            if result.get("success"):
+                return
+            _pause_for_feedback(_format_failure("选择失败", result.get("reason")))
+            continue
+        raw = input(get_input_prompt("neow")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="neow"):
@@ -327,7 +357,7 @@ def handle_map(engine: RunEngine) -> None:
         for idx, node in enumerate(available):
             print(render_room_choice(node, index=idx, burning=getattr(node, "burning_elite", False)))
         print_separator("-")
-        raw = input("地图> ").strip()
+        raw = input(get_input_prompt("map")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="map"):
@@ -351,7 +381,7 @@ def _prompt_target(engine: RunEngine, card_id: str) -> int | None:
     assert combat is not None
     for line in render_target_prompt_lines(card_id, combat.state.monsters):
         print(line)
-    target_raw = input("目标> ").strip()
+    target_raw = input(get_input_prompt("combat_target")).strip()
     target_idx = _parse_int(target_raw)
     if target_idx is None or target_idx not in alive:
         print("目标无效。")
@@ -382,7 +412,7 @@ def handle_combat(engine: RunEngine) -> None:
     while engine.state.phase == RunPhase.COMBAT and engine.state.combat is not None:
         clear_screen()
         hand_cards = _print_combat_header(engine)
-        raw = input("战斗> ").strip()
+        raw = input(get_input_prompt("combat")).strip()
         if not raw:
             continue
         if _handle_common_info_command(
@@ -442,7 +472,7 @@ def handle_combat(engine: RunEngine) -> None:
 def handle_rest(engine: RunEngine) -> None:
     while engine.state.phase == RunPhase.REST:
         clear_screen()
-        _print_title("篝火")
+        _print_title(get_view_title("rest"))
         print(render_status_line(engine))
         print_separator("-")
         print("[r] 休息")
@@ -450,7 +480,7 @@ def handle_rest(engine: RunEngine) -> None:
         if not engine.state.ruby_key_obtained:
             print("[k] 回忆红钥匙")
         print_separator("-")
-        raw = input("篝火> ").strip()
+        raw = input(get_input_prompt("rest")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="rest"):
@@ -474,8 +504,8 @@ def handle_rest(engine: RunEngine) -> None:
             upgradable_card_ids = [card_id for _, card_id in upgradable]
             pick_idx = _prompt_card_selection(
                 engine,
-                title="可升级卡牌",
-                prompt="锻造> ",
+                title=get_view_title("upgradable_cards"),
+                prompt=get_input_prompt("rest_smith"),
                 card_ids=upgradable_card_ids,
                 context="rest",
             )
@@ -488,14 +518,14 @@ def handle_rest(engine: RunEngine) -> None:
 def handle_boss_relic_choice(engine: RunEngine) -> None:
     while engine.state.phase == RunPhase.VICTORY and engine.state.pending_boss_relic_choices:
         clear_screen()
-        _print_title("首领遗物")
+        _print_title(get_view_title("boss_relics"))
         print(render_status_line(engine))
         print_separator("-")
         for line in render_boss_relic_lines(engine.state.pending_boss_relic_choices):
             print(line)
         print("[s] 跳过")
         print_separator("-")
-        raw = input("首领遗物> ").strip()
+        raw = input(get_input_prompt("boss_relics")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="victory"):
@@ -516,7 +546,7 @@ def handle_boss_relic_choice(engine: RunEngine) -> None:
 def handle_treasure(engine: RunEngine) -> None:
     while engine.state.phase == RunPhase.TREASURE:
         clear_screen()
-        _print_title("宝箱")
+        _print_title(get_view_title("treasure"))
         print(render_status_line(engine))
         print_separator("-")
         for line in render_treasure_relic_lines(
@@ -527,7 +557,7 @@ def handle_treasure(engine: RunEngine) -> None:
         if engine.state.pending_treasure_relic and not engine.state.sapphire_key_obtained:
             print("[k] 拿蓝钥匙并放弃主遗物")
         print_separator("-")
-        raw = input("宝箱> ").strip()
+        raw = input(get_input_prompt("treasure")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="treasure"):
@@ -562,13 +592,13 @@ def handle_event(engine: RunEngine) -> None:
         event = engine.get_current_event()
         if event is None:
             return
-        _print_title(f"事件 - {translate_event_name(event)}")
+        _print_title(f"{get_view_title('event')} - {translate_event_name(event)}")
         print(render_status_line(engine))
         print_separator("-")
         for line in render_event_choice_lines(event):
             print(line)
         print_separator("-")
-        raw = input("事件> ").strip()
+        raw = input(get_input_prompt("event")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="event"):
@@ -599,7 +629,7 @@ def handle_card_selection(engine: RunEngine) -> None:
             describe_event_card_choice(pending_choice),
             render_card_collection_lines(choice_cards),
         )
-        raw = input("选牌> ").strip()
+        raw = input(get_input_prompt("event_card_choice")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="event", inspect_cards=choice_cards):
@@ -615,7 +645,7 @@ def handle_card_selection(engine: RunEngine) -> None:
 
 
 def _print_reward_surface(engine: RunEngine, pending: dict) -> None:
-    _print_title("奖励")
+    _print_title(get_view_title("reward"))
     print(render_status_line(engine))
     print_separator("-")
     for line in render_reward_lines(pending):
@@ -628,7 +658,7 @@ def handle_reward(engine: RunEngine) -> None:
         pending = engine.get_pending_reward_state()
         clear_screen()
         _print_reward_surface(engine, pending)
-        raw = input("奖励> ").strip()
+        raw = input(get_input_prompt("reward")).strip()
         if not raw:
             continue
         reward_cards = list(pending["cards"] or [])
@@ -668,8 +698,8 @@ def handle_reward(engine: RunEngine) -> None:
                 continue
             pick_idx = _prompt_card_selection(
                 engine,
-                title="可选卡牌奖励",
-                prompt="选牌> ",
+                title=get_view_title("reward_cards"),
+                prompt=get_input_prompt("reward_card_choice"),
                 card_ids=list(pending["cards"]),
                 context="reward",
             )
@@ -689,7 +719,7 @@ def handle_shop(engine: RunEngine) -> None:
         shop = engine.get_shop()
         if shop is None:
             return
-        _print_title("商店")
+        _print_title(get_view_title("shop"))
         print(render_status_line(engine))
         print_separator("-")
 
@@ -719,7 +749,7 @@ def handle_shop(engine: RunEngine) -> None:
         print("[l] 离开商店")
         print_separator("-")
 
-        raw = input("商店> ").strip()
+        raw = input(get_input_prompt("shop")).strip()
         if not raw:
             continue
         if _handle_common_info_command(engine, raw, context="shop", inspect_cards=inspect_cards):
@@ -735,8 +765,8 @@ def handle_shop(engine: RunEngine) -> None:
                 continue
             pick_idx = _prompt_card_selection(
                 engine,
-                title="可移除卡牌",
-                prompt="移除> ",
+                title=get_view_title("removable_cards"),
+                prompt=get_input_prompt("shop_remove"),
                 card_ids=list(engine.state.deck),
                 context="shop",
             )
@@ -790,14 +820,14 @@ def _is_final_victory(engine: RunEngine) -> bool:
 def _render_terminal_outcome(engine: RunEngine) -> bool:
     if engine.state.phase == RunPhase.VICTORY and _is_final_victory(engine):
         clear_screen()
-        _print_title("胜利")
+        _print_title(get_view_title("victory"))
         print(render_status_line(engine))
         print("本局已结束。")
         print_separator("-")
         return True
     if engine.state.phase == RunPhase.GAME_OVER:
         clear_screen()
-        _print_title("失败")
+        _print_title(get_view_title("defeat"))
         print(render_status_line(engine))
         print("本局已结束。")
         print_separator("-")

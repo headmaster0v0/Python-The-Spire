@@ -46,6 +46,8 @@ def test_phase269_scripted_cli_walk_uses_readable_chinese_surface(
     assert "placeholder" not in output.lower()
     assert "RandomRelic" not in output
     assert "\ufffd" not in output
+    for raw_marker in ("NL", "#g", "#r", "#b", "~", "@"):
+        assert raw_marker not in output
 
 
 def test_phase269_render_helpers_and_cli_views_surface_readable_chinese() -> None:
@@ -61,6 +63,8 @@ def test_phase269_render_helpers_and_cli_views_surface_readable_chinese() -> Non
         "ID: Bash",
         "说明: 造成 8 点伤害并施加 2 层易伤。",
     ]
+    assert render.render_narrative_text("~你又…~ NL ~来啦……~") == "你又…\n来啦……"
+    assert render.render_neow_option_lines([{"label": "[ #g获得 #g100 #g金币 ]"}]) == ["[0] [获得 100 金币]"]
 
     event = Event(
         id="Phase269 Event",
