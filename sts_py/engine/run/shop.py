@@ -557,8 +557,8 @@ class ShopEngine:
 
         self.run_engine.state.player_gold -= item.price
         self.run_engine._mark_maw_bank_used()
-        self.run_engine.state.deck.append(item.item_id)
-        self.purchased_cards.append(item.item_id)
+        added_card = self.run_engine._add_card_to_deck(item.item_id, already_previewed=True)
+        self.purchased_cards.append(str(added_card or item.item_id))
 
         if self._has_courier():
             new_card = self._replace_card(item.item_id, card_index, is_colored)
@@ -574,7 +574,7 @@ class ShopEngine:
                     self.run_engine._record_shop_surfaced_colorless_card(new_card, current_card_ids=current_card_ids)
             return {
                 "success": True,
-                "card_id": item.item_id,
+                "card_id": added_card or item.item_id,
                 "price_paid": item.price,
                 "replacement_card": new_card,
             }
@@ -587,7 +587,7 @@ class ShopEngine:
 
         return {
             "success": True,
-            "card_id": item.item_id,
+            "card_id": added_card or item.item_id,
             "price_paid": item.price,
         }
 
@@ -627,7 +627,7 @@ class ShopEngine:
             candidate_defs = [
                 card_def
                 for card_def in reward_pools.get(CardRarity[rarity_name.upper()], [])
-                if card_def.type == purchased_def.type
+                if getattr(card_def, "card_type", None) == getattr(purchased_def, "card_type", None)
             ]
             if candidate_defs:
                 index = rng.random_int(len(candidate_defs) - 1) if rng is not None else 0
@@ -637,7 +637,7 @@ class ShopEngine:
             card_def
             for pool in reward_pools.values()
             for card_def in pool
-            if card_def.type == purchased_def.type
+            if getattr(card_def, "card_type", None) == getattr(purchased_def, "card_type", None)
         ]
         if fallback_candidates:
             index = rng.random_int(len(fallback_candidates) - 1) if rng is not None else 0
@@ -667,7 +667,7 @@ class ShopEngine:
                 new_price = int(new_price * 0.5)
             self.shop.colored_cards[card_index] = ShopItem(
                 item_type=ShopItemType.CARD,
-                item_id=self.run_engine._canonical_card_id(new_card_id),
+                item_id=self.run_engine._preview_card_with_relics(self.run_engine._canonical_card_id(new_card_id)),
                 price=new_price,
                 original_price=new_price,
             )
@@ -684,7 +684,7 @@ class ShopEngine:
                 new_price = int(new_price * 0.5)
             self.shop.colorless_cards[card_index] = ShopItem(
                 item_type=ShopItemType.CARD,
-                item_id=self.run_engine._canonical_card_id(new_card_id),
+                item_id=self.run_engine._preview_card_with_relics(self.run_engine._canonical_card_id(new_card_id)),
                 price=new_price,
                 original_price=new_price,
             )
@@ -817,6 +817,11 @@ class ShopEngine:
     def remove_card(self, card_id: str) -> dict[str, Any]:
         if card_id not in self.run_engine.state.deck:
             return {"success": False, "reason": "card_not_in_deck"}
+        deck_index = next((idx for idx, deck_card in enumerate(self.run_engine.state.deck) if deck_card == card_id), -1)
+        if deck_index < 0:
+            return {"success": False, "reason": "card_not_in_deck"}
+        if self.run_engine._is_bottled_card_index(deck_index):
+            return {"success": False, "reason": "card_cannot_be_removed"}
 
         price = self._get_card_remove_price()
         if not self.can_afford(price):
@@ -824,16 +829,14 @@ class ShopEngine:
 
         self.run_engine.state.player_gold -= price
         self.run_engine._mark_maw_bank_used()
-        from sts_py.engine.run.events import _apply_parasite_penalty
-        _apply_parasite_penalty(self.run_engine.state, card_id)
-        self.run_engine.state.deck.remove(card_id)
-        self.removed_cards.append(card_id)
+        removed_card = self.run_engine._remove_card_from_deck_index(deck_index, apply_parasite_penalty=True)
+        self.removed_cards.append(str(removed_card or card_id))
         self.shop.card_remove_cost += 25
         self.shop.card_remove_used = True
 
         return {
             "success": True,
-            "card_id": card_id,
+            "card_id": removed_card or card_id,
             "price_paid": price,
         }
 

@@ -296,6 +296,10 @@ class RNG:
         v = int(d * float(range_exclusive))
         return RNG(seed=self.seed, counter=self.counter + 1, xs128=xs), v
 
+    def random_long_raw(self) -> tuple["RNG", int]:
+        xs, v = self.xs128.next_long()
+        return RNG(seed=self.seed, counter=self.counter + 1, xs128=xs), int(v)
+
     def random_long_between(self, start: int, end: int) -> tuple["RNG", int]:
         xs, d = self.xs128.next_double()
         v = start + int(d * float(end - start))
@@ -403,6 +407,11 @@ class MutableRNG:
     def random_float(self) -> float:
         self._rng, v = self._rng.random_float()
         self._record("random()", v)
+        return v
+
+    def random_long_raw(self) -> int:
+        self._rng, v = self._rng.random_long_raw()
+        self._record("randomLong()", v)
         return v
 
     def to_immutable(self) -> RNG:

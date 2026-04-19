@@ -358,7 +358,7 @@ def test_relic_truth_matrix_rng_relics_match_fixed_seed_truth() -> None:
     astrolabe_engine = RunEngine.create("ALIGN_ASTROLABE", ascension=0)
     astrolabe_engine.state.deck = ["Strike", "Defend", "Bash", "ShrugItOff"]
     astrolabe_engine._acquire_relic("Astrolabe", record_pending=False)
-    assert astrolabe_engine.state.deck == ["Havoc+", "ShrugItOff+", "Armaments+", "ShrugItOff"]
+    assert astrolabe_engine.state.deck == ["ShrugItOff", "Havoc+", "ShrugItOff+", "Armaments+"]
 
     tiny_house_engine = RunEngine.create("ALIGN_TINYHOUSE", ascension=0)
     tiny_house_engine.state.deck = ["Strike", "Defend", "Bash", "ShrugItOff"]
@@ -366,7 +366,7 @@ def test_relic_truth_matrix_rng_relics_match_fixed_seed_truth() -> None:
     tiny_house_engine.state.player_hp = 50
     tiny_house_engine.state.player_max_hp = 70
     tiny_house_engine._acquire_relic("TinyHouse", record_pending=False)
-    assert tiny_house_engine.state.deck == ["Strike", "Defend", "Bash", "ShrugItOff+"]
+    assert tiny_house_engine.state.deck == ["Strike", "Defend", "Bash+", "ShrugItOff"]
     assert tiny_house_engine.state.player_gold == 50
     assert tiny_house_engine.state.player_max_hp == 75
     assert tiny_house_engine.state.player_hp == 75

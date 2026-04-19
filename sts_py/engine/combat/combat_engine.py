@@ -456,6 +456,7 @@ class CombatEngine:
         relics: list[str] | None = None,
         neow_blessing: bool = False,
         persistent_relic_attack_counters: dict[str, int] | None = None,
+        bottled_cards: dict[str, int] | None = None,
     ) -> "CombatEngine":
         encounter_specs = MONSTER_ENCOUNTERS.get(encounter_name)
         monsters: list[MonsterBase] = []
@@ -501,6 +502,7 @@ class CombatEngine:
         card_manager.set_max_energy(player.max_energy)
         state = CombatState(player=player, monsters=monsters, card_manager=card_manager)
         state.card_random_rng = card_random_rng
+        state.bottled_cards = dict(bottled_cards or {})
         player._combat_state = state
         card_manager._combat_state = state
         state.rng = hp_rng
@@ -527,6 +529,7 @@ class CombatEngine:
         relics: list[str] | None = None,
         pending_tea_energy: int = 0,
         persistent_relic_attack_counters: dict[str, int] | None = None,
+        bottled_cards: dict[str, int] | None = None,
     ) -> "CombatEngine":
         from sts_py.engine.combat.card_piles import CardManager
         from sts_py.engine.combat.combat_state import Player
@@ -547,6 +550,7 @@ class CombatEngine:
         card_manager.set_max_energy(player.max_energy)
         state = CombatState(player=player, monsters=monsters, card_manager=card_manager)
         state.card_random_rng = card_random_rng
+        state.bottled_cards = dict(bottled_cards or {})
         player._combat_state = state
         card_manager._combat_state = state
         state.rng = hp_rng
@@ -565,6 +569,7 @@ class CombatEngine:
         WeakPower.EFFECTIVENESS = 0.75
 
         self._bind_player_orbs()
+        self._prepare_bottled_cards_for_opening_hand()
 
         start_with_energy_bonus = self._get_start_with_energy_bonus()
         if start_with_energy_bonus > 0:
@@ -629,6 +634,26 @@ class CombatEngine:
                 self.state.card_manager.set_energy(self.state.player.energy)
 
         self.state.phase = CombatPhase.PLAYER_TURN
+
+    def _prepare_bottled_cards_for_opening_hand(self) -> None:
+        card_manager = self.state.card_manager
+        if card_manager is None:
+            return
+        bottled_cards = getattr(self.state, "bottled_cards", None)
+        if not isinstance(bottled_cards, dict) or not bottled_cards:
+            return
+        bottled_indexes: set[int] = set()
+        for raw_index in bottled_cards.values():
+            try:
+                bottled_indexes.add(int(raw_index))
+            except (TypeError, ValueError):
+                continue
+        if not bottled_indexes:
+            return
+        for card in card_manager.draw_pile.cards:
+            master_index = getattr(card, "_master_deck_index", None)
+            if master_index in bottled_indexes:
+                card.is_innate = True
 
     def _bind_player_orbs(self) -> None:
         player = self.state.player

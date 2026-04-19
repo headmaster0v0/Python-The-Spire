@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+from sts_py.engine.content.card_instance import get_runtime_card_base_id
 from sts_py.engine.content.relics import RelicSource, get_relic_by_id, normalize_relic_id
 from sts_py.engine.run.run_engine import MapNode, RoomType, RunEngine, RunPhase
 from sts_py.engine.run.shop import ShopEngine, ShopItem, ShopItemType, ShopState
+from sts_py.terminal.catalog import build_relic_contexts_from_engine
 
 
 def _force_win_current_combat(engine: RunEngine) -> None:
@@ -603,3 +606,50 @@ def test_black_blood_replaces_burning_blood() -> None:
 
     assert "BurningBlood" not in engine.state.relics
     assert "BlackBlood" in engine.state.relics
+
+
+def test_shop_card_preview_and_card_added_hooks_follow_runtime_truth() -> None:
+    engine = RunEngine.create("PHASE278SHOPHOOKS", ascension=0)
+    engine.state.player_gold = 999
+    engine.state.relics.extend(["MoltenEgg", "CeramicFish"])
+    engine._enter_shop()
+    shop = engine.get_shop()
+    assert shop is not None
+
+    attack_offer = next(
+        item
+        for item in shop.get_available_cards()
+        if ALL_CARD_DEFS[get_runtime_card_base_id(item["card_id"])].card_type.value == "ATTACK"
+    )
+    assert attack_offer["card_id"].endswith("+")
+    gold_before = engine.state.player_gold
+
+    result = shop.buy_card(int(attack_offer["index"]), is_colored=bool(attack_offer["is_colored"]))
+
+    assert result["success"] is True
+    assert result["card_id"].endswith("+")
+    assert engine.state.player_gold == gold_before - attack_offer["price"] + 9
+    assert result["card_id"] in engine.state.deck
+
+
+def test_bottled_card_metadata_blocks_purge_and_starts_in_opening_hand() -> None:
+    purge_engine = RunEngine.create("PHASE278BOTTLEPURGE", ascension=0)
+    purge_engine.state.player_gold = 999
+    purge_engine.state.deck = ["Anger", "Defend", "Bash"]
+    purge_engine.state.relics.append("BottledFlame")
+    purge_engine.state.bottled_cards = {"BottledFlame": 0}
+    purge_shop = ShopEngine(purge_engine, ShopState())
+
+    assert purge_shop.remove_card("Anger") == {"success": False, "reason": "card_cannot_be_removed"}
+
+    combat_engine = RunEngine.create("PHASE278BOTTLECOMBAT", ascension=0)
+    combat_engine.state.deck = ["Anger", "Defend", "Bash"]
+    combat_engine.state.relics.append("BottledFlame")
+    combat_engine.state.bottled_cards = {"BottledFlame": 0}
+    combat_engine.start_combat_with_monsters(["Cultist"])
+    assert combat_engine.state.combat is not None
+    opening_hand = [card.card_id for card in combat_engine.state.combat.state.card_manager.hand.cards]
+
+    assert "Anger" in opening_hand
+    contexts = build_relic_contexts_from_engine(combat_engine)
+    assert contexts["BottledFlame"]["selected_card_name"]

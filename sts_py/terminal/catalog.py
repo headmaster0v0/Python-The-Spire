@@ -1044,6 +1044,7 @@ def build_relic_contexts_from_engine(engine: Any) -> dict[str, dict[str, Any]]:
 
     contexts: dict[str, dict[str, Any]] = {}
     relic_counters = dict(getattr(state, "relic_counters", {}) or {})
+    bottled_cards = dict(getattr(state, "bottled_cards", {}) or {})
     deck = list(getattr(state, "deck", []) or [])
 
     for relic_id in list(getattr(state, "relics", []) or []):
@@ -1055,6 +1056,13 @@ def build_relic_contexts_from_engine(engine: Any) -> dict[str, dict[str, Any]]:
             context["counter"] = int(relic_counters[relic_def.id])
         elif getattr(relic_def, "initial_counter", None) is not None:
             context["counter"] = int(relic_def.initial_counter)
+        if relic_def.id in bottled_cards:
+            try:
+                bottled_index = int(bottled_cards[relic_def.id])
+            except (TypeError, ValueError):
+                bottled_index = -1
+            if 0 <= bottled_index < len(deck):
+                context["selected_card_name"] = translate_card_name(deck[bottled_index])
 
         if relic_def.id == "NeowsLament":
             context["counter"] = int(getattr(state, "neow_blessing_remaining", 0) or 0)

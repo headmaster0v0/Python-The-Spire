@@ -128,3 +128,31 @@ def test_unremovable_curses_and_parasite_penalty_follow_event_rules() -> None:
     assert parasite_engine.state.deck == []
     assert parasite_engine.state.player_max_hp == 77
     assert parasite_engine.state.player_hp == 77
+
+
+def test_astrolabe_transform_respects_curse_hooks_for_omamori_and_darkstone() -> None:
+    omamori_engine = RunEngine.create(SEED_STRING, ascension=0)
+    omamori_engine.state.player_hp = 80
+    omamori_engine.state.player_max_hp = 80
+    omamori_engine.state.deck = ["Parasite"]
+    omamori_engine.state.relics.append("Omamori")
+    omamori_engine.state.relic_counters["Omamori"] = 1
+
+    omamori_engine._acquire_relic("Astrolabe", record_pending=False)
+
+    assert omamori_engine.state.deck == []
+    assert omamori_engine.state.player_max_hp == 77
+    assert omamori_engine.state.player_hp == 77
+    assert omamori_engine.state.relic_counters["Omamori"] == 0
+
+    darkstone_engine = RunEngine.create(SEED_STRING, ascension=0)
+    darkstone_engine.state.player_hp = 80
+    darkstone_engine.state.player_max_hp = 80
+    darkstone_engine.state.deck = ["Parasite"]
+    darkstone_engine.state.relics.append("DarkstonePeriapt")
+
+    darkstone_engine._acquire_relic("Astrolabe", record_pending=False)
+
+    assert len(darkstone_engine.state.deck) == 1
+    assert darkstone_engine.state.player_max_hp == 83
+    assert darkstone_engine.state.player_hp == 83

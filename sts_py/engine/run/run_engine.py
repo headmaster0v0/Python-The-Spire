@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 from sts_py.engine.combat.combat_engine import CombatEngine
 from sts_py.engine.combat.combat_state import Player
-from sts_py.engine.core.rng import MutableRNG
+from sts_py.engine.core.rng import JavaRandom, MutableRNG
 from sts_py.engine.content.cards_min import STARTER_DECK_CARD_IDS
 from sts_py.engine.content.relics import RelicSource, get_starter_relic_pool
 from sts_py.engine.run.official_neow_strings import (
@@ -129,6 +129,7 @@ class RunState:
     player_pending_tea_energy: int = 0
     player_relic_attack_counters: dict[str, int] = field(default_factory=dict)
     relic_counters: dict[str, int] = field(default_factory=dict)
+    bottled_cards: dict[str, int] = field(default_factory=dict)
     relic_pool_consumed: dict[str, list[str]] = field(default_factory=_new_relic_pool_consumed)
     relic_history: list[dict[str, Any]] = field(default_factory=list)
     shop_history: list[dict[str, Any]] = field(default_factory=list)
@@ -253,6 +254,7 @@ class RunState:
             "neow_options": self.neow_options,
             "pending_neow_choice": self.pending_neow_choice,
             "relic_counters": self.relic_counters,
+            "bottled_cards": self.bottled_cards,
             "relic_pool_consumed": self.relic_pool_consumed,
             "relic_history": self.relic_history,
             "shop_history": self.shop_history,
@@ -2155,8 +2157,7 @@ class RunEngine:
         if not curse_ids:
             return None
         curse_id = curse_ids[self._neow_random_index(len(curse_ids))]
-        self.state.deck.append(curse_id)
-        return curse_id
+        return self._add_card_to_deck(curse_id)
 
     def _apply_neow_drawback(self, option: dict[str, Any]) -> dict[str, Any]:
         drawback = str(option.get("drawback", "NONE"))
@@ -2202,8 +2203,8 @@ class RunEngine:
         from sts_py.engine.run.events import _can_remove_card
 
         candidates: list[str] = []
-        for card_id in self.state.deck:
-            if action == "remove" and _can_remove_card(self.state, card_id):
+        for idx, card_id in enumerate(self.state.deck):
+            if action == "remove" and _can_remove_card(self.state, card_id) and not self._is_bottled_card_index(idx):
                 candidates.append(card_id)
             elif action == "transform" and _can_remove_card(self.state, card_id):
                 candidates.append(card_id)
@@ -2232,7 +2233,7 @@ class RunEngine:
 
         if action == "reward_pick":
             not_picked = [card_id for idx, card_id in enumerate(candidates) if idx != card_index]
-            self.state.deck.append(selected_card)
+            self._add_card_to_deck(selected_card)
             self.state.card_choices.append({
                 "floor": self.state.floor,
                 "picked": selected_card,
@@ -2246,22 +2247,18 @@ class RunEngine:
             return {"success": True, "action": action, **details}
 
         if action == "remove":
-            from sts_py.engine.run.events import _apply_parasite_penalty
-
-            _apply_parasite_penalty(self.state, selected_card)
-            self.state.deck.remove(selected_card)
-            details = {"removed_card": selected_card}
+            deck_idx = self.state.deck.index(selected_card)
+            removed = self._remove_card_from_deck_index(deck_idx, apply_parasite_penalty=True)
+            details = {"removed_card": removed}
         elif action == "transform":
             deck_idx = self.state.deck.index(selected_card)
-            new_card = self._transform_deck_card(selected_card)
-            self.state.deck[deck_idx] = new_card
+            _, new_card = self._transform_deck_card_at_index(deck_idx, rng=self._misc_rng(), upgrade=False)
             details = {"old_card": selected_card, "new_card": new_card}
         elif action == "upgrade":
             deck_idx = self.state.deck.index(selected_card)
-            upgraded_card = self._upgrade_card(selected_card)
-            if upgraded_card is None or upgraded_card == selected_card:
+            upgraded_card = self._upgrade_deck_card_at_index(deck_idx)
+            if upgraded_card is None:
                 return {"success": False, "reason": "card_cannot_be_upgraded", "card_id": selected_card}
-            self.state.deck[deck_idx] = upgraded_card
             details = {"old_card": selected_card, "new_card": upgraded_card}
         else:
             return {"success": False, "reason": "unknown_pending_neow_action"}
@@ -2730,7 +2727,7 @@ class RunEngine:
 
         if action == "reward_pick":
             not_picked = [card_id for idx, card_id in enumerate(candidates) if idx != card_index]
-            self.state.deck.append(selected_card)
+            self._add_card_to_deck(selected_card)
             self.state.card_choices.append({
                 "floor": self.state.floor,
                 "picked": selected_card,
@@ -2745,22 +2742,18 @@ class RunEngine:
             return {"success": True, "action": action, "event_continues": True, **details}
 
         if action == "remove":
-            from sts_py.engine.run.events import _apply_parasite_penalty
-
-            _apply_parasite_penalty(self.state, selected_card)
-            self.state.deck.remove(selected_card)
-            details = {"removed_card": selected_card}
+            deck_idx = self.state.deck.index(selected_card)
+            removed = self._remove_card_from_deck_index(deck_idx, apply_parasite_penalty=True)
+            details = {"removed_card": removed}
         elif action == "transform":
             deck_idx = self.state.deck.index(selected_card)
-            new_card = self._transform_deck_card(selected_card)
-            self.state.deck[deck_idx] = new_card
+            _, new_card = self._transform_deck_card_at_index(deck_idx, rng=self._misc_rng(), upgrade=False)
             details = {"old_card": selected_card, "new_card": new_card}
         elif action == "upgrade":
             deck_idx = self.state.deck.index(selected_card)
-            upgraded_card = self._upgrade_card(selected_card)
-            if upgraded_card is None or upgraded_card == selected_card:
+            upgraded_card = self._upgrade_deck_card_at_index(deck_idx)
+            if upgraded_card is None:
                 return {"success": False, "reason": "card_cannot_be_upgraded", "card_id": selected_card}
-            self.state.deck[deck_idx] = upgraded_card
             details = {"old_card": selected_card, "new_card": upgraded_card}
         else:
             return {"success": False, "reason": "unknown_pending_neow_action"}
@@ -3155,6 +3148,7 @@ class RunEngine:
             relics=self.state.relics,
             neow_blessing=neow_active,
             persistent_relic_attack_counters=self.state.player_relic_attack_counters,
+            bottled_cards=getattr(self.state, "bottled_cards", {}),
         )
         if consume_neow_relic and "NeowsLament" in self.state.relics:
             self.state.relics.remove("NeowsLament")
@@ -3223,6 +3217,7 @@ class RunEngine:
             relics=self.state.relics,
             pending_tea_energy=self.state.player_pending_tea_energy,
             persistent_relic_attack_counters=self.state.player_relic_attack_counters,
+            bottled_cards=getattr(self.state, "bottled_cards", {}),
         )
         self.state.player_pending_tea_energy = 0
         self.state.combat = combat
@@ -3285,10 +3280,10 @@ class RunEngine:
             not_picked = remaining_rewards
         is_upgraded = upgraded if upgraded is not None else card_id.endswith("+")
         actual_id = card_id if card_id.endswith("+") else (f"{card_id}+" if is_upgraded else card_id)
-        self.state.deck.append(actual_id)
+        added_card = self._add_card_to_deck(actual_id, already_previewed=True)
         self.state.card_choices.append({
             "floor": self.state.floor,
-            "picked": card_id,
+            "picked": added_card or card_id,
             "upgraded": is_upgraded,
             "skipped": False,
             "not_picked": not_picked,
@@ -3546,58 +3541,305 @@ class RunEngine:
         if current_potion_ids is not None:
             self._set_current_shop_potion_ids(current_potion_ids)
 
-    def _upgrade_random_deck_card(self) -> str | None:
-        if self.state.rng is None:
+    def _ensure_bottled_cards(self) -> dict[str, int]:
+        from sts_py.engine.content.relics import get_relic_by_id
+
+        bottled = getattr(self.state, "bottled_cards", None)
+        if not isinstance(bottled, dict):
+            bottled = {}
+        normalized: dict[str, int] = {}
+        deck_size = len(self.state.deck)
+        for relic_id, raw_index in bottled.items():
+            relic_def = get_relic_by_id(str(relic_id))
+            canonical_relic_id = str(getattr(relic_def, "id", relic_id) or relic_id)
+            try:
+                deck_index = int(raw_index)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= deck_index < deck_size:
+                normalized[canonical_relic_id] = deck_index
+        self.state.bottled_cards = normalized
+        return normalized
+
+    def _bottled_relic_ids_for_index(self, deck_index: int) -> list[str]:
+        bottled = self._ensure_bottled_cards()
+        return [relic_id for relic_id, idx in bottled.items() if int(idx) == int(deck_index)]
+
+    def _is_bottled_card_index(self, deck_index: int) -> bool:
+        return bool(self._bottled_relic_ids_for_index(deck_index))
+
+    def _set_bottled_card(self, relic_id: str, deck_index: int) -> None:
+        bottled = self._ensure_bottled_cards()
+        bottled[self._canonical_relic_id(relic_id)] = int(deck_index)
+        self.state.bottled_cards = bottled
+
+    def _auto_bottle_card_for_relic(self, relic_id: str, card_type: str) -> str | None:
+        from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CardRarity, CardType
+
+        type_map = {
+            "attack": CardType.ATTACK,
+            "skill": CardType.SKILL,
+            "power": CardType.POWER,
+        }
+        target_type = type_map.get(str(card_type or "").lower())
+        if target_type is None:
             return None
-        upgradeable_indices: list[int] = []
-        for idx, card_id in enumerate(self.state.deck):
-            upgraded = self._upgrade_card(card_id)
-            if upgraded is not None and upgraded != card_id:
-                upgradeable_indices.append(idx)
+        for deck_index, card_id in enumerate(self.state.deck):
+            card_def = ALL_CARD_DEFS.get(_deck_card_base_id(card_id))
+            if card_def is None or card_def.card_type != target_type:
+                continue
+            if card_def.rarity == CardRarity.BASIC:
+                continue
+            self._set_bottled_card(relic_id, deck_index)
+            return card_id
+        return None
+
+    def _clear_bottled_cards_at_index(self, deck_index: int) -> list[str]:
+        bottled = self._ensure_bottled_cards()
+        removed = [relic_id for relic_id, idx in bottled.items() if int(idx) == int(deck_index)]
+        for relic_id in removed:
+            bottled.pop(relic_id, None)
+        self.state.bottled_cards = bottled
+        return removed
+
+    def _shift_bottled_cards_after_removal(self, removed_index: int) -> None:
+        bottled = self._ensure_bottled_cards()
+        for relic_id, idx in list(bottled.items()):
+            if idx > removed_index:
+                bottled[relic_id] = idx - 1
+        self.state.bottled_cards = bottled
+
+    def _shift_bottled_cards_for_insert(self, inserted_index: int) -> None:
+        bottled = self._ensure_bottled_cards()
+        for relic_id, idx in list(bottled.items()):
+            if idx >= inserted_index:
+                bottled[relic_id] = idx + 1
+        self.state.bottled_cards = bottled
+
+    def _consume_omamori_if_applicable(self, card_id: str) -> bool:
+        from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CardType
+
+        card_def = ALL_CARD_DEFS.get(_deck_card_base_id(card_id))
+        if card_def is None or card_def.card_type != CardType.CURSE:
+            return False
+        if not self._has_relic("Omamori"):
+            return False
+        counter = int(self.state.relic_counters.get("Omamori", 0) or 0)
+        if counter <= 0:
+            return False
+        self.state.relic_counters["Omamori"] = max(0, counter - 1)
+        return True
+
+    def _preview_card_with_relics(self, card_id: str) -> str:
+        from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CardType
+        from sts_py.engine.content.relics import RelicEffectType, get_relic_by_id
+
+        previewed_id = str(card_id)
+        for relic_id in list(self.state.relics):
+            relic_def = get_relic_by_id(relic_id)
+            if relic_def is None:
+                continue
+            for effect in relic_def.effects:
+                if effect.effect_type != RelicEffectType.ON_CARD_ADDED:
+                    continue
+                preview_def = ALL_CARD_DEFS.get(_deck_card_base_id(previewed_id))
+                if preview_def is None:
+                    continue
+                extra_type = str(effect.extra.get("type", "") or "")
+                should_upgrade = (
+                    (extra_type == "upgrade_attack" and preview_def.card_type == CardType.ATTACK)
+                    or (extra_type == "upgrade_skill" and preview_def.card_type == CardType.SKILL)
+                    or (extra_type == "upgrade_power" and preview_def.card_type == CardType.POWER)
+                )
+                if not should_upgrade:
+                    continue
+                upgraded = self._upgrade_card(previewed_id)
+                if upgraded is not None:
+                    previewed_id = upgraded
+        return previewed_id
+
+    def _apply_on_card_added_side_effects(self, card_id: str) -> list[dict[str, Any]]:
+        from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CardType
+        from sts_py.engine.content.relics import RelicEffectType, get_relic_by_id
+
+        applied: list[dict[str, Any]] = []
+        card_def = ALL_CARD_DEFS.get(_deck_card_base_id(card_id))
+        if card_def is None:
+            return applied
+
+        for relic_id in list(self.state.relics):
+            relic_def = get_relic_by_id(relic_id)
+            if relic_def is None:
+                continue
+            for effect in relic_def.effects:
+                if effect.effect_type == RelicEffectType.ON_CARD_ADDED:
+                    extra_type = str(effect.extra.get("type", "") or "")
+                    if extra_type == "gold":
+                        amount = int(effect.value or 0)
+                        self.state.player_gold += amount
+                        applied.append({"type": "gain_gold", "amount": amount, "relic_id": relic_def.id})
+                elif effect.effect_type == RelicEffectType.ON_CURSE_RECEIVED and card_def.card_type == CardType.CURSE:
+                    extra_type = str(effect.extra.get("type", "") or "")
+                    if extra_type == "max_hp":
+                        amount = int(effect.value or 0)
+                        self.state.player_max_hp += amount
+                        self.state.player_hp += amount
+                        applied.append({"type": "gain_max_hp", "amount": amount, "relic_id": relic_def.id})
+        return applied
+
+    def _add_card_to_deck(
+        self,
+        card_id: str,
+        *,
+        already_previewed: bool = False,
+        deck_index: int | None = None,
+    ) -> str | None:
+        final_card_id = str(card_id)
+        if not already_previewed:
+            final_card_id = self._preview_card_with_relics(final_card_id)
+        if self._consume_omamori_if_applicable(final_card_id):
+            return None
+        if deck_index is None or deck_index >= len(self.state.deck):
+            self.state.deck.append(final_card_id)
+        else:
+            self._shift_bottled_cards_for_insert(deck_index)
+            self.state.deck.insert(deck_index, final_card_id)
+        self._apply_on_card_added_side_effects(final_card_id)
+        return final_card_id
+
+    def _remove_card_from_deck_index(
+        self,
+        deck_index: int,
+        *,
+        apply_parasite_penalty: bool = False,
+        allow_bottled: bool = False,
+    ) -> str | None:
+        from sts_py.engine.run.events import _apply_parasite_penalty
+
+        if deck_index < 0 or deck_index >= len(self.state.deck):
+            return None
+        if not allow_bottled and self._is_bottled_card_index(deck_index):
+            return None
+        card_id = self.state.deck.pop(deck_index)
+        if apply_parasite_penalty:
+            _apply_parasite_penalty(self.state, card_id)
+        self._clear_bottled_cards_at_index(deck_index)
+        self._shift_bottled_cards_after_removal(deck_index)
+        return card_id
+
+    def _java_shuffle_with_misc_rng(self, deck_indexes: list[int]) -> list[int]:
+        if len(deck_indexes) <= 1 or self.state.rng is None:
+            return list(deck_indexes)
+        java_rng = JavaRandom(self.state.rng.misc_rng.random_long_raw())
+        shuffled = list(deck_indexes)
+        for i in range(len(shuffled), 1, -1):
+            j = java_rng.next_int(i)
+            shuffled[i - 1], shuffled[j] = shuffled[j], shuffled[i - 1]
+        return shuffled
+
+    def _get_transform_card_candidates(self, card_id: str) -> list[str]:
+        from sts_py.engine.content.cards_min import ALL_CURSE_DEFS, COLORLESS_ALL_DEFS
+
+        base_id = _deck_card_base_id(card_id)
+        if base_id in ALL_CURSE_DEFS:
+            return [candidate for candidate in ALL_CURSE_DEFS if candidate != base_id]
+        if base_id in COLORLESS_ALL_DEFS:
+            return [candidate for candidate in COLORLESS_ALL_DEFS if candidate != base_id]
+        return [candidate for candidate in self._transform_card_candidates_for_character() if candidate != base_id]
+
+    def _transform_card_result(self, card_id: str, *, rng: MutableRNG | None, upgrade: bool = False) -> str:
+        candidates = self._get_transform_card_candidates(card_id)
+        if not candidates:
+            return str(card_id)
+        chosen = candidates[rng.random_int(len(candidates) - 1)] if rng is not None else candidates[0]
+        result = str(chosen)
+        if upgrade:
+            upgraded = self._upgrade_card(result)
+            if upgraded is not None:
+                result = upgraded
+        return self._preview_card_with_relics(result)
+
+    def _upgrade_deck_card_at_index(self, deck_index: int) -> str | None:
+        if deck_index < 0 or deck_index >= len(self.state.deck):
+            return None
+        old_card = self.state.deck[deck_index]
+        upgraded_card = self._upgrade_card(old_card)
+        if upgraded_card is None or upgraded_card == old_card:
+            return None
+        self.state.deck[deck_index] = upgraded_card
+        return upgraded_card
+
+    def _transform_deck_card_at_index(
+        self,
+        deck_index: int,
+        *,
+        rng: MutableRNG | None,
+        upgrade: bool = False,
+    ) -> tuple[str | None, str | None]:
+        if deck_index < 0 or deck_index >= len(self.state.deck):
+            return None, None
+        old_card = self.state.deck[deck_index]
+        removed = self._remove_card_from_deck_index(
+            deck_index,
+            apply_parasite_penalty=True,
+            allow_bottled=True,
+        )
+        if removed is None:
+            return None, None
+        transformed_card = self._transform_card_result(old_card, rng=rng, upgrade=upgrade)
+        added = self._add_card_to_deck(transformed_card, already_previewed=True)
+        return old_card, added
+
+    def _upgrade_random_deck_card(self) -> str | None:
+        upgradeable_indices = [
+            idx
+            for idx, card_id in enumerate(self.state.deck)
+            if (upgraded := self._upgrade_card(card_id)) is not None and upgraded != card_id
+        ]
         if not upgradeable_indices:
             return None
-        chosen = upgradeable_indices[self.state.rng.relic_rng.random_int(len(upgradeable_indices) - 1)]
-        old_card = self.state.deck[chosen]
-        upgraded_card = self._upgrade_card(old_card)
-        if upgraded_card is None:
-            return None
-        self.state.deck[chosen] = upgraded_card
-        return upgraded_card
+        shuffled_indices = self._java_shuffle_with_misc_rng(upgradeable_indices)
+        return self._upgrade_deck_card_at_index(shuffled_indices[0])
 
     def _upgrade_first_n_cards(self, count: int, *, card_type: str) -> list[str]:
         from sts_py.engine.content.cards_min import ALL_CARD_DEFS, CardType
 
-        upgraded_cards: list[str] = []
         target_type = CardType.ATTACK if card_type == "attack" else CardType.SKILL
-        for idx, card_id in enumerate(list(self.state.deck)):
-            if len(upgraded_cards) >= count:
-                break
-            base_id = _deck_card_base_id(card_id)
-            card_def = ALL_CARD_DEFS.get(base_id)
-            if card_def is None or card_def.card_type != target_type:
-                continue
-            upgraded_card = self._upgrade_card(card_id)
-            if upgraded_card is None or upgraded_card == card_id:
-                continue
-            self.state.deck[idx] = upgraded_card
-            upgraded_cards.append(upgraded_card)
+        upgraded_cards: list[str] = []
+        candidate_indices = [
+            idx
+            for idx, card_id in enumerate(self.state.deck)
+            if ALL_CARD_DEFS.get(_deck_card_base_id(card_id), None) is not None
+            and ALL_CARD_DEFS[_deck_card_base_id(card_id)].card_type == target_type
+            and self._upgrade_card(card_id) not in (None, card_id)
+        ]
+        for idx in self._java_shuffle_with_misc_rng(candidate_indices)[: max(0, int(count))]:
+            upgraded_card = self._upgrade_deck_card_at_index(idx)
+            if upgraded_card is not None:
+                upgraded_cards.append(upgraded_card)
         return upgraded_cards
 
     def _remove_first_n_cards(self, count: int, *, exclude_unremovable: bool = False) -> list[str]:
-        from sts_py.engine.run.events import _apply_parasite_penalty, _can_remove_card
+        from sts_py.engine.run.events import _can_remove_card
 
         removed_cards: list[str] = []
-        remaining_deck: list[str] = []
+        deck_index = 0
         removed_needed = max(0, int(count))
-        for card_id in self.state.deck:
+        while deck_index < len(self.state.deck) and removed_needed > 0:
+            card_id = self.state.deck[deck_index]
             can_remove = _can_remove_card(self.state, card_id)
-            if removed_needed > 0 and can_remove and (not exclude_unremovable or can_remove):
-                _apply_parasite_penalty(self.state, card_id)
-                removed_cards.append(card_id)
-                removed_needed -= 1
-            else:
-                remaining_deck.append(card_id)
-        self.state.deck = remaining_deck
+            blocked_by_bottle = exclude_unremovable and self._is_bottled_card_index(deck_index)
+            if can_remove and not blocked_by_bottle:
+                removed = self._remove_card_from_deck_index(
+                    deck_index,
+                    apply_parasite_penalty=True,
+                    allow_bottled=not exclude_unremovable,
+                )
+                if removed is not None:
+                    removed_cards.append(removed)
+                    removed_needed -= 1
+                    continue
+            deck_index += 1
         return removed_cards
 
     def _apply_shop_enter_effects(self) -> list[dict[str, Any]]:
@@ -3636,12 +3878,11 @@ class RunEngine:
                     candidates = [card_id for card_id in ALL_CURSE_DEFS if card_id not in excluded]
                     if not candidates:
                         continue
-                    if self.state.rng is not None:
-                        curse_id = candidates[self.state.rng.relic_rng.random_int(len(candidates) - 1)]
-                    else:
-                        curse_id = candidates[0]
-                    self.state.deck.append(curse_id)
-                    applied.append({"type": "add_curse", "card_id": curse_id, "relic_id": relic_def.id})
+                    rng = self.state.rng.relic_rng if self.state.rng is not None else None
+                    curse_id = candidates[rng.random_int(len(candidates) - 1)] if rng is not None else candidates[0]
+                    added = self._add_card_to_deck(curse_id)
+                    if added is not None:
+                        applied.append({"type": "add_curse", "card_id": added, "relic_id": relic_def.id})
         return applied
 
     def _transform_card_candidates_for_character(self) -> list[str]:
@@ -3655,34 +3896,29 @@ class RunEngine:
                     candidates.append(card_def.id)
         return candidates
 
-    def _transform_deck_card(self, card_id: str, *, upgrade: bool = False) -> str:
-        candidates = [candidate for candidate in self._transform_card_candidates_for_character() if candidate != card_id]
-        if not candidates:
-            return card_id
-        if self.state.rng is not None:
-            chosen = candidates[self.state.rng.relic_rng.random_int(len(candidates) - 1)]
-        else:
-            chosen = candidates[0]
-        if upgrade:
-            upgraded = self._upgrade_card(chosen)
-            if upgraded is not None:
-                return upgraded
-        return chosen
+    def _transform_deck_card(self, card_id: str, *, rng: MutableRNG | None, upgrade: bool = False) -> str:
+        return self._transform_card_result(card_id, rng=rng, upgrade=upgrade)
 
     def _transform_first_n_cards(self, count: int, *, upgrade: bool = False) -> list[dict[str, str]]:
         from sts_py.engine.run.events import _can_remove_card
 
         transformed: list[dict[str, str]] = []
-        remaining = max(0, int(count))
-        for idx, deck_card in enumerate(list(self.state.deck)):
-            if remaining <= 0:
-                break
-            if not _can_remove_card(self.state, deck_card):
+        rng = self.state.rng.misc_rng if self.state.rng is not None else None
+        selected_indices = [
+            idx
+            for idx, deck_card in enumerate(list(self.state.deck))
+            if _can_remove_card(self.state, deck_card)
+        ][: max(0, int(count))]
+        removed_before = 0
+        for original_index in selected_indices:
+            deck_index = original_index - removed_before
+            if deck_index < 0 or deck_index >= len(self.state.deck):
                 continue
-            new_card = self._transform_deck_card(deck_card, upgrade=upgrade)
-            self.state.deck[idx] = new_card
-            transformed.append({"old_card": deck_card, "new_card": new_card})
-            remaining -= 1
+            old_card, new_card = self._transform_deck_card_at_index(deck_index, rng=rng, upgrade=upgrade)
+            if old_card is None:
+                continue
+            transformed.append({"old_card": old_card, "new_card": new_card or ""})
+            removed_before += 1
         return transformed
 
     def _apply_relic_pickup_effect(self, relic_id: str, effect: Any) -> dict[str, Any] | None:
@@ -3709,13 +3945,21 @@ class RunEngine:
             return {"type": "upgrade_attacks", "cards": upgraded}
         if extra_type == "transform_all_strikes_defends":
             transformed: list[dict[str, str]] = []
-            for idx, deck_card in enumerate(list(self.state.deck)):
-                base_id = re.sub(r"\+\d+$", "", deck_card).rstrip("+")
-                if base_id not in {"Strike", "Defend", "Strike_B", "Defend_B"}:
+            rng = self.state.rng.card_random_rng if self.state.rng is not None else None
+            selected_indices = [
+                idx
+                for idx, deck_card in enumerate(list(self.state.deck))
+                if re.sub(r"\+\d+$", "", deck_card).rstrip("+") in {"Strike", "Defend", "Strike_B", "Defend_B"}
+            ]
+            removed_before = 0
+            for original_index in selected_indices:
+                deck_index = original_index - removed_before
+                if deck_index < 0 or deck_index >= len(self.state.deck):
                     continue
-                new_card = self._transform_deck_card(base_id)
-                self.state.deck[idx] = new_card
-                transformed.append({"old_card": deck_card, "new_card": new_card})
+                old_card, new_card = self._transform_deck_card_at_index(deck_index, rng=rng, upgrade=False)
+                if old_card is not None:
+                    transformed.append({"old_card": old_card, "new_card": new_card or ""})
+                    removed_before += 1
             return {"type": "transform_all_strikes_defends", "cards": transformed}
         if extra_type == "transform_3_cards":
             transformed = self._transform_first_n_cards(3, upgrade=bool(effect.extra.get("upgrade")))
@@ -3723,7 +3967,7 @@ class RunEngine:
         if extra_type == "gain_curse_and_relics":
             curse_id = str(effect.extra.get("curse") or "CurseOfTheBell")
             curse_id = "CurseOfTheBell" if curse_id == "Curse" else curse_id
-            self.state.deck.append(curse_id)
+            actual_curse = self._add_card_to_deck(curse_id)
             gained_relics: list[str] = []
             for _ in range(int(effect.extra.get("relic_count") or 0)):
                 gained = self._grant_random_relic(
@@ -3732,7 +3976,7 @@ class RunEngine:
                 )
                 if gained is not None:
                     gained_relics.append(gained)
-            return {"type": "gain_curse_and_relics", "curse": curse_id, "relics": gained_relics}
+            return {"type": "gain_curse_and_relics", "curse": actual_curse, "relics": gained_relics}
         if extra_type == "full_restore":
             self.state.player_hp = self.state.player_max_hp
             return {"type": "full_restore"}
@@ -3771,12 +4015,27 @@ class RunEngine:
                 self.state.player_hp += int(effect.value)
                 applied.append({"type": "gain_max_hp", "amount": int(effect.value)})
             elif effect.effect_type == RelicEffectType.GAIN_POTION:
-                from sts_py.engine.combat.potion_effects import get_random_potion_by_rarity, roll_potion_rarity
+                from sts_py.engine.content.potions import (
+                    get_common_potions,
+                    get_rare_potions,
+                    get_uncommon_potions,
+                )
 
                 gained: list[str] = []
+                rng = self.state.rng.potion_rng if self.state.rng is not None else None
+                common_potions = get_common_potions(self.state.character_class)
+                uncommon_potions = get_uncommon_potions(self.state.character_class)
+                rare_potions = get_rare_potions(self.state.character_class)
                 for _ in range(int(effect.value or 0)):
-                    rarity = roll_potion_rarity()
-                    potion = get_random_potion_by_rarity(rarity, self.state.character_class)
+                    roll = rng.random_int(99) if rng is not None else 0
+                    if roll < 65 and common_potions:
+                        potion = common_potions[rng.random_int(len(common_potions) - 1)] if rng is not None else common_potions[0]
+                    elif roll < 90 and uncommon_potions:
+                        potion = uncommon_potions[rng.random_int(len(uncommon_potions) - 1)] if rng is not None else uncommon_potions[0]
+                    elif rare_potions:
+                        potion = rare_potions[rng.random_int(len(rare_potions) - 1)] if rng is not None else rare_potions[0]
+                    else:
+                        potion = None
                     if potion and self.gain_potion(potion.potion_id):
                         gained.append(potion.potion_id)
                 applied.append({"type": "gain_potion", "potions": gained})
@@ -3792,6 +4051,9 @@ class RunEngine:
             elif effect.effect_type == RelicEffectType.CARD_REWARD and relic_def.id == "TinyHouse":
                 self._add_card_reward(current_room=None, is_event_combat=False)
                 applied.append({"type": "card_reward", "count": len(self.state.pending_card_reward_cards)})
+            elif effect.effect_type == RelicEffectType.BOTTLED:
+                bottled_card = self._auto_bottle_card_for_relic(relic_def.id, str(effect.extra.get("card_type", "") or ""))
+                applied.append({"type": "bottled", "card": bottled_card})
         return applied
 
     def _acquire_relic(
@@ -3867,7 +4129,7 @@ class RunEngine:
         )
         self.state.rng.card_rng._rng = next_rng
         self.state.reward_state = next_reward_state
-        self.state.pending_card_reward_cards = [card.id for card in reward_cards]
+        self.state.pending_card_reward_cards = [self._preview_card_with_relics(card.id) for card in reward_cards]
         self.state.phase = RunPhase.REWARD
 
     def rest(self, heal_percent: float = 0.3) -> int:
@@ -4150,6 +4412,7 @@ class RunEngine:
                     deck_indexes = [
                         idx for idx, card_id in enumerate(self.state.deck)
                         if _can_remove_card(self.state, card_id)
+                        and not self._is_bottled_card_index(idx)
                     ]
                 elif effect.effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM:
                     deck_indexes = [
@@ -4229,18 +4492,16 @@ class RunEngine:
             deck_index = card_index
             card_id = self.state.deck[deck_index]
 
-        from sts_py.engine.run.events import EventEffectType, _apply_parasite_penalty, _can_remove_card, _get_transformed_card
+        from sts_py.engine.run.events import EventEffectType, _can_remove_card
 
         if effect_type == EventEffectType.CHOOSE_CARD_TO_REMOVE.value:
-            if not _can_remove_card(self.state, card_id):
+            if not _can_remove_card(self.state, card_id) or self._is_bottled_card_index(deck_index):
                 return {"success": False, "reason": "card_cannot_be_removed", "card_id": card_id}
-            _apply_parasite_penalty(self.state, card_id)
-            self.state.deck.pop(deck_index)
-            result = {"success": True, "action": "card_removed", "card_id": card_id}
+            removed_card = self._remove_card_from_deck_index(deck_index, apply_parasite_penalty=True)
+            result = {"success": True, "action": "card_removed", "card_id": removed_card}
         elif effect_type == EventEffectType.CHOOSE_CARD_TO_TRANSFORM.value:
             if self._canonical_card_id(card_id) in {"AscendersBane", "CurseOfTheBell", "Necronomicurse"}:
                 return {"success": False, "reason": "card_cannot_be_removed", "card_id": card_id}
-            _apply_parasite_penalty(self.state, card_id)
             handler_key = self._event_handler_key(event)
             if handler_key in {"Living Wall", "Transmorgrifier"}:
                 rng = self._misc_rng()
@@ -4248,8 +4509,7 @@ class RunEngine:
                 rng = getattr(getattr(self.state, "rng", None), "card_random_rng", None)
                 if rng is None:
                     rng = getattr(getattr(self.state, "rng", None), "event_rng", None)
-            transformed_card = _get_transformed_card(card_id, rng)
-            self.state.deck[deck_index] = transformed_card
+            _, transformed_card = self._transform_deck_card_at_index(deck_index, rng=rng, upgrade=False)
             result = {
                 "success": True,
                 "action": "card_transformed",
@@ -4257,10 +4517,9 @@ class RunEngine:
                 "new_card": transformed_card,
             }
         elif effect_type == EventEffectType.CHOOSE_CARD_TO_UPGRADE.value:
-            upgraded_card = self._upgrade_card(card_id)
-            if not upgraded_card or upgraded_card == card_id:
+            upgraded_card = self._upgrade_deck_card_at_index(deck_index)
+            if not upgraded_card:
                 return {"success": False, "reason": "card_cannot_be_upgraded", "card_id": card_id}
-            self.state.deck[deck_index] = upgraded_card
             result = {
                 "success": True,
                 "action": "card_upgraded",
@@ -7026,6 +7285,10 @@ class RunEngine:
             has_membership=self._has_relic("MembershipCard"),
             relics=shop_relics,
         )
+        for item in shop_state.colored_cards:
+            item.item_id = self._preview_card_with_relics(item.item_id)
+        for item in shop_state.colorless_cards:
+            item.item_id = self._preview_card_with_relics(item.item_id)
         self._shop_engine = ShopEngine(self, shop_state)
         self._apply_shop_enter_effects()
         self.state.phase = RunPhase.SHOP
