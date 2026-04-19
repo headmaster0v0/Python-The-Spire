@@ -80,6 +80,18 @@ class TestSilentRewardPools:
         assert all(card.id not in IRONCLAD_ALL_DEFS for card in silent_pools[CardRarity.COMMON])
         assert all(card.id not in WATCHER_ALL_DEFS for card in silent_pools[CardRarity.COMMON])
 
+    def test_reward_pools_keep_backflip_and_infinite_blades_in_java_rarity_buckets(self):
+        silent_pools = build_reward_pools("SILENT")
+
+        common_ids = {card.id for card in silent_pools[CardRarity.COMMON]}
+        uncommon_ids = {card.id for card in silent_pools[CardRarity.UNCOMMON]}
+        rare_ids = {card.id for card in silent_pools[CardRarity.RARE]}
+
+        assert "Backflip" in common_ids
+        assert "Backflip" not in uncommon_ids
+        assert "InfiniteBlades" in uncommon_ids
+        assert "InfiniteBlades" not in rare_ids
+
 
 class TestSilentRunContentFlow:
     def test_run_engine_create_silent_uses_silent_content(self):

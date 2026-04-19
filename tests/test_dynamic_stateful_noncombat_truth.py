@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from sts_py.engine.content.card_instance import CardInstance
-from sts_py.engine.content.cards_min import ALL_CARD_DEFS
+from sts_py.engine.content.cards_min import ALL_CARD_DEFS, COLORLESS_ALL_DEFS
+from sts_py.engine.rewards.card_rewards_min import character_pools
 from sts_py.engine.run.events import ACT1_EVENTS, Event, EventChoice, _event_card_base_id
 from sts_py.engine.run.run_engine import RunEngine, RunPhase, _deck_card_base_id
 from sts_py.terminal.render import render_card_detail_lines
@@ -65,7 +66,8 @@ def test_ritual_dagger_transform_and_detail_render_keep_base_metadata_accessible
     assert transform_result["success"] is True
     assert transform_result["old_card"] == "RitualDagger#18+"
     transformed_base = CardInstance(transform_result["new_card"]).card_id
-    assert ALL_CARD_DEFS[transformed_base].cost == 1
+    assert transformed_base != "RitualDagger"
+    assert transformed_base in COLORLESS_ALL_DEFS
     assert _event_card_base_id("RitualDagger#18+") == "RitualDagger"
     assert _deck_card_base_id("RitualDagger#18+") == "RitualDagger"
 
@@ -178,7 +180,13 @@ def test_genetic_algorithm_transform_and_detail_render_keep_base_metadata_access
     assert transform_result["success"] is True
     assert transform_result["old_card"] == "GeneticAlgorithm#7+"
     transformed_base = CardInstance(transform_result["new_card"]).card_id
-    assert ALL_CARD_DEFS[transformed_base].cost == 1
+    reward_pool_ids = {
+        card.id
+        for pool in character_pools(engine.state.character_class).values()
+        for card in pool
+    }
+    assert transformed_base != "GeneticAlgorithm"
+    assert transformed_base in reward_pool_ids
     assert _event_card_base_id("GeneticAlgorithm#7+") == "GeneticAlgorithm"
     assert _deck_card_base_id("GeneticAlgorithm#7+") == "GeneticAlgorithm"
 

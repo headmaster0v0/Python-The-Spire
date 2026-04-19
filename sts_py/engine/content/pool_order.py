@@ -83,6 +83,7 @@ GREEN_COMMON_POOL_ORDER: list[str] = [
     "Slice",
     "QuickSlash",
     "SuckerPunch",
+    "Backflip",
     "Bane",
     "PiercingWail",
     "Outmaneuver",
@@ -102,7 +103,6 @@ GREEN_COMMON_POOL_ORDER: list[str] = [
 
 GREEN_UNCOMMON_POOL_ORDER: list[str] = [
     "Backstab",
-    "Backflip",
     "AllOutAttack",
     "Blur",
     "Caltrops",
@@ -128,6 +128,7 @@ GREEN_UNCOMMON_POOL_ORDER: list[str] = [
     "Expertise",
     "Concentrate",
     "CalculatedGamble",
+    "InfiniteBlades",
     "Accuracy",
     "Finisher",
     "Setup",
@@ -147,7 +148,6 @@ GREEN_RARE_POOL_ORDER: list[str] = [
     "Envenom",
     "GlassKnife",
     "GrandFinale",
-    "InfiniteBlades",
     "Nightmare",
     "PhantasmalKiller",
     "StormOfSteel",

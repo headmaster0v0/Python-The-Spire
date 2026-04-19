@@ -1452,7 +1452,7 @@ SILENT_ALL_DEFS: dict[str, CardDef] = {
     ),
     "InfiniteBlades": CardDef(
         id="InfiniteBlades",
-        rarity=CardRarity.RARE,
+        rarity=CardRarity.UNCOMMON,
         card_type=CardType.POWER,
         cost=1,
         base_magic_number=1,
@@ -2629,7 +2629,7 @@ _CARD_STATIC_OVERRIDES = {
     "GeneticAlgorithm": {"base_block": 1},
     "HelloWorld": {"base_magic_number": 0, "is_innate": True},
     "Hemokinesis": {"base_magic_number": 2},
-    "InfiniteBlades": {"rarity": CardRarity.UNCOMMON, "base_magic_number": 0, "is_innate": True},
+    "InfiniteBlades": {"base_magic_number": 0, "is_innate": True},
     "Immolate": {"is_exhaust": False},
     "Intimidate": {"is_exhaust": True},
     "Judgement": {"target_required": True},

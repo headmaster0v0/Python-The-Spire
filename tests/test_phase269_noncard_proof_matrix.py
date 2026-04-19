@@ -56,6 +56,7 @@ def test_phase269_proof_matrix_references_checked_in_truth_tests(
 
 
 def test_phase269_fidelity_audit_requires_noncard_proof_coverage_to_be_green(
+    phase269_expected_matrix: dict[str, object],
     phase269_fidelity_bundle: dict[str, object],
 ) -> None:
     summary = phase269_fidelity_bundle["summary"]
@@ -65,7 +66,7 @@ def test_phase269_fidelity_audit_requires_noncard_proof_coverage_to_be_green(
     assert summary["known_approximations_count"] == 0
     assert summary["noncard_proof_uncovered"] == 0
     assert summary["noncard_signature_mismatches"] == 0
-    assert noncard_summary["entity_count"] == 445
+    assert noncard_summary["entity_count"] == len(phase269_expected_matrix["entities"])
     assert noncard_summary["noncard_proof_uncovered"] == 0
     assert noncard_summary["signature_mismatches"] == 0
     assert noncard_summary["stale_matrix_entries"] == 0
