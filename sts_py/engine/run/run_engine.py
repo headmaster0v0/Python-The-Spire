@@ -539,6 +539,9 @@ class RunEngine:
     hp_rng: MutableRNG
     _neow_rng: MutableRNG | None = None
     _player_profile: PlayerProfile | None = None
+    _player_profile_path: Path | None = None
+    _legacy_note_path: Path | None = None
+    _profile_io_enabled: bool = True
     _pending_gold_reward: int = 0
     _pending_potion_reward: str | None = None
     _pending_relic_reward: str | None = None
@@ -546,13 +549,23 @@ class RunEngine:
     _resume_victory_after_reward: bool = False
 
     @classmethod
-    def create(cls, seed_string: str, ascension: int = 0, character_class: str = "IRONCLAD") -> "RunEngine":
+    def create(
+        cls,
+        seed_string: str,
+        ascension: int = 0,
+        character_class: str = "IRONCLAD",
+        *,
+        player_profile_path: Path | None = None,
+        legacy_note_path: Path | None = None,
+    ) -> "RunEngine":
         from sts_py.engine.core.seed import seed_string_to_long
 
         seed = seed_string_to_long(seed_string)
         rng = RunRngState.generate_seeds(seed)
         character_key = character_class.upper()
-        player_profile = load_player_profile(path=PLAYER_PROFILE_PATH, legacy_note_path=NOTE_FOR_YOURSELF_PREFS_PATH)
+        resolved_profile_path = player_profile_path or PLAYER_PROFILE_PATH
+        resolved_note_path = legacy_note_path or NOTE_FOR_YOURSELF_PREFS_PATH
+        player_profile = load_player_profile(path=resolved_profile_path, legacy_note_path=resolved_note_path)
         character_progress = player_profile.character_progress(character_key)
         starting_stats = CHARACTER_STARTING_STATS.get(character_key, CHARACTER_STARTING_STATS["IRONCLAD"])
         starter_deck = list(STARTER_DECK_CARD_IDS.get(character_key, STARTER_DECK_CARD_IDS["IRONCLAD"]))
@@ -589,6 +602,8 @@ class RunEngine:
             hp_rng=hp_rng,
             _neow_rng=MutableRNG.from_seed(seed, rng_type="neowRng"),
             _player_profile=player_profile,
+            _player_profile_path=resolved_profile_path,
+            _legacy_note_path=resolved_note_path,
         )
         engine._init_run()
         return engine
@@ -675,11 +690,17 @@ class RunEngine:
             return progress
         return CharacterProgress.from_raw(progress)
 
+    def _resolved_player_profile_path(self) -> Path:
+        return self._player_profile_path or PLAYER_PROFILE_PATH
+
+    def _resolved_legacy_note_path(self) -> Path:
+        return self._legacy_note_path or NOTE_FOR_YOURSELF_PREFS_PATH
+
     def _load_player_profile(self) -> PlayerProfile:
         if self._player_profile is None:
             self._player_profile = load_player_profile(
-                path=PLAYER_PROFILE_PATH,
-                legacy_note_path=NOTE_FOR_YOURSELF_PREFS_PATH,
+                path=self._resolved_player_profile_path(),
+                legacy_note_path=self._resolved_legacy_note_path(),
             )
         return self._player_profile
 
@@ -693,6 +714,8 @@ class RunEngine:
         return progress
 
     def _save_player_profile(self) -> None:
+        if not self._profile_io_enabled:
+            return
         profile = self._load_player_profile()
         profile.neow_intro_seen = bool(self.state.neow_intro_seen)
         note_payload = self._normalize_note_for_yourself_payload(self.state.note_for_yourself_payload)
@@ -705,7 +728,7 @@ class RunEngine:
         progress.highest_unlocked_ascension = max(1, int(self.state.highest_unlocked_ascension or 1))
         progress.last_ascension_level = max(1, int(self.state.last_ascension_level or progress.highest_unlocked_ascension))
         try:
-            save_player_profile(profile, path=PLAYER_PROFILE_PATH)
+            save_player_profile(profile, path=self._resolved_player_profile_path())
         except Exception:
             pass
 
@@ -739,6 +762,8 @@ class RunEngine:
     def _save_note_for_yourself_payload(self, *, card_id: str, upgrades: int = 0) -> None:
         payload = self._normalize_note_for_yourself_payload({"card_id": card_id, "upgrades": upgrades})
         self.state.note_for_yourself_payload = payload
+        if not self._profile_io_enabled:
+            return
         try:
             profile = self._load_player_profile()
             profile.note_for_yourself.card_id = payload["card_id"]
@@ -746,7 +771,7 @@ class RunEngine:
             self._save_player_profile()
         except Exception:
             pass
-        path = NOTE_FOR_YOURSELF_PREFS_PATH
+        path = self._resolved_legacy_note_path()
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
